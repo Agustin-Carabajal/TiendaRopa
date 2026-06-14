@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="TiendaRopa.BD/TiendaRopa.BD.csproj" />
+  <Project Path="TiendaRopa.Repositorio/TiendaRopa.Repositorio.csproj" />
+  <Project Path="TiendaRopa.Server/TiendaRopa.Server.Client/TiendaRopa.Server.Client.csproj" />
+  <Project Path="TiendaRopa.Server/TiendaRopa.Server/TiendaRopa.Server.csproj" />
+  <Project Path="TiendaRopa.Servicio/TiendaRopa.Servicio.csproj" />
+  <Project Path="TiendaRopa.Shared/TiendaRopa.Shared.csproj" />
+</Solution>
