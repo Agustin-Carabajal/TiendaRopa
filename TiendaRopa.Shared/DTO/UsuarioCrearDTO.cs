@@ -1,17 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TiendaRopa.Shared.ENUM;
 
-namespace TiendaRopa.BD.Datos
+namespace TiendaRopa.Shared.DTO
 {
-    public class ApplicationUser : IdentityUser, IEntityBase
+    public class UsuarioCrearDTO
     {
-        public int Id { get; set; }
-        public EstadoRegistro EstadoRegistro { get; set; }
-        public string Observacion { get; set; } = "";
-
         public string NombreUsuario { get; set; } = string.Empty;
         public string ApellidoUsuario { get; set; } = string.Empty;
         public string DniUsuario { get; set; } = string.Empty;
