@@ -1,8 +1,12 @@
-﻿namespace TiendaRopa.Repositorio.Repositorios
+﻿using TiendaRopa.BD.Datos;
+
+namespace TiendaRopa.Repositorio.Repositorios
 {
-    public interface IRepositorio<E>
+    public interface IRepositorio<E> where E : class, IEntityBase
+
     {
         Task<bool> Delete(int id);
+        Task<bool> DeleteLogico(int id);
         Task<bool> Existe(int id);
         Task<int> Insert(E entity);
         Task<List<E>> Select();

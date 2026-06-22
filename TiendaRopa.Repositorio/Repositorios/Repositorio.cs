@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TiendaRopa.BD.Datos;
+using TiendaRopa.Shared.ENUM;
 
 namespace TiendaRopa.Repositorio.Repositorios
 {
@@ -38,7 +39,7 @@ namespace TiendaRopa.Repositorio.Repositorios
                 await context.SaveChangesAsync();
                 return entity.Id;
             }
-            catch (Exception err) { throw err; }
+            catch (Exception) { throw; }
 
         }
 
@@ -61,7 +62,7 @@ namespace TiendaRopa.Repositorio.Repositorios
                 await context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception err) { throw err; }
+            catch (Exception) { throw; }
         }
 
         public async Task<bool> Delete(int id)
@@ -77,7 +78,28 @@ namespace TiendaRopa.Repositorio.Repositorios
                 await context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception err) { throw err; }
+            catch (Exception) { throw; }
+        }
+
+        public async Task<bool> DeleteLogico(int id) 
+        { 
+            var entidad = await SelectById(id);
+            if (entidad == null)
+            {
+                return false;
+            }
+            try
+            {
+                entidad.EstadoRegistro = EstadoRegistro.eliminado;
+                entidad.Observacion = $"Registro inactivado por el sistema el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+                context.Set<E>().Update(entidad);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

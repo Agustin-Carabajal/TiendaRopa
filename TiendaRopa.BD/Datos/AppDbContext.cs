@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,12 @@ namespace TiendaRopa.BD.Datos
         {
             base.OnModelCreating(modelBuilder);
             // Configuración adicional del modelo si es necesario
+            modelBuilder.Entity<ApplicationUser>()
+                .HasKey(u => u.Id); // Configura la clave primaria para ApplicationUser)
+
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => ((IdentityUser)u).Id)
+                .HasColumnName("IdentityId"); // Configura el nombre de la columna para la propiedad Id
 
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
                 .SelectMany(e => e.GetForeignKeys())
