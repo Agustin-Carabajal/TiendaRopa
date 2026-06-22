@@ -4,11 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TiendaRopa.BD.Datos.Entity;
 
 namespace TiendaRopa.BD.Datos
 {
     public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<Producto> Productos { get; set; }
+        public DbSet<Marca> Marcas { get; set; }
+        public DbSet<Talle> Talles { get; set; }
+        public DbSet<Color> Colores { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TiendaRopa.BD.Datos;
-using TiendaRopa.Shared.DTO;
+using TiendaRopa.Shared.DTO.ApplicationUser;
 
 namespace TiendaRopa.Repositorio.Repositorios
 {

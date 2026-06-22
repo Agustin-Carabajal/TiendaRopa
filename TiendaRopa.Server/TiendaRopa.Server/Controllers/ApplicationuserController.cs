@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios;
-using TiendaRopa.Shared.DTO;
+using TiendaRopa.Shared.DTO.ApplicationUser;
 
 namespace TiendaRopa.Server.Controllers
 {

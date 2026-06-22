@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace TiendaRopa.Shared.DTO
+namespace TiendaRopa.Shared.DTO.ApplicationUser
 {
     public class UsuarioCrearDTO
     {

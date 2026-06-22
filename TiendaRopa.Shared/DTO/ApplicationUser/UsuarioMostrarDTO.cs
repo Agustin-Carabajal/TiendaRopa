@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TiendaRopa.Shared.DTO
+namespace TiendaRopa.Shared.DTO.ApplicationUser
 {
     public class UsuarioMostrarDTO
     {
