@@ -14,6 +14,9 @@ namespace TiendaRopa.BD.Datos
         public DbSet<Marca> Marcas { get; set; }
         public DbSet<Talle> Talles { get; set; }
         public DbSet<Color> Colores { get; set; }
+        public DbSet<Proveedor> Proveedores { get; set; }
+        public DbSet<Pedido> Pedidos { get; set; }
+        public DbSet<Recepcion> Recepciones { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -38,6 +41,5 @@ namespace TiendaRopa.BD.Datos
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
         }
-
     }
 }
