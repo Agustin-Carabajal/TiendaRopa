@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos;
-using TiendaRopa.Repositorio.Repositorios;
-using TiendaRopa.Shared.DTO.ApplicationUser;
+using TiendaRopa.Repositorio.Repositorios.Usuario;
+using TiendaRopa.Shared.DTO.Usuario;
 
 namespace TiendaRopa.Server.Controllers
 {

@@ -1,6 +1,6 @@
 ﻿using TiendaRopa.BD.Datos;
 
-namespace TiendaRopa.Repositorio.Repositorios
+namespace TiendaRopa.Repositorio.Repositorios.Generico
 {
     public interface IRepositorio<E> where E : class, IEntityBase
 

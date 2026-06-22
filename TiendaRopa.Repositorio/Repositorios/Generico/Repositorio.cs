@@ -5,7 +5,7 @@ using System.Text;
 using TiendaRopa.BD.Datos;
 using TiendaRopa.Shared.ENUM;
 
-namespace TiendaRopa.Repositorio.Repositorios
+namespace TiendaRopa.Repositorio.Repositorios.Generico
 {
     public class Repositorio<E> : IRepositorio<E> where E : class, IEntityBase
     {

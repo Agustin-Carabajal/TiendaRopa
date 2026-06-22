@@ -1,7 +1,8 @@
 ﻿using TiendaRopa.BD.Datos;
-using TiendaRopa.Shared.DTO.ApplicationUser;
+using TiendaRopa.Repositorio.Repositorios.Generico;
+using TiendaRopa.Shared.DTO.Usuario;
 
-namespace TiendaRopa.Repositorio.Repositorios
+namespace TiendaRopa.Repositorio.Repositorios.Usuario
 {
     public interface IApplicationUserRepositorio : IRepositorio<ApplicationUser>
   

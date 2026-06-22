@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using TiendaRopa.Shared.ENUM;
 
-namespace TiendaRopa.Shared.DTO.ApplicationUser
+namespace TiendaRopa.Shared.DTO.Usuario
 {
     public class UsuarioActualizarAdminDTO
     {
