@@ -7,15 +7,14 @@ namespace TiendaRopa.Shared.DTO.Usuario
 {
     public class UsuarioActualizarAdminDTO
     {
-        public int IntId { get; set; }
-        public string NombreUsuario { get; set; } = string.Empty;
-        public string ApellidoUsuario { get; set; } = string.Empty;
-        public string DniUsuario { get; set; } = string.Empty;
-        public DateTime FechaNacimientoUsuario { get; set; }
-        public string DireccionUsuario { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
+        public string Dni { get; set; } = string.Empty;
+        public DateTime FechaNacimiento { get; set; }
+        public string Direccion { get; set; } = string.Empty;
 
         // Campos exclusivos que controla el dueño de la tienda
-        public decimal SaldoUsuario { get; set; }
+        public decimal Saldo { get; set; }
         public EstadoRegistro EstadoRegistro { get; set; }
         public string Observacion { get; set; } = "";
     }

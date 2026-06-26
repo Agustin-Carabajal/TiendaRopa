@@ -28,5 +28,12 @@ namespace TiendaRopa.Repositorio.Repositorios.Producto
             }).ToListAsync();
             return lista;
         }
+
+        public async Task<bool> ExisteNombre(string nombre)
+        {
+            // Busca en la base de datos si hay coincidencia exacta sin importar mayúsculas
+            return await context.Set<Marca>()
+                .AnyAsync(m => m.NombreMarca.ToLower().Trim() == nombre.ToLower().Trim());
+        }
     }
 }

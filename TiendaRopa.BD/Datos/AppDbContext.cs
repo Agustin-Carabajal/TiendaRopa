@@ -17,6 +17,7 @@ namespace TiendaRopa.BD.Datos
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<Recepcion> Recepciones { get; set; }
+        public DbSet<DetallesRecepcion> DetallesRecepciones { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -25,17 +26,22 @@ namespace TiendaRopa.BD.Datos
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Configuración adicional del modelo si es necesario
-            modelBuilder.Entity<ApplicationUser>()
-                .HasKey(u => u.Id); // Configura la clave primaria para ApplicationUser)
 
+            // 2. Renombrar la columna Id a IdentityId (si aún deseas mantener este nombre en la base de datos)
             modelBuilder.Entity<ApplicationUser>()
-                .Property(u => ((IdentityUser)u).Id)
-                .HasColumnName("IdentityId"); // Configura el nombre de la columna para la propiedad Id
+                .Property(u => u.Id)
+                .HasColumnName("IdentityId");
 
+            // 3. Configurar la precisión de los decimales para el Saldo del usuario
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.Saldo)
+                .HasPrecision(18, 2);
+
+            // 4. Desactivar el borrado en cascada global para evitar bloqueos en SQL Server
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
                 .SelectMany(e => e.GetForeignKeys())
                 .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
+
             foreach (var fk in cascadeFKs)
             {
                 fk.DeleteBehavior = DeleteBehavior.Restrict;

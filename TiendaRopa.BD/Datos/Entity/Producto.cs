@@ -7,6 +7,9 @@ namespace TiendaRopa.BD.Datos.Entity
 {
     public class Producto : EntityBase
     {
+        //[MaxLength(500, ErrorMessage = "La ruta de la imagen no puede exceder los 500 caracteres.")]
+        //public string? ImagenUrl { get; set; }
+
         [MaxLength(30, ErrorMessage = "El código del producto no puede exceder los 30 caracteres.")]
         public string CodProducto { get; set; } = string.Empty;
 
@@ -35,9 +38,9 @@ namespace TiendaRopa.BD.Datos.Entity
         public required int ColorId { get; set; }
         public Color? Color { get; set; }
 
-        //[Required(ErrorMessage = "El proveedor del producto es obligatorio.")]
-        //public required int ProveedorId { get; set; }
-        //public Proveedor? Proveedor { get; set; }
+        [Required(ErrorMessage = "El proveedor del producto es obligatorio.")]
+        public required int ProveedorId { get; set; }
+        public Proveedor? Proveedor  { get; set; }
 
     }
 }

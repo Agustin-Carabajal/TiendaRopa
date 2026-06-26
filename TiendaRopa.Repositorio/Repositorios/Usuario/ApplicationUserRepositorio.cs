@@ -6,10 +6,11 @@ using System.Text;
 using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios.Generico;
 using TiendaRopa.Shared.DTO.Usuario;
+using TiendaRopa.Shared.ENUM;
 
 namespace TiendaRopa.Repositorio.Repositorios.Usuario
 {
-    public class ApplicationUserRepositorio : Repositorio<ApplicationUser>, IRepositorio<ApplicationUser>, IApplicationUserRepositorio
+    public class ApplicationUserRepositorio :  IApplicationUserRepositorio
     {
         private readonly AppDbContext context;
         private readonly UserManager<ApplicationUser> userManager;
@@ -17,7 +18,7 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
 
         public ApplicationUserRepositorio(AppDbContext context,
                                             UserManager<ApplicationUser> userManager,
-                                            RoleManager<IdentityRole> roleManager) : base(context)
+                                            RoleManager<IdentityRole> roleManager)
         {
             this.context = context;
             this.userManager = userManager;
@@ -28,51 +29,68 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
         {
             var lista = await context.Set<ApplicationUser>().Select(x => new UsuarioMostrarDTO
             {
-                Id = ((Microsoft.AspNetCore.Identity.IdentityUser)x).Id,
-                IntId = x.Id,
-                NombreUsuario = x.NombreUsuario,
-                ApellidoUsuario = x.ApellidoUsuario,
-                DniUsuario = x.DniUsuario,
-                SaldoUsuario = x.SaldoUsuario
+                Id = x.Id,
+                Nombre = x.Nombre,
+                Apellido = x.Apellido,
+                Dni = x.Dni,
+                Saldo = x.Saldo
             }).ToListAsync();
             return lista;
         }
 
-        public async Task<bool> RegistrarUsuarioSeguro(UsuarioCrearDTO model)
+        public async Task<IdentityResult> RegistrarUsuarioSeguro(UsuarioCrearDTO model)
         {
             var nuevoUsuario = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
-                NombreUsuario = model.NombreUsuario,
-                ApellidoUsuario = model.ApellidoUsuario,
-                DniUsuario = model.DniUsuario,
-                FechaNacimientoUsuario = model.FechaNacimientoUsuario,
-                DireccionUsuario = model.DireccionUsuario,
-                SaldoUsuario = model.SaldoUsuario,
-                EmailConfirmed = true
+                Nombre = model.Nombre,
+                Apellido = model.Apellido,
+                Dni = model.Dni,
+                FechaNacimiento = model.FechaNacimiento,
+                Direccion = model.Direccion,
+                Saldo = model.Saldo,
+                EstadoRegistro = EstadoRegistro.activo
             };
             var resultado = await userManager.CreateAsync(nuevoUsuario, model.Password);
-            if (resultado.Succeeded)
+            if (!resultado.Succeeded)
             {
-                // Si quieres asignar un rol específico al usuario, hazlo aquí
-                if (!string.IsNullOrEmpty(model.Rol))
-                {
-                    var rolExiste = await roleManager.RoleExistsAsync(model.Rol);
-                    if (rolExiste)
-                    {
-                        await userManager.AddToRoleAsync(nuevoUsuario, model.Rol);
-                    }
-                    else
-                    {
-                        await userManager.AddToRoleAsync(nuevoUsuario, "Cliente");
-                    }
-                }
-                return true;
-                
+                return resultado;
             }
-            return false;
+
+            if (!await roleManager.RoleExistsAsync(model.Rol)) 
+            {
+                await roleManager.CreateAsync(new IdentityRole(model.Rol));
+            }
+            return await userManager.AddToRoleAsync(nuevoUsuario, model.Rol);
+        }
+             
+        public async Task<IdentityResult> UpdateUsuario(ApplicationUser usuario)
+        {
+            return await userManager.UpdateAsync(usuario);
+        }
+
+        
+
+        public async Task<UsuarioMostrarDTO?> ObtenerPorIdAsync(string id)
+        {
+            return await context.Users
+                .Where(x => x.Id == id)
+                .Select(x => new UsuarioMostrarDTO
+                {
+                    Id = x.Id,
+                    Nombre = x.Nombre,
+                    Apellido = x.Apellido,
+                    Dni = x.Dni,
+                    Saldo = x.Saldo
+                }).FirstOrDefaultAsync();
+        }
+        public async Task<ApplicationUser?> ObtenerEntidadStringId(string id)
+        {
+            return await userManager.FindByIdAsync(id);
 
         }
+
+
     }
 }

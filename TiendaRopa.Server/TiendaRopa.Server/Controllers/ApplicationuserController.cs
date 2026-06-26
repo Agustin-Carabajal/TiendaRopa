@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios.Usuario;
 using TiendaRopa.Shared.DTO.Usuario;
+using TiendaRopa.Shared.ENUM;
 
 namespace TiendaRopa.Server.Controllers
 {
@@ -30,9 +31,9 @@ namespace TiendaRopa.Server.Controllers
         }
 
         [HttpGet("{id}")] //api/Usuarios/{id}
-        public async Task<ActionResult<UsuarioMostrarDTO>> GetUsuarioById(int id)
+        public async Task<ActionResult<UsuarioMostrarDTO>> GetUsuarioById(string id)
         {
-            var usuario = await repositorio.SelectById(id);
+            var usuario = await repositorio.ObtenerPorIdAsync(id);
             if (usuario == null)
             {
                 return NotFound("Usuario no encontrado.");
@@ -45,7 +46,7 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult> AdminCrearUsuario([FromBody] UsuarioCrearDTO model)
         {
             var resultado = await repositorio.RegistrarUsuarioSeguro(model);
-            if (!resultado)
+            if (!resultado.Succeeded)
             {
                 return BadRequest("No se pudo registrar el usuario.");
             }
@@ -59,79 +60,82 @@ namespace TiendaRopa.Server.Controllers
             model.Rol = "Cliente"; // Asignar el rol "Cliente" por defecto
 
             var resultado = await repositorio.RegistrarUsuarioSeguro(model);
-            if (!resultado)
+            if (!resultado.Succeeded)
             {
                 return BadRequest("No se pudo registrar el usuario.");
             }
             return Ok(new { Mensaje = $"Usuario {model.Email} registrado correctamente." });
         }
 
-        [HttpPut("admin-actualizar/{id:int}")] //api/Usuarios/ActualizarByAdmin/{id})
+        [HttpPut("admin-actualizar/{id}")] //api/Usuarios/ActualizarByAdmin/{id})
         [Authorize(Roles = "Administrador")]
-        public async Task<ActionResult> ActualizarUsuarioAdmin([FromRoute] int id, [FromBody] UsuarioActualizarAdminDTO model)
+        public async Task<ActionResult> ActualizarUsuarioAdmin([FromRoute] string id, [FromBody] UsuarioActualizarAdminDTO model)
         {
-            if (id != model.IntId) return BadRequest("Los IDs no coinciden.");
-            var usuarioExistente = await repositorio.SelectById(id);
+            var usuarioExistente = await repositorio.ObtenerEntidadStringId(id);
             if (usuarioExistente == null)
             {
                 return NotFound("Usuario no encontrado.");
             }
 
-            usuarioExistente.NombreUsuario = model.NombreUsuario;
-            usuarioExistente.ApellidoUsuario = model.ApellidoUsuario;
-            usuarioExistente.DniUsuario = model.DniUsuario;
-            usuarioExistente.FechaNacimientoUsuario = model.FechaNacimientoUsuario;
-            usuarioExistente.DireccionUsuario = model.DireccionUsuario;
-            usuarioExistente.SaldoUsuario = model.SaldoUsuario;
+            usuarioExistente.Nombre = model.Nombre;
+            usuarioExistente.Apellido = model.Apellido;
+            usuarioExistente.Dni = model.Dni;
+            usuarioExistente.FechaNacimiento = model.FechaNacimiento;
+            usuarioExistente.Direccion = model.Direccion;
+            usuarioExistente.Saldo = model.Saldo;
             usuarioExistente.EstadoRegistro = model.EstadoRegistro;
             usuarioExistente.Observacion = model.Observacion;
 
-            var resultado = await repositorio.Update(id, usuarioExistente);
-            if (!resultado)
+            var resultado = await repositorio.UpdateUsuario(usuarioExistente);
+            if (!resultado.Succeeded)
             {
                 return BadRequest("No se pudo actualizar el usuario.");
             }
             return Ok(new { Mensaje = $"Usuario con ID {id} actualizado correctamente." });
         }
 
-        [HttpPut("actualizar-mi-perfil/{id:int}")] //api/Usuarios/ActualizarPerfil  /{id})
+        [HttpPut("actualizar-mi-perfil/{id}")] //api/Usuarios/ActualizarPerfil/{id})
         [Authorize]
-        public async Task<ActionResult> ActualizarUsuarioPerfil([FromRoute] int id, [FromBody] UsuarioActualizarPerfilDTO model)
+        public async Task<ActionResult> ActualizarUsuarioPerfil([FromRoute] string id, [FromBody] UsuarioActualizarPerfilDTO model)
         {
-            if (id != model.IntId) return BadRequest("Los IDs no coinciden.");
-            var usuarioExistente = await repositorio.SelectById(id);
+            var usuarioExistente = await repositorio.ObtenerEntidadStringId(id);
             if (usuarioExistente == null)
             {
                 return NotFound("Usuario no encontrado.");
             }
-            usuarioExistente.NombreUsuario = model.NombreUsuario;
-            usuarioExistente.ApellidoUsuario = model.ApellidoUsuario;
-            usuarioExistente.DniUsuario = model.DniUsuario;
-            usuarioExistente.FechaNacimientoUsuario = model.FechaNacimientoUsuario;
-            usuarioExistente.DireccionUsuario = model.DireccionUsuario;
-            var resultado = await repositorio.Update(id, usuarioExistente);
-            if (!resultado)
+            usuarioExistente.Nombre = model.Nombre;
+            usuarioExistente.Apellido = model.Apellido;
+            usuarioExistente.Dni = model.Dni;
+            usuarioExistente.FechaNacimiento = model.FechaNacimiento;
+            usuarioExistente.Direccion = model.Direccion;
+            var resultado = await repositorio.UpdateUsuario(usuarioExistente);
+            if (!resultado.Succeeded)
             {
                 return BadRequest("No se pudo actualizar el perfil del usuario.");
             }
             return Ok(new { Mensaje = $"Perfil del usuario con ID {id} actualizado correctamente." });
         }
 
-        [HttpDelete("{id:int}")] //api/Usuarios/Borrar/{id}
+        [HttpDelete("{id}")] //api/Usuarios/Borrar/{id}
         [Authorize(Roles = "Administrador")]
-        public async Task<ActionResult> BorrarUsuario(int id)
+        public async Task<ActionResult> BorrarUsuario(string id)
         {
-            var usuarioExistente = await repositorio.SelectById(id);
+            var usuarioExistente = await repositorio.ObtenerEntidadStringId(id);
             if (usuarioExistente == null)
             {
                 return NotFound("Usuario no encontrado.");
             }
-            var resultado = await repositorio.DeleteLogico(id);
-            if (!resultado)
+
+            usuarioExistente.EstadoRegistro = EstadoRegistro.eliminado;
+            usuarioExistente.Observacion = $"Registro inactivado por el sistema el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+
+            var resultado = await repositorio.UpdateUsuario(usuarioExistente);
+            if (!resultado.Succeeded)
             {
                 return BadRequest("No se pudo eliminar el usuario.");
             }
             return Ok(new { Mensaje = $"Usuario con ID {id} eliminado correctamente." });
+
 
         }
     }

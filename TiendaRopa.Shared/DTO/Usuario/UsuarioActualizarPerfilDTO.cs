@@ -6,11 +6,10 @@ namespace TiendaRopa.Shared.DTO.Usuario
 {
     public class UsuarioActualizarPerfilDTO
     {
-        public int IntId { get; set; }
-        public string NombreUsuario { get; set; } = string.Empty;
-        public string ApellidoUsuario { get; set; } = string.Empty;
-        public string DniUsuario { get; set; } = string.Empty;
-        public DateTime FechaNacimientoUsuario { get; set; }
-        public string DireccionUsuario { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
+        public string Dni { get; set; } = string.Empty;
+        public DateTime FechaNacimiento { get; set; }
+        public string Direccion { get; set; } = string.Empty;
     }
 }
