@@ -30,6 +30,7 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
             var lista = await context.Set<ApplicationUser>().Select(x => new UsuarioMostrarDTO
             {
                 Id = x.Id,
+                Email = x.Email!,
                 Nombre = x.Nombre,
                 Apellido = x.Apellido,
                 Dni = x.Dni,

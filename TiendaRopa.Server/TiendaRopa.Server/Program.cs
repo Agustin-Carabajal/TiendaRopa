@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios.Producto;
+using TiendaRopa.Repositorio.Repositorios.Usuario;
 using TiendaRopa.Server.Client.Pages;
 using TiendaRopa.Server.Components;
 using TiendaRopa.Server.Components.Account;
+using TiendaRopa.Servicio.ServiciosHttp;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped(sp =>
     new HttpClient { BaseAddress = new Uri("https://localhost:7087/") });
-//builder.Services.AddScoped<IHttpServicio, HttpServicio>();
+builder.Services.AddScoped<IHttpServicio, HttpServicio>();
 
 builder.Services.AddControllers();
 
@@ -32,8 +34,7 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+    }); 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -41,7 +42,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
@@ -50,7 +51,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-//builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<IApplicationUserRepositorio, ApplicationUserRepositorio>();
 builder.Services.AddScoped<IMarcaRepositorio, MarcaRepositorio>();
 builder.Services.AddScoped<ITalleRepositorio, TalleRepositorio>();
 builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
