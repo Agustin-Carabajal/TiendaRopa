@@ -1,0 +1,327 @@
+﻿@page "/admin/categorias"
+@using TiendaRopa.Shared.DTO.Producto_y_mas
+@rendermode InteractiveAuto
+@inject IHttpServicio http
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4 text center">Gestión de Categorías de Ropa</h2>
+
+    <div class="row">
+        <!--Talles -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Talles</h5>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Talle")'>
+                        <i class="oi oi-plus"></i> +
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-end px-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (listaTalles == null)
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
+                            }
+                            else if (!listaTalles.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var talle in listaTalles)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@talle.NombreTalle</td>
+                                        <td class="text-end px-3">
+                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => Editar(talle.IdTalle, talle.NombreTalle, "Talle")'>Editar</button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(talle.IdTalle, "Talle")'>Borrar</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- ================= TABLA DE COLORES ================= -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Colores</h5>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Color")'>
+                        <i class="oi oi-plus"></i> +
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-end px-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (listaColores == null)
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
+                            }
+                            else if (!listaColores.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var color in listaColores)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@color.NombreColor</td>
+                                        <td class="text-end px-3">
+                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => Editar(color.IdColor, color.NombreColor, "Color")'>Editar</button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(color.IdColor, "Color")'>Borrar</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TABLA DE MARCAS ================= -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Marcas</h5>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Marca")'>
+                        <i class="oi oi-plus"></i> +
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Descripción</th>
+                                <th class="text-end px-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (listaMarcas == null)
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
+                            }
+                            else if (!listaMarcas.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var marca in listaMarcas)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@marca.NombreMarca</td>
+                                        <td class="text-end px-3">
+                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => Editar(marca.IdMarca, marca.NombreMarca, "Marca")'>Editar</button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(marca.IdMarca, "Marca")'>Borrar</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header">
+                    <h5 class="modal-title">@tituloModal @tipoAtributoSeleccionado</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Descripción:</label>
+                        <input type="text" class="form-control" @bind="textoInput" placeholder="Ej: XL, Azul, Nike..." @bind:event="oninput" />
+                        @if (!string.IsNullOrEmpty(mensajeValidacion))
+                        {
+                            <div class="text-danger small mt-1">@mensajeValidacion</div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="Guardar" disabled="@string.IsNullOrWhiteSpace(textoInput)">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private List<TalleMostrarDTO>? listaTalles;
+    private List<ColorMostrarDTO>? listaColores;
+    private List<MarcaMostrarDTO>? listaMarcas;
+    private string mensajeError = "";
+    private string tipoAtributoSeleccionado = "";
+    private int idRegistroSeleccionado = 0;
+    private string textoInput = "";
+    private string mensajeValidacion = "";
+    private string tituloModal = "";
+    private bool mostrarModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        mensajeError = "";
+        var responseTalles = await http.Get<List<TalleMostrarDTO>>("api/Talle/listatalles");
+        if (!responseTalles.Error && responseTalles.Respuesta != null)
+        {
+            listaTalles = responseTalles.Respuesta;
+        }
+        else
+        {
+            mensajeError = "Error al cargar los talles.";
+
+        }
+
+        var responseMarcas = await http.Get<List<MarcaMostrarDTO>>("api/Marca/listamarca");
+        if (!responseMarcas.Error && responseMarcas.Respuesta != null)
+        {
+            listaMarcas = responseMarcas.Respuesta;
+        }
+        else
+        {
+            mensajeError = "Error al cargar las marcas.";
+
+        }
+
+        var responseColores = await http.Get<List<ColorMostrarDTO>>("api/Color/listacolores");
+        if (!responseColores.Error && responseColores.Respuesta != null)
+        {
+            listaColores = responseColores.Respuesta;
+        }
+        else
+        {
+            mensajeError = "Error al cargar los colores.";
+        }
+
+    }
+
+    private void Agregar(string tipo)
+    {
+        idRegistroSeleccionado = 0;
+        textoInput = "";
+        mensajeValidacion = "";
+        tituloModal = "Agregar";
+        mostrarModal = true;
+
+    }
+
+    private void Editar(int id, string descripcionActual, string tipo)
+    {
+        idRegistroSeleccionado = id;
+        textoInput = descripcionActual;
+        mensajeValidacion = "";
+        tipoAtributoSeleccionado = tipo;
+        tituloModal = "Editar";
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(textoInput)) return;
+
+        string urlBase = $"api/{tipoAtributoSeleccionado}";
+
+        if (tituloModal == "Agregar")
+        {
+            // 2. Mapeamos dinámicamente al nombre de propiedad que exige tu DTO de creación
+            // Si es Color, creamos un objeto con la propiedad 'NombreColor'. Hacemos lo mismo para Talle y Marca.
+            object dtoCreacion;
+            if (tipoAtributoSeleccionado == "Color")
+                dtoCreacion = new { NombreColor = textoInput };
+            else if (tipoAtributoSeleccionado == "Talle")
+                dtoCreacion = new { NombreTalle = textoInput };
+            else
+                dtoCreacion = new { NombreMarca = textoInput };
+
+            // Consumimos tu POST que devuelve un ActionResult<int> (leemos el int de respuesta)
+            var resultado = await http.Post<object, int>(urlBase, dtoCreacion);
+
+            if (!resultado.Error)
+            {
+                mostrarModal = false;
+                await CargarDatos();
+            }
+            else
+            {
+                mensajeValidacion = "El registro ya existe o los datos son inválidos.";
+            }
+        }
+        else if (tituloModal == "Editar")
+        {
+            // 3. Tu controlador PUT exige recibir el ID en la ruta (api/Color/5) y el objeto completo en el Body
+            string urlPut = $"{urlBase}/{idRegistroSeleccionado}";
+
+            // Construimos el objeto completo respetando el tipado de tu tabla de la BD
+            object dtoActualizar;
+            if (tipoAtributoSeleccionado == "Color")
+                dtoActualizar = new { Id = idRegistroSeleccionado, NombreColor = textoInput };
+            else if (tipoAtributoSeleccionado == "Talle")
+                dtoActualizar = new { Id = idRegistroSeleccionado, NombreTalle = textoInput };
+            else
+                dtoActualizar = new { Id = idRegistroSeleccionado, NombreMarca = textoInput };
+
+            // Invocamos el nuevo método Put que agregamos a tu servicio
+            var resultado = await http.Put(urlPut, dtoActualizar);
+
+            if (!resultado.Error)
+            {
+                mostrarModal = false;
+                await CargarDatos();
+            }
+            else
+            {
+                mensajeValidacion = "No se pudo actualizar. Datos no válidos o el registro no existe.";
+            }
+        }
+
+    }
+
+    private async Task Borrar(int id, string tipo)
+    {
+        // Ajustamos la URL a tu formato de controlador: api/Marcas/Borrar/5
+        string url = $"api/{tipo}s/Borrar/{id}";
+
+        // Asumo que tu método Delete sigue una estructura similar a tu Get
+        // devolviendo un HttpRespuesta o un booleano de error
+        var resultado = await http.Delete(url);
+
+        if (!resultado.Error)
+        {
+            await CargarDatos(); // Recargamos la pantalla si la baja lógica fue exitosa
+        }
+    }
+}

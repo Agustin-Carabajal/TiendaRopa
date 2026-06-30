@@ -6,5 +6,6 @@
         Task<T?> DesSerializar<T>(HttpResponseMessage response);
         Task<HttpRespuesta<T>> Get<T>(string url);
         Task<HttpRespuesta<TResp>> Post<T, TResp>(string url, object enviar);
+        Task<HttpRespuesta<object>> Put(string url, object enviar);
     }
 }

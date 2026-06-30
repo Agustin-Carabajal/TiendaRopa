@@ -44,6 +44,18 @@ namespace TiendaRopa.Servicio.ServiciosHttp
             }
         }
 
+        public async Task<HttpRespuesta<object>> Put(string url, object enviar)
+        {
+            var enviarJson = JsonSerializer.Serialize(enviar);
+            var enviarContent = new StringContent(enviarJson, Encoding.UTF8, "application/json");
+
+            // Ejecuta una petición PUT real hacia el servidor web
+            var response = await _httpClient.PutAsync(url, enviarContent);
+
+            // Devolvemos el envoltorio estándar de tu sistema
+            return new HttpRespuesta<object>(null, !response.IsSuccessStatusCode, response);
+        }
+
         public async Task<HttpRespuesta<object>> Delete(string url)
         {
             var response = await _httpClient.DeleteAsync(url);
