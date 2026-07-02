@@ -340,30 +340,6 @@ namespace TiendaRopa.BD.Migrations
                     b.ToTable("DetallesRecepciones");
                 });
 
-            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Marca", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EstadoRegistro")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NombreMarca")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Observacion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Marcas");
-                });
-
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pedido", b =>
                 {
                     b.Property<int>("Id")
@@ -406,10 +382,43 @@ namespace TiendaRopa.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CodProducto")
+                    b.Property<string>("DescripcionProducto")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MarcaProducto")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NombreProducto")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProveedorId");
+
+                    b.ToTable("Productos");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.ProductoColor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ColorId")
                         .HasColumnType("int");
@@ -417,44 +426,24 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("int");
 
-                    b.Property<int>("MarcaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("NombreProducto")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("PrecioCompraProducto")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PrecioVentaProducto")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProveedorId")
+                    b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StockProducto")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TalleId")
-                        .HasColumnType("int");
+                    b.Property<string>("UrlImagen")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ColorId");
 
-                    b.HasIndex("MarcaId");
+                    b.HasIndex("ProductoId");
 
-                    b.HasIndex("ProveedorId");
-
-                    b.HasIndex("TalleId");
-
-                    b.ToTable("Productos");
+                    b.ToTable("ProductosColores");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Proveedor", b =>
@@ -562,6 +551,50 @@ namespace TiendaRopa.BD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Talles");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Variante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CodVariante")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PrecioVenta")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProductoColorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TalleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductoColorId");
+
+                    b.HasIndex("TalleId");
+
+                    b.ToTable("Variantes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -695,21 +728,39 @@ namespace TiendaRopa.BD.Migrations
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Producto", b =>
                 {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Proveedor", "Proveedor")
+                        .WithMany()
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Proveedor");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.ProductoColor", b =>
+                {
                     b.HasOne("TiendaRopa.BD.Datos.Entity.Color", "Color")
                         .WithMany()
                         .HasForeignKey("ColorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Marca", "Marca")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Producto")
                         .WithMany()
-                        .HasForeignKey("MarcaId")
+                        .HasForeignKey("ProductoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Proveedor", "Proveedor")
+                    b.Navigation("Color");
+
+                    b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Variante", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.ProductoColor", "ProductoColor")
                         .WithMany()
-                        .HasForeignKey("ProveedorId")
+                        .HasForeignKey("ProductoColorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -719,11 +770,7 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Color");
-
-                    b.Navigation("Marca");
-
-                    b.Navigation("Proveedor");
+                    b.Navigation("ProductoColor");
 
                     b.Navigation("Talle");
                 });

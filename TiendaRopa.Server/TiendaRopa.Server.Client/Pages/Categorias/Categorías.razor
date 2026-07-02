@@ -1,4 +1,4 @@
-﻿@page "/admin/categorias"
+﻿@* @page "/admin/categorias"
 @using TiendaRopa.Shared.DTO.Producto_y_mas
 @rendermode InteractiveAuto
 @inject IHttpServicio http
@@ -173,7 +173,7 @@
 @code {
     private List<TalleMostrarDTO>? listaTalles;
     private List<ColorMostrarDTO>? listaColores;
-    private List<MarcaMostrarDTO>? listaMarcas;
+
     private string mensajeError = "";
     private string tipoAtributoSeleccionado = "";
     private int idRegistroSeleccionado = 0;
@@ -201,16 +201,7 @@
 
         }
 
-        var responseMarcas = await http.Get<List<MarcaMostrarDTO>>("api/Marca/listamarca");
-        if (!responseMarcas.Error && responseMarcas.Respuesta != null)
-        {
-            listaMarcas = responseMarcas.Respuesta;
-        }
-        else
-        {
-            mensajeError = "Error al cargar las marcas.";
 
-        }
 
         var responseColores = await http.Get<List<ColorMostrarDTO>>("api/Color/listacolores");
         if (!responseColores.Error && responseColores.Respuesta != null)
@@ -264,8 +255,7 @@
                 dtoCreacion = new { NombreColor = textoInput };
             else if (tipoAtributoSeleccionado == "Talle")
                 dtoCreacion = new { NombreTalle = textoInput };
-            else
-                dtoCreacion = new { NombreMarca = textoInput };
+         
 
             // Consumimos tu POST que devuelve un ActionResult<int> (leemos el int de respuesta)
             var resultado = await http.Post<object, int>(urlBase, dtoCreacion);
@@ -291,8 +281,7 @@
                 dtoActualizar = new { Id = idRegistroSeleccionado, NombreColor = textoInput };
             else if (tipoAtributoSeleccionado == "Talle")
                 dtoActualizar = new { Id = idRegistroSeleccionado, NombreTalle = textoInput };
-            else
-                dtoActualizar = new { Id = idRegistroSeleccionado, NombreMarca = textoInput };
+           
 
             // Invocamos el nuevo método Put que agregamos a tu servicio
             var resultado = await http.Put(urlPut, dtoActualizar);
@@ -325,3 +314,4 @@
         }
     }
 }
+ *@

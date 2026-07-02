@@ -11,13 +11,14 @@ namespace TiendaRopa.BD.Datos
     public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Producto> Productos { get; set; }
-        public DbSet<Marca> Marcas { get; set; }
         public DbSet<Talle> Talles { get; set; }
         public DbSet<Color> Colores { get; set; }
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<Recepcion> Recepciones { get; set; }
         public DbSet<DetallesRecepcion> DetallesRecepciones { get; set; }
+        public DbSet<ProductoColor> ProductosColores { get; set; }
+        public DbSet<Variante> Variantes { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicio : Migration
+    public partial class AgregarIdentity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -71,21 +71,6 @@ namespace TiendaRopa.BD.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Colores", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Marcas",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NombreMarca = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
-                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Marcas", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -289,14 +274,9 @@ namespace TiendaRopa.BD.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CodProducto = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    NombreProducto = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    StockProducto = table.Column<int>(type: "int", nullable: false),
-                    PrecioVentaProducto = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PrecioCompraProducto = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MarcaId = table.Column<int>(type: "int", nullable: false),
-                    TalleId = table.Column<int>(type: "int", nullable: false),
-                    ColorId = table.Column<int>(type: "int", nullable: false),
+                    NombreProducto = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    DescripcionProducto = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MarcaProducto = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ProveedorId = table.Column<int>(type: "int", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "int", nullable: false),
                     Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
@@ -305,27 +285,9 @@ namespace TiendaRopa.BD.Migrations
                 {
                     table.PrimaryKey("PK_Productos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Productos_Colores_ColorId",
-                        column: x => x.ColorId,
-                        principalTable: "Colores",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Productos_Marcas_MarcaId",
-                        column: x => x.MarcaId,
-                        principalTable: "Marcas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_Productos_Proveedores_ProveedorId",
                         column: x => x.ProveedorId,
                         principalTable: "Proveedores",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Productos_Talles_TalleId",
-                        column: x => x.TalleId,
-                        principalTable: "Talles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -362,6 +324,67 @@ namespace TiendaRopa.BD.Migrations
                         name: "FK_DetallesRecepciones_Recepciones_RecepcionId",
                         column: x => x.RecepcionId,
                         principalTable: "Recepciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductosColores",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UrlImagen = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProductoId = table.Column<int>(type: "int", nullable: false),
+                    ColorId = table.Column<int>(type: "int", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
+                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductosColores", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductosColores_Colores_ColorId",
+                        column: x => x.ColorId,
+                        principalTable: "Colores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ProductosColores_Productos_ProductoId",
+                        column: x => x.ProductoId,
+                        principalTable: "Productos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Variantes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CodVariante = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Stock = table.Column<int>(type: "int", nullable: false),
+                    PrecioVenta = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    ProductoColorId = table.Column<int>(type: "int", nullable: false),
+                    TalleId = table.Column<int>(type: "int", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
+                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Variantes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Variantes_ProductosColores_ProductoColorId",
+                        column: x => x.ProductoColorId,
+                        principalTable: "ProductosColores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Variantes_Talles_TalleId",
+                        column: x => x.TalleId,
+                        principalTable: "Talles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -426,23 +449,28 @@ namespace TiendaRopa.BD.Migrations
                 column: "RecepcionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Productos_ColorId",
-                table: "Productos",
-                column: "ColorId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Productos_MarcaId",
-                table: "Productos",
-                column: "MarcaId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Productos_ProveedorId",
                 table: "Productos",
                 column: "ProveedorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Productos_TalleId",
-                table: "Productos",
+                name: "IX_ProductosColores_ColorId",
+                table: "ProductosColores",
+                column: "ColorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductosColores_ProductoId",
+                table: "ProductosColores",
+                column: "ProductoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Variantes_ProductoColorId",
+                table: "Variantes",
+                column: "ProductoColorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Variantes_TalleId",
+                table: "Variantes",
                 column: "TalleId");
         }
 
@@ -471,6 +499,9 @@ namespace TiendaRopa.BD.Migrations
                 name: "DetallesRecepciones");
 
             migrationBuilder.DropTable(
+                name: "Variantes");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -480,22 +511,22 @@ namespace TiendaRopa.BD.Migrations
                 name: "Pedidos");
 
             migrationBuilder.DropTable(
-                name: "Productos");
+                name: "Recepciones");
 
             migrationBuilder.DropTable(
-                name: "Recepciones");
+                name: "ProductosColores");
+
+            migrationBuilder.DropTable(
+                name: "Talles");
 
             migrationBuilder.DropTable(
                 name: "Colores");
 
             migrationBuilder.DropTable(
-                name: "Marcas");
+                name: "Productos");
 
             migrationBuilder.DropTable(
                 name: "Proveedores");
-
-            migrationBuilder.DropTable(
-                name: "Talles");
         }
     }
 }
