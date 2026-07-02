@@ -63,7 +63,7 @@ namespace TiendaRopa.Server.Controllers
         }
 
        // [Authorize(Roles = "Administrador")]
-        [HttpPut("{id:int}")] //api/Color/Actualizar/{id}
+        [HttpPut("editar/{id:int}")] //api/Color/Editar/{id}
         public async Task<ActionResult> Put(int id, Color DTO)
         {
             var flag = await repositorio.Update(id, DTO);
@@ -75,7 +75,7 @@ namespace TiendaRopa.Server.Controllers
         }
 
        // [Authorize(Roles = "Administrador")]
-        [HttpDelete("{id:int}")] //api/Talle/Eliminar/{id}
+        [HttpDelete("borrar/{id:int}")] //api/Color/Borrar/{id}
         public async Task<ActionResult> Delete(int id)
         {
             var flag = await repositorio.Delete(id);
