@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TiendaRopa.BD.Datos;
-using TiendaRopa.Repositorio.Repositorios.Producto;
+using TiendaRopa.Repositorio.Repositorios.ProductoRep;
 using TiendaRopa.Repositorio.Repositorios.Usuario;
 using TiendaRopa.Server.Client.Pages;
 using TiendaRopa.Server.Components;
@@ -55,6 +55,9 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddScoped<IApplicationUserRepositorio, ApplicationUserRepositorio>();
 builder.Services.AddScoped<ITalleRepositorio, TalleRepositorio>();
 builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
+builder.Services.AddScoped<IProductoColorRepositorio, ProductoColorRepositorio>();
+builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
+builder.Services.AddScoped<IVarianteRepositorio, VarianteRepositorio>();
 
 #endregion
 

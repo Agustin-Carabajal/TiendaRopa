@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos.Entity;
-using TiendaRopa.Repositorio.Repositorios.Producto;
+using TiendaRopa.Repositorio.Repositorios.ProductoRep;
 using TiendaRopa.Shared.DTO.Producto_y_mas;
 
 namespace TiendaRopa.Server.Controllers
