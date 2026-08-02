@@ -22,5 +22,7 @@ namespace TiendaRopa.BD.Datos.Entity
 
         [MaxLength(50, ErrorMessage = "El Correo Electronico del proveedor no puede exceder los 50 caracteres.")]
         public required string EmailProveedores { get; set; }
+
+        public string? ObvsProveedores { get; set; }
     }
 }

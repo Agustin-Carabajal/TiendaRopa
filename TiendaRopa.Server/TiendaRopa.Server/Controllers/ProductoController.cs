@@ -110,31 +110,32 @@ namespace TiendaRopa.Server.Controllers
                 {
                     var nuevoProductoColor = new ProductoColor
                     {
-                        ProductoId = nuevoProducto.Id, // Vinculamos con el ID recién creado
+                        ProductoId = nuevoProducto.Id,
                         ColorId = colorDto.ColorId,
-                        UrlImagen = colorDto.UrlImagen
+                        UrlImagen = colorDto.UrlImagen,
+                        EstadoRegistro = EstadoRegistro.activo // Asegúrate de heredar el estado activo
                     };
 
                     context.ProductosColores.Add(nuevoProductoColor);
-                    await context.SaveChangesAsync(); // Genera el nuevoProductoColor.Id
+                    await context.SaveChangesAsync(); // 🌟 ESTA LÍNEA ES CRUCIAL para que se genere el nuevoProductoColor.Id
 
-                    // 3. Recorrer las variantes (talles) de este color específico
                     foreach (var varianteDto in colorDto.Variantes)
                     {
                         var nuevaVariante = new Variante
                         {
-                            ProductoColorId = nuevoProductoColor.Id, // Vinculamos con el ID intermedio
-                            TalleId = varianteDto.Id,
+                            // 🛑 REVISA ESTA LÍNEA: Debe apuntar al ID generado arriba
+                            ProductoColorId = nuevoProductoColor.Id,
+                            TalleId = varianteDto.TalleId,
                             Stock = varianteDto.Stock,
                             PrecioVenta = varianteDto.PrecioVenta,
                             CodVariante = varianteDto.CodVariante,
-                            Activo = true,
-                            
+                            EstadoRegistro = EstadoRegistro.activo // 🌟 OBLIGATORIO: Ponlo en activo para que el GET lo lea
                         };
 
                         context.Variantes.Add(nuevaVariante);
                     }
                 }
+           
 
                 // 4. Guardar todas las variantes juntas
                 await context.SaveChangesAsync();

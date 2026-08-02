@@ -12,15 +12,15 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260702003519_AgregarIdentity")]
-    partial class AgregarIdentity
+    [Migration("20260802223158_correccion")]
+    partial class correccion
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -359,7 +359,7 @@ namespace TiendaRopa.BD.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<DateTime>("FechaDeEntrega")
+                    b.Property<DateTime?>("FechaDeEntrega")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaDePedido")
@@ -369,10 +369,15 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalPedidos")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProveedorId");
 
                     b.ToTable("Pedidos");
                 });
@@ -482,6 +487,9 @@ namespace TiendaRopa.BD.Migrations
 
                     b.Property<string>("Observacion")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ObvsProveedores")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RazonSocialProveedores")
@@ -727,6 +735,17 @@ namespace TiendaRopa.BD.Migrations
                     b.Navigation("Producto");
 
                     b.Navigation("Recepcion");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pedido", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Proveedor", "Proveedor")
+                        .WithMany()
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Proveedor");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Producto", b =>
