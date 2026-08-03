@@ -1,8 +1,8 @@
-FROM microsoft.com AS base
+FROM ://microsoft.com AS base
 WORKDIR /app
 EXPOSE 8080
 
-FROM microsoft.com AS build
+FROM ://microsoft.com AS build
 WORKDIR /src
 
 COPY ["TiendaRopa.Server/TiendaRopa.Server.csproj", "TiendaRopa.Server/"]
