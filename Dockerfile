@@ -1,8 +1,8 @@
-FROM ://microsoft.com AS base
+FROM microsoft.com AS base
 WORKDIR /app
 EXPOSE 8080
 
-FROM ://microsoft.com AS build
+FROM microsoft.com AS build
 WORKDIR /src
 
 COPY ["TiendaRopa.Server/TiendaRopa.Server.csproj", "TiendaRopa.Server/"]
@@ -24,5 +24,5 @@ RUN dotnet publish "TiendaRopa.Server.csproj" -c Release -o /app/publish /p:UseA
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish /app/publish
 ENTRYPOINT ["dotnet", "TiendaRopa.Server.dll"]
