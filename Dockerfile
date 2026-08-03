@@ -24,5 +24,5 @@ RUN dotnet publish "TiendaRopa.Server.csproj" -c Release -o /app/publish /p:UseA
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TiendaRopa.Server.dll"]
