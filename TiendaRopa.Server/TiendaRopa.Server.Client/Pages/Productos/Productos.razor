@@ -1,0 +1,474 @@
+﻿@page "/productos"
+@rendermode InteractiveAuto
+@using TiendaRopa.Shared.DTO.Producto_y_mas;
+@inject IHttpServicio http
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Gestión de Catálogo de Productos</h2>
+        <button class="btn btn-primary" @onclick="AbrirModalAgregar">
+            <i class="bi bi-plus-circle"></i> Agregar Producto
+        </button>
+    </div>
+
+
+    @if (productosActivos == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">Cargando catálogo...</p>
+        </div>
+    }
+    else if (!productosActivos.Any())
+    {
+        <div class="alert alert-info text-center">No hay productos registrados en el sistema.</div>
+    }
+    else
+    {
+        <table class="table table-striped table-hover align-middle shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Marca</th>
+                    <th>Proveedor</th>
+                    <th>Descripción</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var prod in productosActivos)
+                {
+                    <tr>
+                        <td>@prod.Id</td>
+                        <td class="fw-bold">@prod.Nombre</td>
+                        <td>@prod.Marca</td>
+                        <td>@prod.Proveedor</td>
+                        <td><small class="text-muted">@prod.Descripcion</small></td>
+                        <td class="text-center">
+                            <button class="btn btn-info btn-sm me-2 text-white" @onclick="() => VerDetallesProducto(prod.Id)">
+                                <i class="bi bi-eye"></i> Ver Detalles y Variantes
+                            </button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarProducto(prod.Id)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+
+<!-- ========================================================== -->
+@if (mostrarModalDetalles)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Detalles del Producto: @productoSeleccionadoNombre</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModales"></button>
+                </div>
+                <div class="modal-body">
+                    <h5 class="mb-3 border-bottom pb-2">Variantes (Talles y Stock) Guardadas</h5>
+                    
+                    @if (variantesProducto == null || !variantesProducto.Any())
+                    {
+                        <div class="alert alert-warning">Este producto no cuenta con variantes activas cargadas.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr class="text-center">
+                                        <th>Código</th>
+                                        <th>Producto - Color</th>
+                                        <th>Talle</th>
+                                        <th style="width: 150px;">Stock</th>
+                                        <th style="width: 180px;">Precio Venta</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var v in variantesProducto)
+                                    {
+                                        <tr>
+                                            <td class="text-center">
+                                                <input type="text" class="form-control form-control-sm" @bind="v.CodVariante" />
+                                            </td>
+                                            <td class="fw-semibold text-secondary">@v.ProductoColor</td>
+                                            <td class="text-center font-monospace">@v.Talle</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-center" @bind="v.Stock" min="0" />
+                                            </td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" step="0.01" class="form-control text-end" @bind="v.PrecioVenta" min="0.01" />
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                
+                                                <button class="btn btn-success btn-sm" @onclick="() => GuardarCambiosVarianteIndividual(v)">
+                                                    <i class="bi bi-save"></i> Guardar fila
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModales">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========================================================== -->
+@if (mostrarModalAgregar)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Registrar Nuevo Producto</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModales"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="nuevoProductoDto" OnValidSubmit="GuardarProductoCompleto">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger mb-3" />
+
+                        <div class="row">
+                            <!-- Datos básicos del producto -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Nombre del Producto</label>
+                                <InputText @bind-Value="nuevoProductoDto.NombreProducto" class="form-control" placeholder="Ej: Remera Algodón" />
+                                <ValidationMessage For="() => nuevoProductoDto.NombreProducto" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Marca</label>
+                                <InputText @bind-Value="nuevoProductoDto.MarcaProducto" class="form-control" placeholder="Ej: Nike" />
+                                <ValidationMessage For="() => nuevoProductoDto.MarcaProducto" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <select class="form-select" @bind="nuevoProductoDto.ProveedorId">
+                                    <option value="0">-- Seleccione un Proveedor --</option>
+                                    @foreach (var prov in proveedoresActivos)
+                                    {
+                                        <option value="@prov.IdProveedor">@prov.RazonSocialProveedores</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3 d-flex align-items-end shadow-none">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="checkActivoProd" @bind="nuevoProductoDto.Activo" />
+                                    <label class="form-check-label fw-bold" for="checkActivoProd">Producto Publicado / Activo</label>
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold">Descripción</label>
+                                <InputTextArea @bind-Value="nuevoProductoDto.DescripcionProducto" class="form-control" rows="2" placeholder="Detalles de la prenda..." />
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4 border-bottom pb-2 text-secondary">Configuración de Colores y Talles</h4>
+
+                        
+                        @foreach (var col in todosLosColores)
+                        {
+                            var colorSel = nuevoProductoDto.Colores.FirstOrDefault(c => c.ColorId == col.IdColor);
+                            bool colorChequeado = colorSel != null;
+
+                            <div class="card mb-3 border-secondary shadow-sm">
+                                <div class="card-header bg-light d-flex align-items-center gap-3">
+                                    <input type="checkbox" class="form-check-input" id="col-@col.IdColor"
+                                           checked="@colorChequeado"
+                                           @onchange="(e) => AlternarColor(col.IdColor, (bool)e.Value!)" />
+                                    <label class="form-check-label fw-bold m-0" for="col-@col.IdColor">@col.NombreColor</label>
+                                </div>
+
+                              
+                                @if (colorSel != null)
+                                {
+                                    <div class="card-body bg-white ps-4 border-start border-primary border-4">
+                                        <div class="mb-3 row align-items-center">
+                                            <label class="col-sm-2 col-form-label text-muted small fw-bold">URL Imagen del Color:</label>
+                                            <div class="col-sm-10">
+                                                <input type="text" class="form-control form-control-sm" @bind="colorSel.UrlImagen" placeholder="https://ejemplo.com" />
+                                            </div>
+                                        </div>
+
+                                        <table class="table table-sm table-bordered mt-2 align-middle">
+                                            <thead class="table-light text-center small">
+                                                <tr>
+                                                    <th>Talle</th>
+                                                    <th>¿Habilitar Talle?</th>
+                                                    <th>Stock Inicial</th>
+                                                    <th>Precio de Venta</th>
+                                                    <th>Código de Variante</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var tal in todosLosTalles)
+                                                {
+                                                    var varDto = colorSel.Variantes.FirstOrDefault(v => v.TalleId == tal.IdTalle);
+                                                    bool talleChequeado = varDto != null;
+
+                                                    <tr>
+                                                        <td class="text-center fw-bold text-dark">@tal.NombreTalle</td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                   checked="@talleChequeado"
+                                                                   @onchange="(e) => AlternarTalle(colorSel, tal.IdTalle, (bool)e.Value!)" />
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" class="form-control form-control-sm text-center"
+                                                                   disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).Stock" min="0" />
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text">$</span>
+                                                                <input type="number" step="0.01" class="form-control text-end"
+                                                                       disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).PrecioVenta" min="0" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control form-control-sm"
+                                                                   disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).CodVariante" placeholder="Ejem: PROD-COL-TAL" />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="modal-footer px-0 pb-0 mt-4 border-top pt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModales">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar Producto con Variantes</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+@code {
+   
+    private List<ProductoMostrarDTO>? productosActivos;
+    private List<ColorMostrarDTO> todosLosColores = new();
+    private List<TalleMostrarDTO> todosLosTalles = new();
+    private List<ProveedorMostrarDTO> proveedoresActivos = new();
+
+ 
+    private List<VarianteMostrarDTO> variantesProducto = new();
+    private string productoSeleccionadoNombre = string.Empty;
+
+   
+    private RegistrarProductoCompletoDTO nuevoProductoDto = new();
+
+    
+    private bool mostrarModalDetalles = false;
+    private bool mostrarModalAgregar = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarGrillaPrincipal();
+
+        var respColores = await http.Get<List<ColorMostrarDTO>>("api/Color/listacolores");
+        if (!respColores.Error && respColores.Respuesta != null)
+        {
+            todosLosColores = respColores.Respuesta;
+        }
+
+        var respTalles = await http.Get<List<TalleMostrarDTO>>("api/Talle/listatalles");
+        if (!respTalles.Error && respTalles.Respuesta != null)
+        {
+            todosLosTalles = respTalles.Respuesta;
+        }
+        proveedoresActivos = new List<ProveedorMostrarDTO>
+        {
+            new ProveedorMostrarDTO { IdProveedor = 2, RazonSocialProveedores = "PEPE" },
+            new ProveedorMostrarDTO { IdProveedor = 3, RazonSocialProveedores = "Distribuidora Textil S.A." },
+            new ProveedorMostrarDTO { IdProveedor = 4, RazonSocialProveedores = "Indumentaria Mayorista Nike" },
+            new ProveedorMostrarDTO { IdProveedor = 5, RazonSocialProveedores = "Fábrica de Ropa Denim Hnos." }
+            
+        };
+        // var respProveedores = await http.Get<List<ProveedorMostrarDTO>>("api/Proveedor/listaproveedores");
+        // if (!respProveedores.Error && respProveedores.Respuesta != null)
+        // {
+        //     proveedoresActivos = respProveedores.Respuesta;
+        // }
+    }
+
+    private async Task CargarGrillaPrincipal()
+    {
+        var respProductos = await http.Get<List<ProductoMostrarDTO>>("api/Producto/lista-productos-activos");
+        if (!respProductos.Error && respProductos.Respuesta != null)
+        {
+            productosActivos = respProductos.Respuesta;
+        }
+    }
+
+    // private async Task VerDetallesProducto(int productoId)
+    // {
+    //     var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
+    //     productoSeleccionadoNombre = prod?.Nombre ?? string.Empty;
+    
+    //     var respTodasLasVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
+    //     if (!respTodasLasVariantes.Error && respTodasLasVariantes.Respuesta != null)
+    //     {
+    //         var todasLasVariantes = respTodasLasVariantes.Respuesta;
+    
+           
+    //         variantesProducto = todasLasVariantes
+    //             .Where(v => v.ProductoId == productoId)
+    //             .ToList();
+    //     }
+    //     else
+    //     {
+    //         variantesProducto = new List<VarianteMostrarDTO>();
+    //     }
+    
+    //     mostrarModalDetalles = true;
+    // }
+
+    private async Task VerDetallesProducto(int productoId)
+    {
+        var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
+        productoSeleccionadoNombre = prod?.Nombre ?? string.Empty;
+    
+      
+        var respTodasLasVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
+        if (!respTodasLasVariantes.Error && respTodasLasVariantes.Respuesta != null)
+        {
+            var todasLasVariantes = respTodasLasVariantes.Respuesta;
+    
+            variantesProducto = todasLasVariantes
+                .Where(v => v.ProductoId == productoId)
+                .ToList();
+        }
+        else
+        {
+            variantesProducto = new List<VarianteMostrarDTO>();
+        }
+    
+        mostrarModalDetalles = true;
+        StateHasChanged(); 
+    }
+
+
+    private async Task GuardarCambiosVarianteIndividual(VarianteMostrarDTO v)
+    {
+        var editarDto = new
+        {
+            Stock = v.Stock,
+            PrecioVenta = v.PrecioVenta,
+            CodVariante = v.CodVariante
+        };
+
+        var response = await http.Put($"api/Variante/editar/{v.Id}", editarDto);
+
+        if (!response.Error)
+        {
+            Console.WriteLine($"Variante con ID {v.Id} modificada correctamente.");
+        }
+    }
+
+    private void AbrirModalAgregar()
+    {
+        nuevoProductoDto = new RegistrarProductoCompletoDTO(); 
+        if (proveedoresActivos.Any()) nuevoProductoDto.ProveedorId = proveedoresActivos.First().IdProveedor;
+        mostrarModalAgregar = true;
+    }
+
+    private void CerrarModales()
+    {
+        mostrarModalDetalles = false;
+        mostrarModalAgregar = false;
+    }
+
+    
+    private void AlternarColor(int colorId, bool seleccionado)
+    {
+        if (seleccionado)
+        {
+            if (!nuevoProductoDto.Colores.Any(c => c.ColorId == colorId))
+            {
+                nuevoProductoDto.Colores.Add(new ColorSeleccionadoDTO { ColorId = colorId });
+            }
+        }
+        else
+        {
+            var colorRemover = nuevoProductoDto.Colores.FirstOrDefault(c => c.ColorId == colorId);
+            if (colorRemover != null) nuevoProductoDto.Colores.Remove(colorRemover);
+        }
+    }
+
+
+    private void AlternarTalle(ColorSeleccionadoDTO colorDto, int talleId, bool seleccionado)
+    {
+        if (seleccionado)
+        {
+            if (!colorDto.Variantes.Any(v => v.TalleId == talleId))
+            {
+                colorDto.Variantes.Add(new VarianteTalleDTO { TalleId = talleId, Stock = 0, PrecioVenta = 0 });
+            }
+        }
+        else
+        {
+            var varRemover = colorDto.Variantes.FirstOrDefault(v => v.TalleId == talleId);
+            if (varRemover != null) colorDto.Variantes.Remove(varRemover);
+        }
+    }
+
+    private VarianteTalleDTO ObtenerOInstanciarVariante(ColorSeleccionadoDTO colorDto, int talleId)
+    {
+        var variante = colorDto.Variantes.FirstOrDefault(v => v.TalleId == talleId);
+        return variante ?? new VarianteTalleDTO();
+    }
+
+
+    private async Task GuardarProductoCompleto()
+    {
+        if (nuevoProductoDto.ProveedorId == 0) return;
+
+        var response = await http.Post<RegistrarProductoCompletoDTO, object>("api/Producto/registrar-completo", nuevoProductoDto);
+
+        if (!response.Error)
+        {
+            CerrarModales();
+            await CargarGrillaPrincipal(); 
+        }
+        else
+        {
+   
+            var codigoEstado = response.HttpResponseMessage?.StatusCode;
+            Console.WriteLine($"Error al guardar. Código de estado: {codigoEstado}");
+        }
+    }
+
+
+    private async Task EliminarProducto(int id)
+    {
+        var response = await http.Delete($"api/Producto/borrar/{id}");
+        if (!response.Error)
+        {
+            await CargarGrillaPrincipal();
+        }
+    }
+
+}

@@ -361,3 +361,19 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.cs
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.cs
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.Designer.cs
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.cs
+TiendaRopa.BD/Migrations/20260703055441_Inicio.Designer.cs
+TiendaRopa.BD/Migrations/20260802223158_correccion.cs
+TiendaRopa.BD/Migrations/20260802223158_correccion.Designer.cs
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.cs
+TiendaRopa.BD/Migrations/20260702003519_AgregarIdentity.Designer.cs
+TiendaRopa.BD/Migrations/20260703055441_Inicio.cs
+TiendaRopa.BD/Migrations/20260703055441_Inicio.Designer.cs
+TiendaRopa.BD/Migrations/20260802223158_correccion.cs
+TiendaRopa.BD/Migrations/20260802223158_correccion.Designer.cs
+TiendaRopa.Server/TiendaRopa.Server/Program.cs
+TiendaRopa.BD/Datos/AppDbContext.cs
+TiendaRopa.Server/TiendaRopa.Server.Client/Layout/NavMenu.razor

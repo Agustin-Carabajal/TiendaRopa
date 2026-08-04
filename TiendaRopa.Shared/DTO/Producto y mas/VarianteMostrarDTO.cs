@@ -11,6 +11,7 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
     {
         public int Id { get; set; }
         public string CodVariante { get; set; } = string.Empty;
+        public int ProductoId { get; set; }
         public string ProductoColor { get; set; } = " - ";
         public string Talle { get; set; } = string.Empty;
         public  int Stock { get; set; }

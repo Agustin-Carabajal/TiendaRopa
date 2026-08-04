@@ -28,23 +28,25 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                 .Include(v => v.ProductoColor)
                     .ThenInclude(pc => pc!.Color)
                 .Include(v => v.Talle)
-                .Select(v => new VarianteMostrarDTO
-                {
-                    Id = v.Id,
-                    CodVariante = v.CodVariante,
-                    Stock = v.Stock,
-                    PrecioVenta = v.PrecioVenta,
-                    Estado = v.EstadoRegistro, // Mapea tu enum EstadoRegistro
+               .Select(v => new VarianteMostrarDTO
+               {
+                   Id = v.Id,
 
-                    // Mapeamos el nombre del Talle
-                    Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
+                   // CORRECCIÓN CLAVE: Navegación profunda en las relaciones para extraer el ID correcto
+                   ProductoId = (v.ProductoColor != null && v.ProductoColor.Producto != null)
+                 ? v.ProductoColor.Producto.Id
+                 : 0,
 
-                    // Concatenamos ProductoNombre + ColorNombre desde la tabla intermedia
-                    ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
+                   CodVariante = v.CodVariante,
+                   Stock = v.Stock,
+                   PrecioVenta = v.PrecioVenta,
+                   Estado = v.EstadoRegistro,
+                   Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
+                   ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
                         : "Producto/Color no asignado"
-                })
-                .ToListAsync();
+               })
+               .ToListAsync();
         }
 
         public async Task<VarianteMostrarDTO?> ObtenerById(int id)
@@ -83,18 +85,20 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                 .Select(v => new VarianteMostrarDTO
                 {
                     Id = v.Id,
+
+                    // CORRECCIÓN CLAVE: Navegación profunda en las relaciones para extraer el ID correcto
+                    ProductoId = (v.ProductoColor != null && v.ProductoColor.Producto != null)
+                 ? v.ProductoColor.Producto.Id
+                 : 0,
+
                     CodVariante = v.CodVariante,
                     Stock = v.Stock,
                     PrecioVenta = v.PrecioVenta,
-                    Estado = v.EstadoRegistro, // Mapea tu enum EstadoRegistro
-
-                    // Mapeamos el nombre del Talle
+                    Estado = v.EstadoRegistro,
                     Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
-
-                    // Concatenamos ProductoNombre + ColorNombre desde la tabla intermedia
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
-                        ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
-                        : "Producto/Color no asignado"
+        ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
+        : "Producto/Color no asignado"
                 })
                 .ToListAsync();
         }
@@ -109,6 +113,10 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
             if (registroExistente == null) return false;
 
+            // Validar que el ProductoColorId proporcionado exista en la tabla ProductosColores
+            var existeProductoColor = await context.ProductosColores
+                .AnyAsync(pc => pc.Id == dto.ProductoColorId);
+            if (!existeProductoColor) return false;
 
             registroExistente.CodVariante = dto.CodVariante;
             registroExistente.Stock = dto.Stock;

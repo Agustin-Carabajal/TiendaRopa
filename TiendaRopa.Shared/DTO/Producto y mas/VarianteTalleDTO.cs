@@ -8,7 +8,7 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
 {
     public class VarianteTalleDTO
     {
-        public int Id { get; set; }
+        public int TalleId { get; set; }
 
         [Required(ErrorMessage = "El stock es obligatorio.")]
         [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo.")]
