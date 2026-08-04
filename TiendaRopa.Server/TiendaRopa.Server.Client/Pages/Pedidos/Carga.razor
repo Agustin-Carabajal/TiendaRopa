@@ -1,0 +1,106 @@
+﻿@page "/admin/detalles-pedido/detalle"
+@page "/admin/detalles-pedido/detalle/{Id:int}"
+@using TiendaRopa.Shared.DTO.Proveedor
+@using TiendaRopa.Shared.DTO.Producto_y_mas
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>@(Id == null ? "Agregar Prenda a Pedido" : "Editar Detalle de Pedido")</h3>
+
+<EditForm Model="@modeloDetalle" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Pedido (Nro. Factura)</label>
+        <InputSelect @bind-Value="modeloDetalle.PedidoId" class="form-control">
+            <option value="0">-- Seleccione el Pedido --</option>
+            @if (listaPedidos != null)
+            {
+                @foreach (var ped in listaPedidos)
+                {
+                    <option value="@ped.Id">Factura: @ped.FacturaPedido - Total: $@ped.TotalPedido</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Prenda / Producto</label>
+        <InputSelect @bind-Value="modeloDetalle.ProductoId" class="form-control">
+            <option value="0">-- Seleccione la Prenda --</option>
+            @if (listaProductos != null)
+            {
+                @foreach (var prod in listaProductos)
+                {
+                    <option value="@prod.Id">@prod.Nombre</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad Pedida</label>
+        <InputNumber @bind-Value="modeloDetalle.Cant_prod_Pedido" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Valor Unidad</label>
+        <InputNumber @bind-Value="modeloDetalle.Valor_uni" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Valor Estimado Total</label>
+        <InputNumber @bind-Value="modeloDetalle.Valor_est" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary"
+            disabled="@(modeloDetalle.PedidoId == 0 || modeloDetalle.ProductoId == 0)">
+        Guardar
+    </button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    public DetallePedidoDTO modeloDetalle { get; set; } = new DetallePedidoDTO();
+
+   
+    private List<PedidoDTO>? listaPedidos;
+    private List<ProductoMostrarDTO>? listaProductos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
+        listaProductos = await Http.GetFromJsonAsync<List<ProductoMostrarDTO>>("api/productos"); 
+
+        if (Id.HasValue)
+        {
+            var respuesta = await Http.GetFromJsonAsync<DetallePedidoDTO>($"api/detallespedido/{Id}");
+            if (respuesta != null)
+            {
+                modeloDetalle = respuesta;
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (modeloDetalle.PedidoId == 0 || modeloDetalle.ProductoId == 0) return;
+
+        if (Id == null)
+        {
+            await Http.PostAsJsonAsync("api/detallespedido", modeloDetalle);
+        }
+        else
+        {
+            await Http.PutAsJsonAsync($"api/detallespedido/{Id}", modeloDetalle);
+        }
+
+        Navigation.NavigateTo("/admin/detalles-pedido");
+    }
+
+    private void Cancelar() => Navigation.NavigateTo("/admin/detalles-pedido");
+}

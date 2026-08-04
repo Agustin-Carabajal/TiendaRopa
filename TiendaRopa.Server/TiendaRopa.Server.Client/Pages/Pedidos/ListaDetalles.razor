@@ -1,0 +1,77 @@
+﻿@page "/admin/detalles-pedido"
+@using TiendaRopa.Shared.DTO.Proveedor
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Prendas por Pedido (Detalles)</h2>
+    <button class="btn btn-success" @onclick="IrAAñadir">Asignar Prenda a Pedido</button>
+</div>
+
+@if (listaDetalles == null)
+{
+    <p>Cargando detalles...</p>
+}
+else if (!listaDetalles.Any())
+{
+    <div class="alert alert-info">No hay prendas asignadas a ningún pedido todavía.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Factura Pedido</th>
+                    <th>Prenda / Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Valor Estimado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var det in listaDetalles)
+                {
+                    <tr>
+                        <td>@det.FacturaPedido</td>
+                        <td>@det.NombreProducto</td>
+                        <td>@det.Cant_prod_Pedido</td>
+                        <td>$@det.Valor_uni</td>
+                        <td>$@det.Valor_est</td>
+                        <td class="text-center">
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(det.Id)">Editar</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarDetalle(det.Id)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<DetallePedidoDTO>? listaDetalles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDetalles();
+    }
+
+    private async Task CargarDetalles()
+    {
+        listaDetalles = await Http.GetFromJsonAsync<List<DetallePedidoDTO>>("api/detallespedido");
+    }
+
+    private void IrAAñadir() => Navigation.NavigateTo("/admin/detalles-pedido/detalle");
+    private void IrAEditar(int id) => Navigation.NavigateTo($"/admin/detalles-pedido/detalle/{id}");
+
+    private async Task EliminarDetalle(int id)
+    {
+        var respuesta = await Http.DeleteAsync($"api/detallespedido/{id}");
+        if (respuesta.IsSuccessStatusCode)
+        {
+            await CargarDetalles();
+        }
+    }
+}

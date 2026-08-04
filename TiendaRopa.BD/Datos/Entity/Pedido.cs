@@ -11,9 +11,12 @@ namespace TiendaRopa.BD.Datos.Entity
 
         public DateTime FechaDePedido { get; set; }
 
-        public DateTime FechaDeEntrega { get; set; }
+        public DateTime? FechaDeEntrega { get; set; }
 
         [MaxLength(255, ErrorMessage = "La Factura del pedido no puede exceder los 255 caracteres.")]
         public required string FacturaPedidos { get; set; }
+
+        public int ProveedorId { get; set; }
+        public Proveedor? Proveedor { get; set; }
     }
 }

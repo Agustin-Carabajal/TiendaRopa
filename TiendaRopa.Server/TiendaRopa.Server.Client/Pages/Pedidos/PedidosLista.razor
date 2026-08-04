@@ -1,0 +1,79 @@
+﻿@page "/admin/pedidos"
+@using TiendaRopa.Shared.DTO.Proveedor
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Listado de Pedidos</h2>
+    <button class="btn btn-success" @onclick="IrAAñadir">
+        Añadir Pedido
+    </button>
+</div>
+
+@if (listaPedidos == null)
+{
+    <p>Cargando pedidos...</p>
+}
+else if (!listaPedidos.Any())
+{
+    <div class="alert alert-info">No hay pedidos registrados.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Factura</th>
+                    <th>Proveedor</th>
+                    <th>Fecha Pedido</th>
+                    <th>Fecha Entrega</th>
+                    <th>Total</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ped in listaPedidos)
+                {
+                    <tr>
+                        <td>@ped.FacturaPedido</td>
+                        <td>@ped.RazonSocialProveedor</td>
+                        <td>@ped.FechaDePedido.ToShortDateString()</td>
+                        <td>@(ped.FechaDeEntrega.HasValue ? ped.FechaDeEntrega.Value.ToShortDateString() : "Pendiente")</td>
+                        <td>$@ped.TotalPedido</td>
+                        <td class="text-center">
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(ped.Id)">Editar</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarPedido(ped.Id)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<PedidoDTO>? listaPedidos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPedidos();
+    }
+
+    private async Task CargarPedidos()
+    {
+        listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
+    }
+
+    private void IrAAñadir() => Navigation.NavigateTo("/admin/pedidos/pedido");
+    private void IrAEditar(int id) => Navigation.NavigateTo($"/admin/pedidos/pedido/{id}");
+
+    private async Task EliminarPedido(int id)
+    {
+        var respuesta = await Http.DeleteAsync($"api/pedidos/{id}");
+        if (respuesta.IsSuccessStatusCode)
+        {
+            await CargarPedidos();
+        }
+    }
+}

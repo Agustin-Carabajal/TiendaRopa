@@ -1,0 +1,93 @@
+﻿<h3>Proveedor</h3>
+
+@page "/admin/proveedor"
+@page "/admin/proveedor/{Id:int}"
+@using TiendaRopa.Shared.DTO.Proveedor
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>@(Id == null ? "Nuevo Proveedor" : "Editar Proveedor")</h3>
+
+<EditForm Model="@modeloProveedor" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Razón Social</label>
+        <InputText @bind-Value="modeloProveedor.RazonSocialProveedores" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">CUIT</label>
+        <InputText @bind-Value="modeloProveedor.CuitProveedores" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Domicilio</label>
+        <InputText @bind-Value="modeloProveedor.DomicilioProveedores" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre de Contacto</label>
+        <InputText @bind-Value="modeloProveedor.ContactoNombreProveedores" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText @bind-Value="modeloProveedor.EmailProveedores" class="form-control" type="email" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones</label>
+        <InputTextArea @bind-Value="modeloProveedor.ObvsProveedores" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    
+    public ProveedorDto modeloProveedor { get; set; } = new ProveedorDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            try
+            {
+                var respuesta = await Http.GetFromJsonAsync<ProveedorDto>($"api/proveedores/{Id}");
+                if (respuesta != null)
+                {
+                    modeloProveedor = respuesta;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar proveedor: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (Id == null)
+        {
+            await Http.PostAsJsonAsync("api/proveedores", modeloProveedor);
+        }
+        else
+        {
+            await Http.PutAsJsonAsync($"api/proveedores/{Id}", modeloProveedor);
+        }
+
+        Navigation.NavigateTo("/admin/proveedores");
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/admin/proveedores");
+    }
+}

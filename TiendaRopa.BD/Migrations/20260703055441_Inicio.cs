@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class AgregarIdentity : Migration
+    public partial class Inicio : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -74,24 +74,6 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Pedidos",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TotalPedidos = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    FechaDePedido = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaDeEntrega = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FacturaPedidos = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
-                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Pedidos", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Proveedores",
                 columns: table => new
                 {
@@ -102,6 +84,7 @@ namespace TiendaRopa.BD.Migrations
                     DomicilioProveedores = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     ContactoNombreProveedores = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     EmailProveedores = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ObvsProveedores = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     EstadoRegistro = table.Column<int>(type: "int", nullable: false),
                     Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
@@ -269,6 +252,31 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Pedidos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TotalPedidos = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    FechaDePedido = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaDeEntrega = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FacturaPedidos = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ProveedorId = table.Column<int>(type: "int", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
+                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pedidos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Pedidos_Proveedores_ProveedorId",
+                        column: x => x.ProveedorId,
+                        principalTable: "Proveedores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Productos",
                 columns: table => new
                 {
@@ -288,6 +296,37 @@ namespace TiendaRopa.BD.Migrations
                         name: "FK_Productos_Proveedores_ProveedorId",
                         column: x => x.ProveedorId,
                         principalTable: "Proveedores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DetallesPedidos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Cant_prod_Pedido = table.Column<int>(type: "int", nullable: false),
+                    Valor_est = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Valor_uni = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ProductoId = table.Column<int>(type: "int", nullable: false),
+                    PedidoId = table.Column<int>(type: "int", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "int", nullable: false),
+                    Observacion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DetallesPedidos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DetallesPedidos_Pedidos_PedidoId",
+                        column: x => x.PedidoId,
+                        principalTable: "Pedidos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetallesPedidos_Productos_ProductoId",
+                        column: x => x.ProductoId,
+                        principalTable: "Productos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -434,6 +473,16 @@ namespace TiendaRopa.BD.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DetallesPedidos_PedidoId",
+                table: "DetallesPedidos",
+                column: "PedidoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallesPedidos_ProductoId",
+                table: "DetallesPedidos",
+                column: "ProductoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DetallesRecepciones_PedidoId",
                 table: "DetallesRecepciones",
                 column: "PedidoId");
@@ -447,6 +496,11 @@ namespace TiendaRopa.BD.Migrations
                 name: "IX_DetallesRecepciones_RecepcionId",
                 table: "DetallesRecepciones",
                 column: "RecepcionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Pedidos_ProveedorId",
+                table: "Pedidos",
+                column: "ProveedorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Productos_ProveedorId",
@@ -494,6 +548,9 @@ namespace TiendaRopa.BD.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "DetallesPedidos");
 
             migrationBuilder.DropTable(
                 name: "DetallesRecepciones");
