@@ -12,15 +12,15 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260703055441_Inicio")]
-    partial class Inicio
+    [Migration("20260804123600_Correcciones")]
+    partial class Correcciones
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);

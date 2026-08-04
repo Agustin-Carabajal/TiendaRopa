@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class Inicio : Migration
+    public partial class Correcciones : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

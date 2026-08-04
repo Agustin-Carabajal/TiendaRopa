@@ -19,8 +19,4 @@
     <ProjectReference Include="..\TiendaRopa.Shared\TiendaRopa.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
-
 </Project>

@@ -20,6 +20,8 @@ namespace TiendaRopa.BD.Datos
         public DbSet<ProductoColor> ProductosColores { get; set; }
         public DbSet<Variante> Variantes { get; set; }
 
+        public DbSet<DetallesPedido> DetallesPedidos { get; set; }
+
         public AppDbContext(DbContextOptions options) : base(options)
         {
         }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TiendaRopa.BD.Datos;
+using TiendaRopa.Repositorio.Repositorios.PedidosRep;
 using TiendaRopa.Repositorio.Repositorios.ProductoRep;
 using TiendaRopa.Repositorio.Repositorios.Usuario;
 using TiendaRopa.Server.Client.Pages;
@@ -58,6 +59,9 @@ builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
 builder.Services.AddScoped<IProductoColorRepositorio, ProductoColorRepositorio>();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IVarianteRepositorio, VarianteRepositorio>();
+builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
+builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
+builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 
 #endregion
 
