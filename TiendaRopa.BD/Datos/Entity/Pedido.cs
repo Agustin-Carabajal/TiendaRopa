@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace TiendaRopa.BD.Datos.Entity
 {
     public class Pedido : EntityBase
     {
+        [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPedidos { get; set; }
 
         public DateTime FechaDePedido { get; set; }
