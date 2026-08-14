@@ -14,8 +14,11 @@ using TiendaRopa.Servicio.ServiciosHttp;
 var builder = WebApplication.CreateBuilder(args);
 #region configura el constructor de la aplicación y sus servicios
 
-builder.Services.AddScoped(sp =>
-    new HttpClient { BaseAddress = new Uri("https://localhost:7087/") });
+//builder.Services.AddScoped(sp =>
+//    new HttpClient { BaseAddress = new Uri("https://localhost:7087/") });
+
+var apiBaseUrl = builder.Configuration["UrlApi"] ?? builder.Configuration["Kestrel:Endpoints:Http:Url"];
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl!) });
 builder.Services.AddScoped<IHttpServicio, HttpServicio>();
 
 builder.Services.AddControllers();
