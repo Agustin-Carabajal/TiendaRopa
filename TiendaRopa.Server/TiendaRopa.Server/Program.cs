@@ -19,10 +19,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 var apiBaseUrl = builder.Configuration["UrlApi"];
 
-if (string.IsNullOrEmpty(apiBaseUrl))
+if (string.IsNullOrWhiteSpace(apiBaseUrl) || !Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out var uri))
 {
-    // Si no hay UrlApi configurada, usa localhost o la dirección por defecto con esquema válido
-    apiBaseUrl = "https://localhost:7087/"; 
+    apiBaseUrl = "https://localhost:7087/";
 }
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
