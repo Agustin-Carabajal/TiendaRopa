@@ -17,8 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddScoped(sp =>
 //    new HttpClient { BaseAddress = new Uri("https://localhost:7087/") });
 
-var apiBaseUrl = builder.Configuration["UrlApi"] ?? builder.Configuration["Kestrel:Endpoints:Http:Url"];
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl!) });
+var apiBaseUrl = builder.Configuration["UrlApi"];
+
+if (string.IsNullOrEmpty(apiBaseUrl))
+{
+    // Si no hay UrlApi configurada, usa localhost o la dirección por defecto con esquema válido
+    apiBaseUrl = "https://localhost:7087/"; 
+}
+
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 builder.Services.AddScoped<IHttpServicio, HttpServicio>();
 
 builder.Services.AddControllers();
