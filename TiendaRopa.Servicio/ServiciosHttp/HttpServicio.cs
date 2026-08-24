@@ -30,9 +30,16 @@ namespace TiendaRopa.Servicio.ServiciosHttp
 
         public async Task<HttpRespuesta<TResp>> Post<T, TResp>(string url, object enviar)
         {
+            Console.WriteLine("Post: antes de serializar");
             var enviarJson = JsonSerializer.Serialize(enviar);
+            Console.WriteLine($"Post: serializado OK, longitud={enviarJson.Length}");
+
             var enviarContent = new StringContent(enviarJson, Encoding.UTF8, "application/json");
+            Console.WriteLine("Post: antes de PostAsync");
+
             var response = await _httpClient.PostAsync(url, enviarContent);
+            Console.WriteLine($"Post: PostAsync terminó, status={response.StatusCode}");
+
             if (response.IsSuccessStatusCode)
             {
                 var respuesta = await DesSerializar<TResp>(response);

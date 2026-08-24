@@ -19,5 +19,6 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         [Column(TypeName = "decimal(18,2)")]
         public  decimal PrecioVenta { get; set; }
         public EstadoRegistro Estado { get; set; }
+        public string? UrlImagen { get; set; }
     }
 }

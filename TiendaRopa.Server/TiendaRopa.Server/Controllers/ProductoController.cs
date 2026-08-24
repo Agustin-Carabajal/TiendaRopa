@@ -113,23 +113,23 @@ namespace TiendaRopa.Server.Controllers
                         ProductoId = nuevoProducto.Id,
                         ColorId = colorDto.ColorId,
                         UrlImagen = colorDto.UrlImagen,
-                        EstadoRegistro = EstadoRegistro.activo // Asegúrate de heredar el estado activo
+                        EstadoRegistro = EstadoRegistro.activo 
                     };
 
                     context.ProductosColores.Add(nuevoProductoColor);
-                    await context.SaveChangesAsync(); // 🌟 ESTA LÍNEA ES CRUCIAL para que se genere el nuevoProductoColor.Id
+                    await context.SaveChangesAsync();
 
                     foreach (var varianteDto in colorDto.Variantes)
                     {
                         var nuevaVariante = new Variante
                         {
-                            // 🛑 REVISA ESTA LÍNEA: Debe apuntar al ID generado arriba
+                            
                             ProductoColorId = nuevoProductoColor.Id,
                             TalleId = varianteDto.TalleId,
                             Stock = varianteDto.Stock,
                             PrecioVenta = varianteDto.PrecioVenta,
                             CodVariante = varianteDto.CodVariante,
-                            EstadoRegistro = EstadoRegistro.activo // 🌟 OBLIGATORIO: Ponlo en activo para que el GET lo lea
+                            EstadoRegistro = EstadoRegistro.activo 
                         };
 
                         context.Variantes.Add(nuevaVariante);

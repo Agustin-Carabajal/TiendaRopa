@@ -44,7 +44,8 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                    Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                    ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
-                        : "Producto/Color no asignado"
+                        : "Producto/Color no asignado",
+                   UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
                })
                .ToListAsync();
         }
@@ -68,7 +69,8 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
-                        : "Producto/Color no asignado"
+                        : "Producto/Color no asignado",
+                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
                 })
                 .FirstOrDefaultAsync();
         }
@@ -98,7 +100,8 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
-        : "Producto/Color no asignado"
+        : "Producto/Color no asignado",
+                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
                 })
                 .ToListAsync();
         }
@@ -128,6 +131,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
             await context.SaveChangesAsync();
             return true;
         }
+
 
 
 
