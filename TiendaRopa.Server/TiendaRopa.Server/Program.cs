@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TiendaRopa.BD.Datos;
+using TiendaRopa.Repositorio.Repositorios.ClientesRep;
 using TiendaRopa.Repositorio.Repositorios.PedidosRep;
 using TiendaRopa.Repositorio.Repositorios.ProductoRep;
 using TiendaRopa.Repositorio.Repositorios.Usuario;
@@ -72,6 +73,7 @@ builder.Services.AddScoped<IVarianteRepositorio, VarianteRepositorio>();
 builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
+builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 
 #endregion
 

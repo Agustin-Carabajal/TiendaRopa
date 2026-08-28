@@ -21,6 +21,7 @@ namespace TiendaRopa.BD.Datos
         public DbSet<Variante> Variantes { get; set; }
 
         public DbSet<DetallesPedido> DetallesPedidos { get; set; }
+        public DbSet<Cliente> Clientes { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {

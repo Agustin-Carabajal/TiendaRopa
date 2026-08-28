@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class InicioPostgre : Migration
+    public partial class ModuloCliente : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -57,6 +57,28 @@ namespace TiendaRopa.BD.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.IdentityId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Clientes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Apellido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Dni = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
+                    FechaNacimiento = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Domicilio = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    Telefono = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Saldo = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Rol = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Clientes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -338,7 +360,7 @@ namespace TiendaRopa.BD.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TotalPedidos = table.Column<decimal>(type: "numeric", nullable: false),
+                    TotalPedidos = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     PedidoId = table.Column<int>(type: "integer", nullable: false),
                     RecepcionId = table.Column<int>(type: "integer", nullable: false),
                     ProductoId = table.Column<int>(type: "integer", nullable: false),
@@ -547,6 +569,9 @@ namespace TiendaRopa.BD.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Clientes");
 
             migrationBuilder.DropTable(
                 name: "DetallesPedidos");

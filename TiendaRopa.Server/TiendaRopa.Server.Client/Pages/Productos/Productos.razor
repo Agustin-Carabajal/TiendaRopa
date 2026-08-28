@@ -85,7 +85,6 @@
                                 <thead class="table-light">
                                     <tr class="text-center">
                                         <th>Código</th>
-                                        <th>Producto - Color</th>
                                         <th>Talle</th>
                                         <th style="width: 150px;">Stock</th>
                                         <th style="width: 180px;">Precio Venta</th>
@@ -93,30 +92,43 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var v in variantesProducto)
+                                    @foreach (var grupoColor in variantesProducto.GroupBy(v => v.ProductoColor))
                                     {
-                                        <tr>
-                                            <td class="text-center">
-                                                <input type="text" class="form-control form-control-sm" @bind="v.CodVariante" />
-                                            </td>
-                                            <td class="fw-semibold text-secondary">@v.ProductoColor</td>
-                                            <td class="text-center font-monospace">@v.Talle</td>
-                                            <td>
-                                                <input type="number" class="form-control form-control-sm text-center" @bind="v.Stock" min="0" />
-                                            </td>
-                                            <td>
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text">$</span>
-                                                    <input type="number" step="0.01" class="form-control text-end" @bind="v.PrecioVenta" min="0.01" />
+                                        <tr class="table-secondary">
+                                            <td colspan="5">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if (!string.IsNullOrEmpty(grupoColor.First().UrlImagen))
+                                                    {
+                                                        <img src="@grupoColor.First().UrlImagen" alt="Imagen" class="img-thumbnail" style="max-height:60px;" />
+                                                    }
+                                                    <span class="fw-bold text-secondary">@grupoColor.Key</span>
                                                 </div>
                                             </td>
-                                            <td class="text-center">
-                                                
-                                                <button class="btn btn-success btn-sm" @onclick="() => GuardarCambiosVarianteIndividual(v)">
-                                                    <i class="bi bi-save"></i> Guardar fila
-                                                </button>
-                                            </td>
                                         </tr>
+                                        @foreach (var v in grupoColor)
+                                        {
+                                            <tr>
+                                                <td class="text-center">
+                                                    <input type="text" class="form-control form-control-sm" @bind="v.CodVariante" />
+                                                </td>
+                                                <td class="text-center font-monospace">@v.Talle</td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm text-center" @bind="v.Stock" min="0" />
+                                                </td>
+                                                <td>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" step="0.01" class="form-control text-end" @bind="v.PrecioVenta" min="0.01" />
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    
+                                                    <button class="btn btn-success btn-sm" @onclick="() => GuardarCambiosVarianteIndividual(v)">
+                                                        <i class="bi bi-save"></i> Guardar fila
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
                                     }
                                 </tbody>
                             </table>
@@ -201,9 +213,13 @@
                                 {
                                     <div class="card-body bg-white ps-4 border-start border-primary border-4">
                                         <div class="mb-3 row align-items-center">
-                                            <label class="col-sm-2 col-form-label text-muted small fw-bold">URL Imagen del Color:</label>
+                                            <label class="col-sm-2 col-form-label text-muted small fw-bold">Imagen del Color:</label>
                                             <div class="col-sm-10">
-                                                <input type="text" class="form-control form-control-sm" @bind="colorSel.UrlImagen" placeholder="https://ejemplo.com" />
+                                                <InputFile OnChange="@(e => CargarImagenColor(e, colorSel))" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" />
+                                                @if (!string.IsNullOrEmpty(colorSel.UrlImagen))
+                                                {
+                                                    <img src="@colorSel.UrlImagen" alt="Vista previa" class="img-thumbnail mt-2" style="max-height:120px;" />
+                                                }
                                             </div>
                                         </div>
 
@@ -299,19 +315,19 @@
         {
             todosLosTalles = respTalles.Respuesta;
         }
-        proveedoresActivos = new List<ProveedorMostrarDTO>
-        {
-            new ProveedorMostrarDTO { IdProveedor = 2, RazonSocialProveedores = "PEPE" },
-            new ProveedorMostrarDTO { IdProveedor = 3, RazonSocialProveedores = "Distribuidora Textil S.A." },
-            new ProveedorMostrarDTO { IdProveedor = 4, RazonSocialProveedores = "Indumentaria Mayorista Nike" },
-            new ProveedorMostrarDTO { IdProveedor = 5, RazonSocialProveedores = "Fábrica de Ropa Denim Hnos." }
-            
-        };
-        // var respProveedores = await http.Get<List<ProveedorMostrarDTO>>("api/Proveedor/listaproveedores");
-        // if (!respProveedores.Error && respProveedores.Respuesta != null)
+        // proveedoresActivos = new List<ProveedorMostrarDTO>
         // {
-        //     proveedoresActivos = respProveedores.Respuesta;
-        // }
+        //     new ProveedorMostrarDTO { IdProveedor = 2, RazonSocialProveedores = "PEPE" },
+        //     new ProveedorMostrarDTO { IdProveedor = 3, RazonSocialProveedores = "Distribuidora Textil S.A." },
+        //     new ProveedorMostrarDTO { IdProveedor = 4, RazonSocialProveedores = "Indumentaria Mayorista Nike" },
+        //     new ProveedorMostrarDTO { IdProveedor = 5, RazonSocialProveedores = "Fábrica de Ropa Denim Hnos." }
+            
+        // };
+        var respProveedores = await http.Get<List<ProveedorMostrarDTO>>("/api/Proveedores");
+        if (!respProveedores.Error && respProveedores.Respuesta != null)
+        {
+            proveedoresActivos = respProveedores.Respuesta;
+        }
     }
 
     private async Task CargarGrillaPrincipal()
@@ -441,23 +457,53 @@
         return variante ?? new VarianteTalleDTO();
     }
 
+    // Lee la imagen elegida por el usuario desde su PC y la guarda como Data URL (base64)
+    // en colorDto.UrlImagen, reutilizando el mismo campo string que ya recibe el controller.
+    private async Task CargarImagenColor(InputFileChangeEventArgs e, ColorSeleccionadoDTO colorDto)
+    {
+        var archivo = e.File;
+        if (archivo == null) return;
+
+        const long tamañoMaximoBytes = 2 * 1024 * 1024; // 2 MB, ajustar según necesidad
+
+        if (archivo.Size > tamañoMaximoBytes)
+        {
+            Console.WriteLine("La imagen supera el tamaño máximo permitido (2MB).");
+            return;
+        }
+
+        using var stream = archivo.OpenReadStream(tamañoMaximoBytes);
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+
+        var base64 = Convert.ToBase64String(memoryStream.ToArray());
+        colorDto.UrlImagen = $"data:{archivo.ContentType};base64,{base64}";
+
+        StateHasChanged();
+    }
+
 
     private async Task GuardarProductoCompleto()
     {
+        Console.WriteLine("Entró a GuardarProductoCompleto");
+        Console.WriteLine($"ProveedorId actual: {nuevoProductoDto.ProveedorId}");  // 👈 agregar esta línea
         if (nuevoProductoDto.ProveedorId == 0) return;
 
-        var response = await http.Post<RegistrarProductoCompletoDTO, object>("api/Producto/registrar-completo", nuevoProductoDto);
+        try
+        {
+            var response = await http.Post<RegistrarProductoCompletoDTO, object>("api/Producto/registrar-completo", nuevoProductoDto);
+            Console.WriteLine($"Respuesta recibida. Error: {response.Error}, StatusCode: {response.HttpResponseMessage?.StatusCode}");
 
-        if (!response.Error)
-        {
-            CerrarModales();
-            await CargarGrillaPrincipal(); 
+            if (!response.Error)
+            {
+                CerrarModales();
+                await CargarGrillaPrincipal();
+            }
         }
-        else
+        catch (Exception ex)
         {
-   
-            var codigoEstado = response.HttpResponseMessage?.StatusCode;
-            Console.WriteLine($"Error al guardar. Código de estado: {codigoEstado}");
+            Console.WriteLine($"❌ EXCEPCIÓN: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
         }
     }
 
