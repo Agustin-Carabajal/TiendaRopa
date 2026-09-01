@@ -39,10 +39,15 @@ namespace TiendaRopa.Repositorio.Repositorios.ClientesRep
 
         public async Task<bool> ExisteNombre(string nombre, string apellido)
         {
-            // Busca en la base de datos si hay coincidencia exacta sin importar mayúsculas
+            // Busca en la base de datos si hay coincidencia exacta sin importar mayúsculas.
+            // Normalizar parámetros fuera del árbol de expresión para evitar NullReferenceException.
+            var nombreNorm = (nombre ?? string.Empty).ToLower().Trim();
+            var apellidoNorm = (apellido ?? string.Empty).ToLower().Trim();
+
             return await context.Set<Cliente>()
-                .AnyAsync(m => m.Nombre.ToLower().Trim() == nombre.ToLower().Trim() && m.Apellido!.ToLower().Trim() == apellido.ToLower().Trim());
+                .AnyAsync(m => ((m.Nombre ?? string.Empty).ToLower().Trim() == nombreNorm) && ((m.Apellido ?? string.Empty).ToLower().Trim() == apellidoNorm));
         }
+        //explanation":"Normalizar parámetros nulos y evitar la evaluación de ToLower/Trim sobre parámetros nulos en el árbol de expresión; usar coalesce en propiedades de entidad para evitar NullReferenceException."}```
 
         public async Task<ClienteMostrarDTO?> ObtenerById(int id)
         {

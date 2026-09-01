@@ -73,6 +73,11 @@ namespace TiendaRopa.Server.Controllers
         [HttpPut("editar/{id:int}")] //api/Cliente/editar/{id}
         public async Task<ActionResult> Put(int id, Cliente DTO)
         {
+            bool yaExiste = await repositorio.ExisteNombre(DTO.Nombre, DTO.Apellido!);
+            if (yaExiste)
+            {
+                return BadRequest($"El cliente '{DTO.Nombre} {DTO.Apellido}' ya se encuentra registrado.");
+            }
             var flag = await repositorio.Update(id, DTO);
             if (!flag)
             {
