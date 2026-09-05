@@ -154,6 +154,134 @@ namespace TiendaRopa.Server.Controllers
         }
 
         // [Authorize(Roles = "Administrador")]
+        [HttpPut("editar-completo/{id:int}")] //api/Producto/editar-completo/{id}
+        public async Task<ActionResult> EditarProductoCompleto(int id, [FromBody] RegistrarProductoCompletoDTO dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var producto = await context.Productos.FirstOrDefaultAsync(p => p.Id == id);
+                if (producto == null) return NotFound($"No existe el producto con id {id}.");
+
+                // 1. Actualizar datos básicos del producto
+                producto.NombreProducto = dto.NombreProducto;
+                producto.DescripcionProducto = dto.DescripcionProducto;
+                producto.MarcaProducto = dto.MarcaProducto;
+                producto.ProveedorId = dto.ProveedorId;
+                producto.EstadoRegistro = dto.Activo ? EstadoRegistro.activo : EstadoRegistro.inactivo;
+
+                // 2. Traer los ProductoColor y Variantes que YA existen para este producto
+                var coloresExistentes = await context.ProductosColores
+                    .Where(pc => pc.ProductoId == id)
+                    .ToListAsync();
+
+                var idsColoresExistentes = coloresExistentes.Select(pc => pc.Id).ToList();
+                var variantesExistentes = await context.Variantes
+                    .Where(v => idsColoresExistentes.Contains(v.ProductoColorId))
+                    .ToListAsync();
+
+                // 3. Recorrer los colores que llegan del formulario de edición
+                foreach (var colorDto in dto.Colores)
+                {
+                    var productoColor = coloresExistentes.FirstOrDefault(pc => pc.ColorId == colorDto.ColorId);
+
+                    if (productoColor == null)
+                    {
+                        // Color nuevo para este producto: se crea el ProductoColor y sus variantes
+                        productoColor = new ProductoColor
+                        {
+                            ProductoId = id,
+                            ColorId = colorDto.ColorId,
+                            UrlImagen = colorDto.UrlImagen,
+                            EstadoRegistro = EstadoRegistro.activo
+                        };
+                        context.ProductosColores.Add(productoColor);
+                        await context.SaveChangesAsync(); // genera productoColor.Id
+
+                        foreach (var varianteDto in colorDto.Variantes)
+                        {
+                            context.Variantes.Add(new Variante
+                            {
+                                ProductoColorId = productoColor.Id,
+                                TalleId = varianteDto.TalleId,
+                                Stock = varianteDto.Stock,
+                                PrecioVenta = varianteDto.PrecioVenta,
+                                CodVariante = varianteDto.CodVariante,
+                                EstadoRegistro = EstadoRegistro.activo
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // Color existente: se reactiva por si estaba dado de baja, y se actualiza la imagen
+                        productoColor.UrlImagen = colorDto.UrlImagen;
+                        productoColor.EstadoRegistro = EstadoRegistro.activo;
+
+                        var variantesDeEsteColor = variantesExistentes.Where(v => v.ProductoColorId == productoColor.Id).ToList();
+
+                        foreach (var varianteDto in colorDto.Variantes)
+                        {
+                            var varianteExistente = variantesDeEsteColor.FirstOrDefault(v => v.TalleId == varianteDto.TalleId);
+
+                            if (varianteExistente == null)
+                            {
+                                // Talle nuevo dentro de un color que ya existía
+                                context.Variantes.Add(new Variante
+                                {
+                                    ProductoColorId = productoColor.Id,
+                                    TalleId = varianteDto.TalleId,
+                                    Stock = varianteDto.Stock,
+                                    PrecioVenta = varianteDto.PrecioVenta,
+                                    CodVariante = varianteDto.CodVariante,
+                                    EstadoRegistro = EstadoRegistro.activo
+                                });
+                            }
+                            else
+                            {
+                                // Talle existente: se actualizan sus datos y se reactiva por si estaba inactivo
+                                varianteExistente.Stock = varianteDto.Stock;
+                                varianteExistente.PrecioVenta = varianteDto.PrecioVenta;
+                                varianteExistente.CodVariante = varianteDto.CodVariante;
+                                varianteExistente.EstadoRegistro = EstadoRegistro.activo;
+                            }
+                        }
+
+                        // Talles que existían para este color pero ya no vienen tildados en el formulario -> baja lógica
+                        var talleIdsEnviados = colorDto.Variantes.Select(v => v.TalleId).ToHashSet();
+                        foreach (var varianteVieja in variantesDeEsteColor.Where(v => !talleIdsEnviados.Contains(v.TalleId)))
+                        {
+                            varianteVieja.EstadoRegistro = EstadoRegistro.inactivo;
+                        }
+                    }
+                }
+
+                // 4. Colores que existían antes pero ya no vienen en el formulario -> baja lógica del color y sus variantes
+                var colorIdsEnviados = dto.Colores.Select(c => c.ColorId).ToHashSet();
+                foreach (var colorViejo in coloresExistentes.Where(pc => !colorIdsEnviados.Contains(pc.ColorId)))
+                {
+                    colorViejo.EstadoRegistro = EstadoRegistro.inactivo;
+                    foreach (var v in variantesExistentes.Where(v => v.ProductoColorId == colorViejo.Id))
+                    {
+                        v.EstadoRegistro = EstadoRegistro.inactivo;
+                    }
+                }
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new { Mensaje = "Producto actualizado con éxito.", ProductoId = id });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Error interno al editar el producto: {ex.Message}");
+            }
+        }
+
+        // [Authorize(Roles = "Administrador")]
         [HttpPut("editar/{id:int}")] //api/Producto/editar/{id}
         public async Task<ActionResult> Put(int id, ProductoCrearDTO DTO)
         {

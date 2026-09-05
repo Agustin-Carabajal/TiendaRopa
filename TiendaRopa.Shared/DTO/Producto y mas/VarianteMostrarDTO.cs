@@ -20,5 +20,7 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         public  decimal PrecioVenta { get; set; }
         public EstadoRegistro Estado { get; set; }
         public string? UrlImagen { get; set; }
+        public int ColorId { get; set; }
+        public int TalleId { get; set; }
     }
 }

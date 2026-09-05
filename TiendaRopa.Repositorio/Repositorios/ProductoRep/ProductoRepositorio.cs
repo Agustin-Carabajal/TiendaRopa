@@ -33,6 +33,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Descripcion = pc.DescripcionProducto,
                     Marca = pc.MarcaProducto,
                     Proveedor = pc.Proveedor!.RazonSocialProveedores,
+                    ProveedorId = pc.ProveedorId,
                     Estado = pc.EstadoRegistro
                 })
                 .ToListAsync();
@@ -51,6 +52,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Descripcion = pc.DescripcionProducto,
                     Marca = pc.MarcaProducto,
                     Proveedor = pc.Proveedor!.RazonSocialProveedores,
+                    ProveedorId = pc.ProveedorId,
                     Estado = pc.EstadoRegistro
                 })
                 .ToListAsync();
@@ -88,6 +90,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Descripcion = p.DescripcionProducto,
                     Marca = p.MarcaProducto,
                     Proveedor = p.Proveedor != null ? p.Proveedor.RazonSocialProveedores : "Sin Proveedor",
+                    ProveedorId = p.ProveedorId,
                     Estado = p.EstadoRegistro
                 })
                 .FirstOrDefaultAsync();

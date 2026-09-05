@@ -45,7 +45,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                    ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
                         : "Producto/Color no asignado",
-                   UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
+                   UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null,
+                   ColorId = v.ProductoColor != null ? v.ProductoColor.ColorId : 0,
+                   TalleId = v.TalleId
                })
                .ToListAsync();
         }
@@ -70,7 +72,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
                         : "Producto/Color no asignado",
-                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
+                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null,
+                    ColorId = v.ProductoColor != null ? v.ProductoColor.ColorId : 0,
+                    TalleId = v.TalleId
                 })
                 .FirstOrDefaultAsync();
         }
@@ -101,7 +105,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
         : "Producto/Color no asignado",
-                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null
+                    UrlImagen = v.ProductoColor != null ? v.ProductoColor.UrlImagen : null,
+                    ColorId = v.ProductoColor != null ? v.ProductoColor.ColorId : 0,
+                    TalleId = v.TalleId
                 })
                 .ToListAsync();
         }
@@ -131,7 +137,6 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
             await context.SaveChangesAsync();
             return true;
         }
-
 
 
 

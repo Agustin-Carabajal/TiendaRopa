@@ -49,6 +49,9 @@
                             <button class="btn btn-info btn-sm me-2 text-white" @onclick="() => VerDetallesProducto(prod.Id)">
                                 <i class="bi bi-eye"></i> Ver Detalles y Variantes
                             </button>
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => AbrirModalEditar(prod.Id)">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
                             <button class="btn btn-danger btn-sm" @onclick="() => EliminarProducto(prod.Id)">
                                 <i class="bi bi-trash"></i> Eliminar
                             </button>
@@ -88,14 +91,13 @@
                                         <th>Talle</th>
                                         <th style="width: 150px;">Stock</th>
                                         <th style="width: 180px;">Precio Venta</th>
-                                        <th>Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var grupoColor in variantesProducto.GroupBy(v => v.ProductoColor))
                                     {
                                         <tr class="table-secondary">
-                                            <td colspan="5">
+                                            <td colspan="4">
                                                 <div class="d-flex align-items-center gap-2">
                                                     @if (!string.IsNullOrEmpty(grupoColor.First().UrlImagen))
                                                     {
@@ -108,25 +110,10 @@
                                         @foreach (var v in grupoColor)
                                         {
                                             <tr>
-                                                <td class="text-center">
-                                                    <input type="text" class="form-control form-control-sm" @bind="v.CodVariante" />
-                                                </td>
+                                                <td class="text-center">@v.CodVariante</td>
                                                 <td class="text-center font-monospace">@v.Talle</td>
-                                                <td>
-                                                    <input type="number" class="form-control form-control-sm text-center" @bind="v.Stock" min="0" />
-                                                </td>
-                                                <td>
-                                                    <div class="input-group input-group-sm">
-                                                        <span class="input-group-text">$</span>
-                                                        <input type="number" step="0.01" class="form-control text-end" @bind="v.PrecioVenta" min="0.01" />
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    
-                                                    <button class="btn btn-success btn-sm" @onclick="() => GuardarCambiosVarianteIndividual(v)">
-                                                        <i class="bi bi-save"></i> Guardar fila
-                                                    </button>
-                                                </td>
+                                                <td class="text-center">@v.Stock</td>
+                                                <td class="text-center">$@v.PrecioVenta.ToString("N2")</td>
                                             </tr>
                                         }
                                     }
@@ -136,6 +123,9 @@
                     }
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" @onclick="() => AbrirModalEditar(productoSeleccionadoId)">
+                        <i class="bi bi-pencil"></i> Editar Producto
+                    </button>
                     <button type="button" class="btn btn-secondary" @onclick="CerrarModales">Cerrar</button>
                 </div>
             </div>
@@ -218,7 +208,12 @@
                                                 <InputFile OnChange="@(e => CargarImagenColor(e, colorSel))" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" />
                                                 @if (!string.IsNullOrEmpty(colorSel.UrlImagen))
                                                 {
-                                                    <img src="@colorSel.UrlImagen" alt="Vista previa" class="img-thumbnail mt-2" style="max-height:120px;" />
+                                                    <div class="mt-2">
+                                                        <img src="@colorSel.UrlImagen" alt="Vista previa" class="img-thumbnail d-block mb-1" style="max-height:120px;" />
+                                                        <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => EliminarImagenColor(colorSel)">
+                                                            <i class="bi bi-x-circle"></i> Quitar imagen
+                                                        </button>
+                                                    </div>
                                                 }
                                             </div>
                                         </div>
@@ -247,13 +242,13 @@
                                                                    @onchange="(e) => AlternarTalle(colorSel, tal.IdTalle, (bool)e.Value!)" />
                                                         </td>
                                                         <td>
-                                                            <input type="number" class="form-control form-control-sm text-center"
+                                                            <input type="number" class="form-control form-control-sm text-center" onfocus="this.select();"
                                                                    disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).Stock" min="0" />
                                                         </td>
                                                         <td>
                                                             <div class="input-group input-group-sm">
                                                                 <span class="input-group-text">$</span>
-                                                                <input type="number" step="0.01" class="form-control text-end"
+                                                                <input type="number" step="0.01" class="form-control text-end" onfocus="this.select();"
                                                                        disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).PrecioVenta" min="0" />
                                                             </div>
                                                         </td>
@@ -282,6 +277,146 @@
 
 }
 
+<!-- ========================================================== -->
+@if (mostrarModalEditar)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Editar Producto</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModales"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="productoEditarDto" OnValidSubmit="GuardarProductoEditado">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger mb-3" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Nombre del Producto</label>
+                                <InputText @bind-Value="productoEditarDto.NombreProducto" class="form-control" placeholder="Ej: Remera Algodón" />
+                                <ValidationMessage For="() => productoEditarDto.NombreProducto" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Marca</label>
+                                <InputText @bind-Value="productoEditarDto.MarcaProducto" class="form-control" placeholder="Ej: Nike" />
+                                <ValidationMessage For="() => productoEditarDto.MarcaProducto" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Proveedor</label>
+                                <select class="form-select" @bind="productoEditarDto.ProveedorId">
+                                    <option value="0">-- Seleccione un Proveedor --</option>
+                                    @foreach (var prov in proveedoresActivos)
+                                    {
+                                        <option value="@prov.IdProveedor">@prov.RazonSocialProveedores</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3 d-flex align-items-end shadow-none">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="checkActivoProdEdit" @bind="productoEditarDto.Activo" />
+                                    <label class="form-check-label fw-bold" for="checkActivoProdEdit">Producto Publicado / Activo</label>
+                                </div>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold">Descripción</label>
+                                <InputTextArea @bind-Value="productoEditarDto.DescripcionProducto" class="form-control" rows="2" placeholder="Detalles de la prenda..." />
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4 border-bottom pb-2 text-secondary">Configuración de Colores y Talles</h4>
+
+                        @foreach (var col in todosLosColores)
+                        {
+                            var colorSel = productoEditarDto.Colores.FirstOrDefault(c => c.ColorId == col.IdColor);
+                            bool colorChequeado = colorSel != null;
+
+                            <div class="card mb-3 border-secondary shadow-sm">
+                                <div class="card-header bg-light d-flex align-items-center gap-3">
+                                    <input type="checkbox" class="form-check-input" id="col-edit-@col.IdColor"
+                                           checked="@colorChequeado"
+                                           @onchange="(e) => AlternarColorEditar(col.IdColor, (bool)e.Value!)" />
+                                    <label class="form-check-label fw-bold m-0" for="col-edit-@col.IdColor">@col.NombreColor</label>
+                                </div>
+
+                                @if (colorSel != null)
+                                {
+                                    <div class="card-body bg-white ps-4 border-start border-primary border-4">
+                                        <div class="mb-3 row align-items-center">
+                                            <label class="col-sm-2 col-form-label text-muted small fw-bold">Imagen del Color:</label>
+                                            <div class="col-sm-10">
+                                                <InputFile OnChange="@(e => CargarImagenColor(e, colorSel))" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" />
+                                                @if (!string.IsNullOrEmpty(colorSel.UrlImagen))
+                                                {
+                                                    <div class="mt-2">
+                                                        <img src="@colorSel.UrlImagen" alt="Vista previa" class="img-thumbnail d-block mb-1" style="max-height:120px;" />
+                                                        <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => EliminarImagenColor(colorSel)">
+                                                            <i class="bi bi-x-circle"></i> Quitar imagen
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <table class="table table-sm table-bordered mt-2 align-middle">
+                                            <thead class="table-light text-center small">
+                                                <tr>
+                                                    <th>Talle</th>
+                                                    <th>¿Habilitar Talle?</th>
+                                                    <th>Stock</th>
+                                                    <th>Precio de Venta</th>
+                                                    <th>Código de Variante</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var tal in todosLosTalles)
+                                                {
+                                                    var varDto = colorSel.Variantes.FirstOrDefault(v => v.TalleId == tal.IdTalle);
+                                                    bool talleChequeado = varDto != null;
+
+                                                    <tr>
+                                                        <td class="text-center fw-bold text-dark">@tal.NombreTalle</td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                   checked="@talleChequeado"
+                                                                   @onchange="(e) => AlternarTalle(colorSel, tal.IdTalle, (bool)e.Value!)" />
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" class="form-control form-control-sm text-center" onfocus="this.select();"
+                                                                   disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).Stock" min="0" />
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm">
+                                                                <span class="input-group-text">$</span>
+                                                                <input type="number" step="0.01" class="form-control text-end" onfocus="this.select();"
+                                                                       disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).PrecioVenta" min="0" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control form-control-sm"
+                                                                   disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).CodVariante" placeholder="Ejem: PROD-COL-TAL" />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="modal-footer px-0 pb-0 mt-4 border-top pt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModales">Cancelar</button>
+                            <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
    
     private List<ProductoMostrarDTO>? productosActivos;
@@ -292,13 +427,17 @@
  
     private List<VarianteMostrarDTO> variantesProducto = new();
     private string productoSeleccionadoNombre = string.Empty;
+    private int productoSeleccionadoId;
 
    
     private RegistrarProductoCompletoDTO nuevoProductoDto = new();
+    private RegistrarProductoCompletoDTO productoEditarDto = new();
+    private int productoIdEnEdicion;
 
     
     private bool mostrarModalDetalles = false;
     private bool mostrarModalAgregar = false;
+    private bool mostrarModalEditar = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -366,6 +505,7 @@
     {
         var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
         productoSeleccionadoNombre = prod?.Nombre ?? string.Empty;
+        productoSeleccionadoId = productoId;
     
       
         var respTodasLasVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
@@ -415,6 +555,7 @@
     {
         mostrarModalDetalles = false;
         mostrarModalAgregar = false;
+        mostrarModalEditar = false;
     }
 
     
@@ -431,6 +572,23 @@
         {
             var colorRemover = nuevoProductoDto.Colores.FirstOrDefault(c => c.ColorId == colorId);
             if (colorRemover != null) nuevoProductoDto.Colores.Remove(colorRemover);
+        }
+    }
+
+    // Misma lógica que AlternarColor, pero para el modelo del modal de Editar (productoEditarDto)
+    private void AlternarColorEditar(int colorId, bool seleccionado)
+    {
+        if (seleccionado)
+        {
+            if (!productoEditarDto.Colores.Any(c => c.ColorId == colorId))
+            {
+                productoEditarDto.Colores.Add(new ColorSeleccionadoDTO { ColorId = colorId });
+            }
+        }
+        else
+        {
+            var colorRemover = productoEditarDto.Colores.FirstOrDefault(c => c.ColorId == colorId);
+            if (colorRemover != null) productoEditarDto.Colores.Remove(colorRemover);
         }
     }
 
@@ -482,6 +640,14 @@
         StateHasChanged();
     }
 
+    // Limpia la imagen cargada para el color (por si el usuario subió una equivocada).
+    // Sirve tanto para el modal de Agregar como el de Editar, ya que ambos usan ColorSeleccionadoDTO.
+    private void EliminarImagenColor(ColorSeleccionadoDTO colorDto)
+    {
+        colorDto.UrlImagen = string.Empty;
+        StateHasChanged();
+    }
+
 
     private async Task GuardarProductoCompleto()
     {
@@ -514,6 +680,87 @@
         if (!response.Error)
         {
             await CargarGrillaPrincipal();
+        }
+    }
+
+    // Carga los datos actuales del producto (básicos + colores + talles + imagen) en productoEditarDto
+    // para poder editarlos en un modal con la misma estructura que "Agregar".
+    private async Task AbrirModalEditar(int productoId)
+    {
+        var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
+        if (prod == null) return;
+
+        productoIdEnEdicion = productoId;
+
+        productoEditarDto = new RegistrarProductoCompletoDTO
+        {
+            NombreProducto = prod.Nombre,
+            MarcaProducto = prod.Marca,
+            DescripcionProducto = prod.Descripcion,
+            ProveedorId = prod.ProveedorId,
+            Activo = true
+        };
+
+        var respVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
+        if (!respVariantes.Error && respVariantes.Respuesta != null)
+        {
+            var variantesDelProducto = respVariantes.Respuesta.Where(v => v.ProductoId == productoId);
+
+            foreach (var grupoColor in variantesDelProducto.GroupBy(v => v.ColorId))
+            {
+                var primerVariante = grupoColor.First();
+                var colorDto = new ColorSeleccionadoDTO
+                {
+                    ColorId = grupoColor.Key,
+                    UrlImagen = primerVariante.UrlImagen ?? string.Empty
+                };
+
+                foreach (var v in grupoColor)
+                {
+                    colorDto.Variantes.Add(new VarianteTalleDTO
+                    {
+                        TalleId = v.TalleId,
+                        Stock = v.Stock,
+                        PrecioVenta = v.PrecioVenta,
+                        CodVariante = v.CodVariante
+                    });
+                }
+
+                productoEditarDto.Colores.Add(colorDto);
+            }
+        }
+
+        mostrarModalEditar = true;
+    }
+
+    private async Task GuardarProductoEditado()
+    {
+        // NOTA IMPORTANTE: este endpoint todavía no existe en el backend.
+        // "registrar-completo" solo sirve para ALTAS (siempre inserta un Producto nuevo).
+        // Para editar hace falta un endpoint que sepa actualizar el Producto y hacer el
+        // "diff" de colores/talles (agregar los nuevos, actualizar los existentes, borrar
+        // los que ya no están tildados) dentro de una transacción, similar a la lógica de
+        // "registrar-completo" pero con UPDATE/DELETE en vez de solo INSERT.
+        //
+        // Te lo dejo armado del lado del cliente para que, en cuanto tengamos ese endpoint,
+        // sea cuestión de probarlo.
+        try
+        {
+            var response = await http.Put($"api/Producto/editar-completo/{productoIdEnEdicion}", productoEditarDto);
+
+            if (!response.Error)
+            {
+                CerrarModales();
+                await CargarGrillaPrincipal();
+            }
+            else
+            {
+                Console.WriteLine($"Error al editar. Código de estado: {response.HttpResponseMessage?.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ EXCEPCIÓN al editar: {ex.GetType().Name} - {ex.Message}");
         }
     }
 

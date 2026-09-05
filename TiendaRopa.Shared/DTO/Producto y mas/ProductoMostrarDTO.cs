@@ -17,6 +17,8 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
 
         public string Proveedor {  get; set; } = string.Empty;
 
+        public int ProveedorId { get; set; }
+
         public EstadoRegistro Estado { get; set; }
     }
 }
