@@ -20,7 +20,7 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
         {
             return await _context.DetallesPedidos
                                  .Include(d => d.Pedido)
-                                 .Include(d => d.Producto)
+                                 .Include(d => d.Variante)
                                  .ToListAsync();
         }
 

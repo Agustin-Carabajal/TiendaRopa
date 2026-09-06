@@ -11,6 +11,12 @@ namespace TiendaRopa.BD.Datos.Entity
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPedidos { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PrecioUnitario { get; set; }
+
+        public int CantidadRecibida { get; set; }
+
+
         //Foraneas
 
         [Required(ErrorMessage = "")]
@@ -22,7 +28,7 @@ namespace TiendaRopa.BD.Datos.Entity
         public Recepcion? Recepcion { get; set; }
 
         [Required(ErrorMessage = "El producto es obligatorio.")]
-        public required int ProductoId { get; set; }
-        public Producto? Producto { get; set; }
+        public required int VarianteId { get; set; }
+        public Producto? Variante { get; set; }
     }
 }

@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class ModuloCliente : Migration
+    public partial class PostgreMigracion : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -36,7 +36,6 @@ namespace TiendaRopa.BD.Migrations
                     Dni = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     FechaNacimiento = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Direccion = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    Saldo = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Observacion = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -97,6 +96,41 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notificaciones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Tipo = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    Mensaje = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    FechaGeneracion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Leida = table.Column<bool>(type: "boolean", nullable: false),
+                    EntidadRelacionadaId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    TipoEntidad = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notificaciones", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Pagos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Tipo = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pagos", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Proveedores",
                 columns: table => new
                 {
@@ -122,7 +156,7 @@ namespace TiendaRopa.BD.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FechaDePedido = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaDeEntrega = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     RemitoProveedor = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
                     RecibidoPor = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
                     Notas = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -275,6 +309,36 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Compradores",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ClienteId = table.Column<int>(type: "integer", nullable: true),
+                    ApplicationUserId = table.Column<string>(type: "text", nullable: true),
+                    Origen = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Compradores", x => x.Id);
+                    table.CheckConstraint("CK_Comprador_OrigenUnico", "(\"ClienteId\" IS NOT NULL AND \"ApplicationUserId\" IS NULL) OR (\"ClienteId\" IS NULL AND \"ApplicationUserId\" IS NOT NULL)");
+                    table.ForeignKey(
+                        name: "FK_Compradores_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "IdentityId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Compradores_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Pedidos",
                 columns: table => new
                 {
@@ -324,6 +388,30 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Carritos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FechaCreacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Estado = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CompradorId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carritos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Carritos_Compradores_CompradorId",
+                        column: x => x.CompradorId,
+                        principalTable: "Compradores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DetallesPedidos",
                 columns: table => new
                 {
@@ -332,7 +420,7 @@ namespace TiendaRopa.BD.Migrations
                     Cant_prod_Pedido = table.Column<int>(type: "integer", nullable: false),
                     Valor_est = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     Valor_uni = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    ProductoId = table.Column<int>(type: "integer", nullable: false),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
                     PedidoId = table.Column<int>(type: "integer", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
@@ -347,8 +435,8 @@ namespace TiendaRopa.BD.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DetallesPedidos_Productos_ProductoId",
-                        column: x => x.ProductoId,
+                        name: "FK_DetallesPedidos_Productos_VarianteId",
+                        column: x => x.VarianteId,
                         principalTable: "Productos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -361,9 +449,11 @@ namespace TiendaRopa.BD.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TotalPedidos = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    PrecioUnitario = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CantidadRecibida = table.Column<int>(type: "integer", nullable: false),
                     PedidoId = table.Column<int>(type: "integer", nullable: false),
                     RecepcionId = table.Column<int>(type: "integer", nullable: false),
-                    ProductoId = table.Column<int>(type: "integer", nullable: false),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
                 },
@@ -377,8 +467,8 @@ namespace TiendaRopa.BD.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_DetallesRecepciones_Productos_ProductoId",
-                        column: x => x.ProductoId,
+                        name: "FK_DetallesRecepciones_Productos_VarianteId",
+                        column: x => x.VarianteId,
                         principalTable: "Productos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -420,6 +510,38 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Ventas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FechaHora = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CanalDeVenta = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Estado = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CompradorId = table.Column<int>(type: "integer", nullable: false),
+                    CarritoId = table.Column<int>(type: "integer", nullable: true),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ventas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Ventas_Carritos_CarritoId",
+                        column: x => x.CarritoId,
+                        principalTable: "Carritos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Ventas_Compradores_CompradorId",
+                        column: x => x.CompradorId,
+                        principalTable: "Compradores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Variantes",
                 columns: table => new
                 {
@@ -447,6 +569,122 @@ namespace TiendaRopa.BD.Migrations
                         name: "FK_Variantes_Talles_TalleId",
                         column: x => x.TalleId,
                         principalTable: "Talles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Envios",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Direccion = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CostoEnvio = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Estado = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    HoraInicio = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    HoraLlegada = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    VentaId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Envios", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Envios_Ventas_VentaId",
+                        column: x => x.VentaId,
+                        principalTable: "Ventas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MovimientosCuentaCorriente",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Fecha = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Tipo = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ClienteId = table.Column<int>(type: "integer", nullable: false),
+                    VentaId = table.Column<int>(type: "integer", nullable: true),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MovimientosCuentaCorriente", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MovimientosCuentaCorriente_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovimientosCuentaCorriente_Ventas_VentaId",
+                        column: x => x.VentaId,
+                        principalTable: "Ventas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PagosVenta",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PagoId = table.Column<int>(type: "integer", nullable: false),
+                    VentaId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PagosVenta", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PagosVenta_Pagos_PagoId",
+                        column: x => x.PagoId,
+                        principalTable: "Pagos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PagosVenta_Ventas_VentaId",
+                        column: x => x.VentaId,
+                        principalTable: "Ventas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DetallesVenta",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CantidadProducto = table.Column<int>(type: "integer", nullable: false),
+                    PrecioUnitario = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Subtotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    VentaId = table.Column<int>(type: "integer", nullable: false),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DetallesVenta", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DetallesVenta_Variantes_VarianteId",
+                        column: x => x.VarianteId,
+                        principalTable: "Variantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetallesVenta_Ventas_VentaId",
+                        column: x => x.VentaId,
+                        principalTable: "Ventas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -494,14 +732,33 @@ namespace TiendaRopa.BD.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Carritos_CompradorId",
+                table: "Carritos",
+                column: "CompradorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Compradores_ApplicationUserId",
+                table: "Compradores",
+                column: "ApplicationUserId",
+                unique: true,
+                filter: "\"ApplicationUserId\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Compradores_ClienteId",
+                table: "Compradores",
+                column: "ClienteId",
+                unique: true,
+                filter: "\"ClienteId\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DetallesPedidos_PedidoId",
                 table: "DetallesPedidos",
                 column: "PedidoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallesPedidos_ProductoId",
+                name: "IX_DetallesPedidos_VarianteId",
                 table: "DetallesPedidos",
-                column: "ProductoId");
+                column: "VarianteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DetallesRecepciones_PedidoId",
@@ -509,14 +766,55 @@ namespace TiendaRopa.BD.Migrations
                 column: "PedidoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DetallesRecepciones_ProductoId",
-                table: "DetallesRecepciones",
-                column: "ProductoId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_DetallesRecepciones_RecepcionId",
                 table: "DetallesRecepciones",
                 column: "RecepcionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallesRecepciones_VarianteId",
+                table: "DetallesRecepciones",
+                column: "VarianteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallesVenta_VarianteId",
+                table: "DetallesVenta",
+                column: "VarianteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DetallesVenta_VentaId",
+                table: "DetallesVenta",
+                column: "VentaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Envios_VentaId",
+                table: "Envios",
+                column: "VentaId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimientosCuentaCorriente_ClienteId_Fecha",
+                table: "MovimientosCuentaCorriente",
+                columns: new[] { "ClienteId", "Fecha" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovimientosCuentaCorriente_VentaId",
+                table: "MovimientosCuentaCorriente",
+                column: "VentaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notificaciones_TipoEntidad_EntidadRelacionadaId_Leida",
+                table: "Notificaciones",
+                columns: new[] { "TipoEntidad", "EntidadRelacionadaId", "Leida" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PagosVenta_PagoId",
+                table: "PagosVenta",
+                column: "PagoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PagosVenta_VentaId",
+                table: "PagosVenta",
+                column: "VentaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Pedidos_ProveedorId",
@@ -547,6 +845,17 @@ namespace TiendaRopa.BD.Migrations
                 name: "IX_Variantes_TalleId",
                 table: "Variantes",
                 column: "TalleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ventas_CarritoId",
+                table: "Ventas",
+                column: "CarritoId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ventas_CompradorId",
+                table: "Ventas",
+                column: "CompradorId");
         }
 
         /// <inheritdoc />
@@ -571,22 +880,28 @@ namespace TiendaRopa.BD.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Clientes");
-
-            migrationBuilder.DropTable(
                 name: "DetallesPedidos");
 
             migrationBuilder.DropTable(
                 name: "DetallesRecepciones");
 
             migrationBuilder.DropTable(
-                name: "Variantes");
+                name: "DetallesVenta");
+
+            migrationBuilder.DropTable(
+                name: "Envios");
+
+            migrationBuilder.DropTable(
+                name: "MovimientosCuentaCorriente");
+
+            migrationBuilder.DropTable(
+                name: "Notificaciones");
+
+            migrationBuilder.DropTable(
+                name: "PagosVenta");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Pedidos");
@@ -595,10 +910,22 @@ namespace TiendaRopa.BD.Migrations
                 name: "Recepciones");
 
             migrationBuilder.DropTable(
+                name: "Variantes");
+
+            migrationBuilder.DropTable(
+                name: "Pagos");
+
+            migrationBuilder.DropTable(
+                name: "Ventas");
+
+            migrationBuilder.DropTable(
                 name: "ProductosColores");
 
             migrationBuilder.DropTable(
                 name: "Talles");
+
+            migrationBuilder.DropTable(
+                name: "Carritos");
 
             migrationBuilder.DropTable(
                 name: "Colores");
@@ -607,7 +934,16 @@ namespace TiendaRopa.BD.Migrations
                 name: "Productos");
 
             migrationBuilder.DropTable(
+                name: "Compradores");
+
+            migrationBuilder.DropTable(
                 name: "Proveedores");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Clientes");
         }
     }
 }

@@ -12,8 +12,8 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260828025205_ModuloCliente")]
-    partial class ModuloCliente
+    [Migration("20260906235230_PostgreMigracion")]
+    partial class PostgreMigracion
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -253,10 +253,6 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("Saldo")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
@@ -277,6 +273,42 @@ namespace TiendaRopa.BD.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Carrito", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompradorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompradorId");
+
+                    b.ToTable("Carritos", (string)null);
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Cliente", b =>
@@ -355,6 +387,87 @@ namespace TiendaRopa.BD.Migrations
                     b.ToTable("Colores");
                 });
 
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique()
+                        .HasFilter("\"ApplicationUserId\" IS NOT NULL");
+
+                    b.HasIndex("ClienteId")
+                        .IsUnique()
+                        .HasFilter("\"ClienteId\" IS NOT NULL");
+
+                    b.ToTable("Compradores", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Comprador_OrigenUnico", "(\"ClienteId\" IS NOT NULL AND \"ApplicationUserId\" IS NULL) OR (\"ClienteId\" IS NULL AND \"ApplicationUserId\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetalleVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadProducto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VarianteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VarianteId");
+
+                    b.HasIndex("VentaId");
+
+                    b.ToTable("DetallesVenta", (string)null);
+                });
+
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetallesPedido", b =>
                 {
                     b.Property<int>("Id")
@@ -376,25 +489,203 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("PedidoId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("Valor_est")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Valor_uni")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("VarianteId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PedidoId");
 
-                    b.HasIndex("ProductoId");
+                    b.HasIndex("VarianteId");
 
                     b.ToTable("DetallesPedidos");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetallesRecepcion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadRecibida")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PedidoId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RecepcionId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPedidos")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VarianteId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
+
+                    b.HasIndex("RecepcionId");
+
+                    b.HasIndex("VarianteId");
+
+                    b.ToTable("DetallesRecepciones");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Envio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CostoEnvio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Direccion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("HoraInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("HoraLlegada")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VentaId")
+                        .IsUnique();
+
+                    b.ToTable("Envios");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.MovimientoCuentaCorriente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("VentaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VentaId");
+
+                    b.HasIndex("ClienteId", "Fecha");
+
+                    b.ToTable("MovimientosCuentaCorriente", (string)null);
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Notificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EntidadRelacionadaId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaGeneracion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("TipoEntidad")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TipoEntidad", "EntidadRelacionadaId", "Leida");
+
+                    b.ToTable("Notificaciones", (string)null);
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pago", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -409,27 +700,44 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PedidoId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("RecepcionId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("TotalPedidos")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PedidoId");
+                    b.ToTable("Pagos");
+                });
 
-                    b.HasIndex("ProductoId");
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.PagoVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-                    b.HasIndex("RecepcionId");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.ToTable("DetallesRecepciones");
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PagoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PagoId");
+
+                    b.HasIndex("VentaId");
+
+                    b.ToTable("PagosVenta");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pedido", b =>
@@ -602,7 +910,7 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("FechaDePedido")
+                    b.Property<DateTime>("FechaDeEntrega")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Notas")
@@ -695,6 +1003,53 @@ namespace TiendaRopa.BD.Migrations
                     b.HasIndex("TalleId");
 
                     b.ToTable("Variantes");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Venta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CanalDeVenta")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("CarritoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompradorId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarritoId")
+                        .IsUnique();
+
+                    b.HasIndex("CompradorId");
+
+                    b.ToTable("Ventas", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -799,6 +1154,53 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Carrito", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Comprador", "Comprador")
+                        .WithMany("Carritos")
+                        .HasForeignKey("CompradorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Comprador");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetalleVenta", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
+                        .WithMany()
+                        .HasForeignKey("VarianteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Venta", "Venta")
+                        .WithMany("DetallesVenta")
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Variante");
+
+                    b.Navigation("Venta");
+                });
+
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetallesPedido", b =>
                 {
                     b.HasOne("TiendaRopa.BD.Datos.Entity.Pedido", "Pedido")
@@ -807,15 +1209,15 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Producto")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
                         .WithMany()
-                        .HasForeignKey("ProductoId")
+                        .HasForeignKey("VarianteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Pedido");
 
-                    b.Navigation("Producto");
+                    b.Navigation("Variante");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetallesRecepcion", b =>
@@ -826,23 +1228,71 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("TiendaRopa.BD.Datos.Entity.Recepcion", "Recepcion")
                         .WithMany()
                         .HasForeignKey("RecepcionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
+                        .WithMany()
+                        .HasForeignKey("VarianteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Pedido");
 
-                    b.Navigation("Producto");
-
                     b.Navigation("Recepcion");
+
+                    b.Navigation("Variante");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Envio", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Venta", "Venta")
+                        .WithOne("Envio")
+                        .HasForeignKey("TiendaRopa.BD.Datos.Entity.Envio", "VentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Venta");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.MovimientoCuentaCorriente", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Venta", "Venta")
+                        .WithMany()
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("Venta");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.PagoVenta", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Pago", "Pago")
+                        .WithMany()
+                        .HasForeignKey("PagoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Venta", "Venta")
+                        .WithMany("PagosVenta")
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Pago");
+
+                    b.Navigation("Venta");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pedido", b =>
@@ -903,6 +1353,45 @@ namespace TiendaRopa.BD.Migrations
                     b.Navigation("ProductoColor");
 
                     b.Navigation("Talle");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Venta", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Carrito", "Carrito")
+                        .WithOne("Venta")
+                        .HasForeignKey("TiendaRopa.BD.Datos.Entity.Venta", "CarritoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Comprador", "Comprador")
+                        .WithMany("Ventas")
+                        .HasForeignKey("CompradorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Carrito");
+
+                    b.Navigation("Comprador");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Carrito", b =>
+                {
+                    b.Navigation("Venta");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
+                {
+                    b.Navigation("Carritos");
+
+                    b.Navigation("Ventas");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Venta", b =>
+                {
+                    b.Navigation("DetallesVenta");
+
+                    b.Navigation("Envio");
+
+                    b.Navigation("PagosVenta");
                 });
 #pragma warning restore 612, 618
         }

@@ -82,7 +82,7 @@ namespace TiendaRopa.Server.Controllers
             usuarioExistente.Dni = model.Dni;
             usuarioExistente.FechaNacimiento = model.FechaNacimiento;
             usuarioExistente.Direccion = model.Direccion;
-            usuarioExistente.Saldo = model.Saldo;
+            
             usuarioExistente.EstadoRegistro = model.EstadoRegistro;
             usuarioExistente.Observacion = model.Observacion;
 

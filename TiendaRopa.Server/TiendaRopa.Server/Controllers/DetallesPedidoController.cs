@@ -28,8 +28,8 @@ namespace TiendaRopa.Server.Controllers
                 Valor_uni = d.Valor_uni,
                 PedidoId = d.PedidoId,
                 FacturaPedido = d.Pedido?.FacturaPedidos, 
-                ProductoId = d.ProductoId,
-                NombreProducto = d.Producto?.NombreProducto 
+                VarianteId = d.VarianteId,
+                NombreProducto = d.Variante?.NombreProducto
             });
             return Ok(dtos);
         }
@@ -47,7 +47,7 @@ namespace TiendaRopa.Server.Controllers
                 Valor_est = d.Valor_est,
                 Valor_uni = d.Valor_uni,
                 PedidoId = d.PedidoId,
-                ProductoId = d.ProductoId
+                VarianteId = d.VarianteId  
             };
             return Ok(dto);
         }
@@ -61,7 +61,7 @@ namespace TiendaRopa.Server.Controllers
                 Valor_est = dto.Valor_est,
                 Valor_uni = dto.Valor_uni,
                 PedidoId = dto.PedidoId,
-                ProductoId = dto.ProductoId
+                VarianteId = dto.VarianteId
             };
 
             await _repository.AddAsync(detalle);
@@ -78,7 +78,7 @@ namespace TiendaRopa.Server.Controllers
             d.Valor_est = dto.Valor_est;
             d.Valor_uni = dto.Valor_uni;
             d.PedidoId = dto.PedidoId;
-            d.ProductoId = dto.ProductoId;
+            d.VarianteId = dto.VarianteId;
 
             await _repository.UpdateAsync(d);
             return NoContent();

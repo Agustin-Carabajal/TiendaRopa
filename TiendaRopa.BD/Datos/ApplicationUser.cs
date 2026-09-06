@@ -27,9 +27,6 @@ namespace TiendaRopa.BD.Datos
         [MaxLength(250)]
         public string Direccion { get; set; } = string.Empty;
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Saldo { get; set; }
-
         [MaxLength(300)]
         public string Observacion { get; set; } = string.Empty;
         public EstadoRegistro EstadoRegistro { get; set; }

@@ -14,7 +14,7 @@ namespace TiendaRopa.Shared.DTO.Proveedor
         public int PedidoId { get; set; }
         public string? FacturaPedido { get; set; } 
 
-        public int ProductoId { get; set; }
+        public int VarianteId { get; set; }
         public string? NombreProducto { get; set; }
     }
 }

@@ -34,7 +34,7 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
                 Nombre = x.Nombre,
                 Apellido = x.Apellido,
                 Dni = x.Dni,
-                Saldo = x.Saldo
+                
             }).ToListAsync();
             return lista;
         }
@@ -50,7 +50,7 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
                 Dni = model.Dni,
                 FechaNacimiento = model.FechaNacimiento,
                 Direccion = model.Direccion,
-                Saldo = model.Saldo,
+             
                 EstadoRegistro = EstadoRegistro.activo
             };
             var resultado = await userManager.CreateAsync(nuevoUsuario, model.Password);
@@ -83,7 +83,7 @@ namespace TiendaRopa.Repositorio.Repositorios.Usuario
                     Nombre = x.Nombre,
                     Apellido = x.Apellido,
                     Dni = x.Dni,
-                    Saldo = x.Saldo
+                   
                 }).FirstOrDefaultAsync();
         }
         public async Task<ApplicationUser?> ObtenerEntidadStringId(string id)

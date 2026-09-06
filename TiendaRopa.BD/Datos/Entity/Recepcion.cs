@@ -7,7 +7,7 @@ namespace TiendaRopa.BD.Datos.Entity
 {
     public class Recepcion : EntityBase
     {
-        public DateTime FechaDePedido { get; set; }
+        public DateTime FechaDeEntrega { get; set; }
 
         [MaxLength(45, ErrorMessage = "El Remito del proveedor no puede exceder los 45 caracteres.")]
         public required string RemitoProveedor { get; set; }

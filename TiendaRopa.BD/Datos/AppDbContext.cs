@@ -19,9 +19,17 @@ namespace TiendaRopa.BD.Datos
         public DbSet<DetallesRecepcion> DetallesRecepciones { get; set; }
         public DbSet<ProductoColor> ProductosColores { get; set; }
         public DbSet<Variante> Variantes { get; set; }
-
+        public DbSet<Envio> Envios { get; set; }
         public DbSet<DetallesPedido> DetallesPedidos { get; set; }
         public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<PagoVenta> PagosVenta { get; set; }
+        public DbSet<Comprador> Compradores => Set<Comprador>();
+        public DbSet<Carrito> Carritos => Set<Carrito>();
+        public DbSet<Venta> Ventas => Set<Venta>();
+        public DbSet<MovimientoCuentaCorriente> MovimientosCuentaCorriente => Set<MovimientoCuentaCorriente>();
+        public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+        public DbSet<DetalleVenta> DetallesVenta => Set<DetalleVenta>();
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -31,15 +39,14 @@ namespace TiendaRopa.BD.Datos
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
             // 2. Renombrar la columna Id a IdentityId (si aún deseas mantener este nombre en la base de datos)
             modelBuilder.Entity<ApplicationUser>()
                 .Property(u => u.Id)
                 .HasColumnName("IdentityId");
 
-            // 3. Configurar la precisión de los decimales para el Saldo del usuario
-            modelBuilder.Entity<ApplicationUser>()
-                .Property(u => u.Saldo)
-                .HasPrecision(18, 2);
+  
 
             // 4. Desactivar el borrado en cascada global para evitar bloqueos en SQL Server
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
