@@ -1,0 +1,142 @@
+@page "/admin/ventas/detalle/{Id:int}"
+@using TiendaRopa.Shared.DTO.Venta
+@using TiendaRopa.Shared.ENUM
+@using TiendaRopa.Servicio.ServiciosHttp
+@inject IHttpServicio http
+@inject NavigationManager nav
+@inject IJSRuntime js
+
+<h3>Venta #@Id</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando venta...</em></p>
+}
+else if (venta != null)
+{
+    var anulada = venta.Estado == EstadosVenta.Anulada;
+    var editable = !anulada && venta.Canal == CanalVenta.Presencial;
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3"><strong>Fecha</strong><br />@venta.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                <div class="col-md-3"><strong>Cliente</strong><br />@venta.Cliente</div>
+                <div class="col-md-2"><strong>Canal</strong><br />@venta.Canal</div>
+                <div class="col-md-2"><strong>Pago</strong><br />@(venta.MetodoPago ?? "—")</div>
+                <div class="col-md-2">
+                    <strong>Estado</strong><br />
+                    <span class="badge @(anulada ? "bg-secondary" : "bg-success")">@venta.Estado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th></th>
+                    <th>Artículo</th>
+                    <th>Talle</th>
+                    <th>Código</th>
+                    <th class="text-end">Cantidad</th>
+                    <th class="text-end">Precio unitario</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in venta.Detalles)
+                {
+                    <tr>
+                        <td style="width:56px">
+                            @if (!string.IsNullOrWhiteSpace(d.UrlImagen))
+                            {
+                                <img src="@d.UrlImagen" alt="@d.Producto" style="width:44px;height:44px;object-fit:cover;border-radius:4px" />
+                            }
+                        </td>
+                        <td>@d.Producto <span class="text-muted">- @d.Color</span></td>
+                        <td>@d.Talle</td>
+                        <td>@d.CodVariante</td>
+                        <td class="text-end">@d.Cantidad</td>
+                        <td class="text-end">@($"${d.PrecioUnitario:N2}")</td>
+                        <td class="text-end">@($"${d.Subtotal:N2}")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="6" class="text-end">Total</td>
+                    <td class="text-end">@($"${venta.Monto:N2}")</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="ventas">Volver al historial</a>
+        @if (editable)
+        {
+            <a class="btn btn-primary" href="ventas/editar/@venta.Id">Editar</a>
+            <button type="button" class="btn btn-outline-danger" @onclick="Anular">Anular venta</button>
+        }
+    </div>
+}
+else if (string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-warning">No se encontró la venta.</div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private VentaDetalleDTO? venta;
+    private bool cargando = true;
+    private string? error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Cargar();
+    }
+
+    private async Task Cargar()
+    {
+        cargando = true;
+        error = null;
+
+        var respuesta = await http.Get<VentaDetalleDTO>($"api/Venta/{Id}");
+        if (respuesta.Error)
+        {
+            error = await respuesta.ObtenerMensajeAsync();
+            venta = null;
+        }
+        else
+        {
+            venta = respuesta.Respuesta;
+        }
+
+        cargando = false;
+    }
+
+    private async Task Anular()
+    {
+        var confirmado = await js.InvokeAsync<bool>("confirm",
+            $"¿Anular la venta #{Id}? Se repondrá el stock de sus artículos.");
+        if (!confirmado) return;
+
+        var respuesta = await http.Delete($"api/Venta/anular/{Id}");
+        if (respuesta.Error)
+        {
+            error = await respuesta.ObtenerMensajeAsync();
+        }
+        else
+        {
+            await Cargar();
+        }
+    }
+}

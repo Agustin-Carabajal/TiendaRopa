@@ -21,7 +21,7 @@ namespace TiendaRopa.BD.Datos
         public DbSet<Variante> Variantes { get; set; }
         public DbSet<Envio> Envios { get; set; }
         public DbSet<DetallesPedido> DetallesPedidos { get; set; }
-        public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<Cliente> Clientes  => Set<Cliente>();
         public DbSet<Pago> Pagos { get; set; }
         public DbSet<PagoVenta> PagosVenta { get; set; }
         public DbSet<Carrito> Carritos => Set<Carrito>();

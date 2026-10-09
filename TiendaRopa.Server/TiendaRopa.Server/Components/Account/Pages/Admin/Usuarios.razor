@@ -7,6 +7,7 @@
 
 <input @bind="email" placeholder="Email de la cuenta" />
 <button @onclick="Promover">Dar rol de administrador</button>
+<button @onclick="Quitar">Quitar rol de administrador</button>
 <p>@mensaje</p>
 
 @code {
@@ -17,5 +18,11 @@
     {
         var (ok, error) = await Servicio.HacerAdminAsync(email.Trim());
         mensaje = ok ? "Listo: la cuenta ahora es administradora." : error;
+    }
+
+    private async Task Quitar()
+    {
+        var (ok, error) = await Servicio.QuitarAdminAsync(email.Trim());
+        mensaje = ok ? "Listo: la cuenta ya no es administradora." : error;
     }
 }

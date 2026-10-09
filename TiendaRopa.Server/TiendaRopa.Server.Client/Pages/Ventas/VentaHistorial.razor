@@ -1,0 +1,187 @@
+@page "/admin/ventas"
+@using TiendaRopa.Shared.DTO.Venta
+@using TiendaRopa.Shared.ENUM
+@using TiendaRopa.Servicio.ServiciosHttp
+@inject IHttpServicio http
+@inject IJSRuntime js
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Historial de ventas</h3>
+    <a class="btn btn-primary" href="ventas/nueva">+ Nueva venta</a>
+</div>
+
+<div class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Canal</label>
+            <select class="form-select" @bind="canalFiltro">
+                <option value="">Todos</option>
+                <option value="Presencial">Presencial</option>
+                <option value="Web">Web</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Desde</label>
+            <input type="date" class="form-control" @bind="desde" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Hasta</label>
+            <input type="date" class="form-control" @bind="hasta" />
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary flex-fill" @onclick="Cargar">Filtrar</button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-success">@mensaje</div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando ventas...</em></p>
+}
+else if (ventas.Count == 0)
+{
+    <div class="alert alert-info">No hay ventas para los filtros elegidos.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Canal</th>
+                    <th>Pago</th>
+                    <th class="text-end">Artículos</th>
+                    <th class="text-end">Monto</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in ventas)
+                {
+                    var anulada = v.Estado == EstadosVenta.Anulada;
+                    var editable = !anulada && v.Canal == CanalVenta.Presencial;
+                    <tr class="@(anulada ? "text-muted" : "")">
+                        <td>@v.Id</td>
+                        <td>@v.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@v.Cliente</td>
+                        <td><span class="badge @(v.Canal == CanalVenta.Web ? "bg-info text-dark" : "bg-light text-dark border")">@v.Canal</span></td>
+                        <td>@(v.MetodoPago ?? "—")</td>
+                        <td class="text-end">@v.CantidadArticulos</td>
+                        <td class="text-end">@($"${v.Monto:N2}")</td>
+                        <td><span class="badge @(anulada ? "bg-secondary" : "bg-success")">@v.Estado</span></td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" href="ventas/detalle/@v.Id">Detalle</a>
+                            @if (editable)
+                            {
+                                <a class="btn btn-sm btn-outline-secondary" href="ventas/editar/@v.Id">Editar</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => Anular(v)">Anular</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="6" class="text-end">Total (sin anuladas)</td>
+                    <td class="text-end">@($"${TotalVendido:N2}")</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+@code {
+    private List<VentaMostrarDTO> ventas = new();
+    private bool cargando = true;
+    private string? error;
+    private string? mensaje;
+
+    // Por defecto el administrador ve las ventas del local.
+    private string canalFiltro = "Presencial";
+    private DateTime? desde;
+    private DateTime? hasta;
+
+    private decimal TotalVendido => ventas.Where(v => v.Estado != EstadosVenta.Anulada).Sum(v => v.Monto);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Cargar();
+    }
+
+    private async Task Cargar()
+    {
+        cargando = true;
+        error = null;
+
+        var filtros = new List<string>();
+        if (!string.IsNullOrEmpty(canalFiltro))
+            filtros.Add($"canal={canalFiltro}");
+        if (desde.HasValue)
+            filtros.Add("desde=" + Uri.EscapeDataString(InicioDeDiaEnUtc(desde.Value).ToString("o")));
+        if (hasta.HasValue)
+            filtros.Add("hasta=" + Uri.EscapeDataString(InicioDeDiaEnUtc(hasta.Value.AddDays(1)).ToString("o")));
+
+        var url = "api/Venta/historial" + (filtros.Count > 0 ? "?" + string.Join("&", filtros) : "");
+        var respuesta = await http.Get<List<VentaMostrarDTO>>(url);
+
+        if (respuesta.Error)
+        {
+            error = await respuesta.ObtenerMensajeAsync();
+            ventas = new();
+        }
+        else
+        {
+            ventas = respuesta.Respuesta ?? new();
+        }
+
+        cargando = false;
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        canalFiltro = "Presencial";
+        desde = null;
+        hasta = null;
+        await Cargar();
+    }
+
+    private async Task Anular(VentaMostrarDTO venta)
+    {
+        var confirmado = await js.InvokeAsync<bool>("confirm",
+            $"¿Anular la venta #{venta.Id}? Se repondrá el stock de sus artículos.");
+        if (!confirmado) return;
+
+        mensaje = null;
+        error = null;
+
+        var respuesta = await http.Delete($"api/Venta/anular/{venta.Id}");
+        if (respuesta.Error)
+        {
+            error = await respuesta.ObtenerMensajeAsync();
+        }
+        else
+        {
+            mensaje = $"Venta #{venta.Id} anulada.";
+            await Cargar();
+        }
+    }
+
+    // El usuario elige fechas del calendario local; el servidor trabaja en UTC.
+    private static DateTime InicioDeDiaEnUtc(DateTime fecha)
+        => DateTime.SpecifyKind(fecha.Date, DateTimeKind.Local).ToUniversalTime();
+}

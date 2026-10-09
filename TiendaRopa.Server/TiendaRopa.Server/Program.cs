@@ -6,6 +6,7 @@ using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios.ClientesRep;
 using TiendaRopa.Repositorio.Repositorios.PedidosRep;
 using TiendaRopa.Repositorio.Repositorios.ProductoRep;
+using TiendaRopa.Repositorio.Repositorios.VentasRep;
 using TiendaRopa.Server.Client.Pages;
 using TiendaRopa.Server.Components;
 using TiendaRopa.Server.Components.Account;
@@ -73,7 +74,9 @@ builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
+builder.Services.AddScoped<IVentaRepositorio, VentaRepositorio>();
 builder.Services.AddScoped<UsuarioAdminService>();
+
 #endregion
 
 

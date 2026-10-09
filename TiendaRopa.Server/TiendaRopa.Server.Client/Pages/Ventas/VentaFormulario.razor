@@ -1,0 +1,363 @@
+@page "/admin/ventas/nueva"
+@page "/admin/ventas/editar/{Id:int}"
+@using TiendaRopa.Shared.DTO.Cliente
+@using TiendaRopa.Shared.DTO.Producto_y_mas
+@using TiendaRopa.Shared.DTO.Venta
+@using TiendaRopa.Shared.ENUM
+@using TiendaRopa.Servicio.ServiciosHttp
+@inject IHttpServicio http
+@inject NavigationManager nav
+
+<h3>@(EsEdicion ? $"Editar venta #{Id}" : "Nueva venta presencial")</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando datos...</em></p>
+}
+else if (bloqueada)
+{
+    <a class="btn btn-outline-secondary" href="ventas">Volver al historial</a>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Cliente *</label>
+            <select class="form-select" @bind="clienteId">
+                <option value="0">-- Seleccionar cliente --</option>
+                @foreach (var c in clientes)
+                {
+                    <option value="@c.Id">@NombreCliente(c)@(string.IsNullOrWhiteSpace(c.Dni) ? "" : $" - DNI {c.Dni}")</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Método de pago</label>
+            <select class="form-select" @bind="pagoId">
+                <option value="">-- Sin especificar --</option>
+                @foreach (var p in metodosPago)
+                {
+                    <option value="@p.Id">@p.Tipo</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <h5>Artículos</h5>
+    <div class="card card-body mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Buscar</label>
+                <input class="form-control" placeholder="Nombre, color, talle o código"
+                       @bind="filtro" @bind:event="oninput" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Artículo</label>
+                <select class="form-select" @bind="varianteSeleccionadaId">
+                    <option value="0">-- Seleccionar artículo --</option>
+                    @foreach (var v in VariantesFiltradas)
+                    {
+                        <option value="@v.Id">@v.ProductoColor | Talle @v.Talle | $@v.PrecioVenta.ToString("N2") | Stock @v.Stock</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Cant.</label>
+                <input type="number" min="1" class="form-control" @bind="cantidadAgregar" />
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-primary w-100"
+                        disabled="@(varianteSeleccionadaId == 0)" @onclick="AgregarLinea">
+                    Agregar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (lineas.Count == 0)
+    {
+        <div class="alert alert-info">Todavía no agregó artículos a la venta.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Talle</th>
+                        <th class="text-end">Disponible</th>
+                        <th style="width:110px">Cantidad</th>
+                        <th style="width:150px">Precio unitario</th>
+                        <th class="text-end">Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in lineas)
+                    {
+                        <tr>
+                            <td>@l.Descripcion</td>
+                            <td>@l.Talle</td>
+                            <td class="text-end">@l.MaxCantidad</td>
+                            <td>
+                                <input type="number" min="1" max="@l.MaxCantidad" class="form-control form-control-sm" @bind="l.Cantidad" />
+                            </td>
+                            <td>
+                                <input type="number" min="0" step="0.01" class="form-control form-control-sm" @bind="l.PrecioUnitario" />
+                            </td>
+                            <td class="text-end">@($"${l.Subtotal:N2}")</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => QuitarLinea(l)">Quitar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-light fw-bold">
+                        <td colspan="5" class="text-end">Total</td>
+                        <td class="text-end">@($"${Total:N2}")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary" disabled="@guardando" @onclick="Guardar">
+            @(guardando ? "Guardando..." : (EsEdicion ? "Guardar cambios" : "Registrar venta"))
+        </button>
+        <a class="btn btn-outline-secondary" href="@(EsEdicion ? $"ventas/detalle/{Id}" : "ventas")">Cancelar</a>
+    </div>
+}
+
+@code {
+    // Presente solo en /ventas/editar/{Id}; en /ventas/nueva queda en null.
+    [Parameter] public int? Id { get; set; }
+
+    private bool EsEdicion => Id.HasValue;
+
+    private List<ClienteMostrarDTO> clientes = new();
+    private List<VarianteMostrarDTO> variantes = new();
+    private List<PagoMostrarDTO> metodosPago = new();
+    private List<LineaVenta> lineas = new();
+
+    private int clienteId;
+    private int? pagoId;
+
+    private string filtro = string.Empty;
+    private int varianteSeleccionadaId;
+    private int cantidadAgregar = 1;
+
+    private bool cargando = true;
+    private bool guardando;
+    private bool bloqueada;
+    private string? error;
+
+    private decimal Total => lineas.Sum(l => l.Subtotal);
+
+    private IEnumerable<VarianteMostrarDTO> VariantesFiltradas
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(filtro)) return variantes;
+            var texto = filtro.Trim();
+            return variantes.Where(v =>
+                v.ProductoColor.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                v.Talle.Contains(texto, StringComparison.OrdinalIgnoreCase) ||
+                v.CodVariante.Contains(texto, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var rClientes = await http.Get<List<ClienteMostrarDTO>>("api/Cliente/listarclientes");
+        var rVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Venta/variantes-disponibles");
+        var rPagos = await http.Get<List<PagoMostrarDTO>>("api/Venta/metodos-pago");
+
+        if (rClientes.Error || rVariantes.Error || rPagos.Error)
+        {
+            error = "No se pudieron cargar los datos para la venta.";
+            bloqueada = true;
+            cargando = false;
+            return;
+        }
+
+        clientes = rClientes.Respuesta ?? new();
+        variantes = rVariantes.Respuesta ?? new();
+        metodosPago = rPagos.Respuesta ?? new();
+
+        if (EsEdicion)
+        {
+            await CargarVentaExistente();
+        }
+
+        cargando = false;
+    }
+
+    private async Task CargarVentaExistente()
+    {
+        var respuesta = await http.Get<VentaDetalleDTO>($"api/Venta/{Id}");
+        if (respuesta.Error || respuesta.Respuesta == null)
+        {
+            error = await respuesta.ObtenerMensajeAsync();
+            bloqueada = true;
+            return;
+        }
+
+        var venta = respuesta.Respuesta;
+
+        if (venta.Estado == EstadosVenta.Anulada)
+        {
+            error = "No se puede editar una venta anulada.";
+            bloqueada = true;
+            return;
+        }
+        if (venta.Canal != CanalVenta.Presencial)
+        {
+            error = "Solo se pueden editar ventas presenciales.";
+            bloqueada = true;
+            return;
+        }
+
+        // Si el cliente se dio de baja después de la venta, igual tiene que aparecer en el combo.
+        if (!clientes.Any(c => c.Id == venta.ClienteId))
+        {
+            clientes.Add(new ClienteMostrarDTO { Id = venta.ClienteId, Nombre = venta.Cliente });
+        }
+
+        clienteId = venta.ClienteId;
+        pagoId = venta.PagoId;
+
+        lineas = venta.Detalles.Select(d => new LineaVenta
+        {
+            VarianteId = d.VarianteId,
+            Descripcion = $"{d.Producto} - {d.Color}",
+            Talle = d.Talle,
+            Cantidad = d.Cantidad,
+            PrecioUnitario = d.PrecioUnitario,
+            // Lo ya vendido vuelve al stock al guardar, así que cuenta como disponible.
+            MaxCantidad = d.StockActual + d.Cantidad
+        }).ToList();
+    }
+
+    private void AgregarLinea()
+    {
+        error = null;
+
+        var variante = variantes.FirstOrDefault(v => v.Id == varianteSeleccionadaId);
+        if (variante == null) return;
+
+        var cantidad = cantidadAgregar < 1 ? 1 : cantidadAgregar;
+
+        var existente = lineas.FirstOrDefault(l => l.VarianteId == variante.Id);
+        if (existente != null)
+        {
+            existente.Cantidad += cantidad;
+        }
+        else
+        {
+            lineas.Add(new LineaVenta
+            {
+                VarianteId = variante.Id,
+                Descripcion = variante.ProductoColor,
+                Talle = variante.Talle,
+                Cantidad = cantidad,
+                PrecioUnitario = variante.PrecioVenta,
+                MaxCantidad = variante.Stock
+            });
+        }
+
+        varianteSeleccionadaId = 0;
+        cantidadAgregar = 1;
+    }
+
+    private void QuitarLinea(LineaVenta linea) => lineas.Remove(linea);
+
+    private async Task Guardar()
+    {
+        error = Validar();
+        if (error != null) return;
+
+        var dto = new VentaCrearDTO
+        {
+            ClienteId = clienteId,
+            PagoId = pagoId,
+            Detalles = lineas.Select(l => new DetalleVentaCrearDTO
+            {
+                VarianteId = l.VarianteId,
+                Cantidad = l.Cantidad,
+                PrecioUnitario = l.PrecioUnitario
+            }).ToList()
+        };
+
+        guardando = true;
+        try
+        {
+            if (EsEdicion)
+            {
+                var respuesta = await http.Put($"api/Venta/editar/{Id}", dto);
+                if (respuesta.Error)
+                {
+                    error = await respuesta.ObtenerMensajeAsync();
+                    return;
+                }
+                nav.NavigateTo($"ventas/detalle/{Id}");
+            }
+            else
+            {
+                var respuesta = await http.Post<VentaCrearDTO, int>("api/Venta/crear", dto);
+                if (respuesta.Error)
+                {
+                    error = await respuesta.ObtenerMensajeAsync();
+                    return;
+                }
+                nav.NavigateTo($"ventas/detalle/{respuesta.Respuesta}");
+            }
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    // Validación rápida en pantalla; el servidor vuelve a validar todo (stock incluido).
+    private string? Validar()
+    {
+        if (clienteId == 0) return "Seleccione un cliente.";
+        if (lineas.Count == 0) return "Agregue al menos un artículo.";
+
+        foreach (var l in lineas)
+        {
+            if (l.Cantidad < 1)
+                return $"La cantidad de {l.Descripcion} debe ser mayor a 0.";
+            if (l.Cantidad > l.MaxCantidad)
+                return $"Stock insuficiente para {l.Descripcion} (talle {l.Talle}): máximo {l.MaxCantidad}.";
+            if (l.PrecioUnitario < 0)
+                return $"El precio de {l.Descripcion} no puede ser negativo.";
+        }
+
+        return null;
+    }
+
+    private static string NombreCliente(ClienteMostrarDTO c)
+        => string.IsNullOrWhiteSpace(c.Apellido) ? c.Nombre : $"{c.Apellido}, {c.Nombre}";
+
+    private class LineaVenta
+    {
+        public int VarianteId { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public string Talle { get; set; } = string.Empty;
+        public int Cantidad { get; set; } = 1;
+        public decimal PrecioUnitario { get; set; }
+        public int MaxCantidad { get; set; }
+
+        public decimal Subtotal => Math.Round(Cantidad * PrecioUnitario, 2, MidpointRounding.AwayFromZero);
+    }
+}
