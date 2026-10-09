@@ -9,8 +9,8 @@ public class Venta : EntityBase
     public string Estado { get; set; } = string.Empty;
     public decimal Monto { get; set; }
 
-    public int CompradorId { get; set; }
-    public Comprador Comprador { get; set; } = null!;
+    public int ClienteId { get; set; }
+    public Cliente Cliente { get; set; } = null!;
 
     // Nullable: las ventas presenciales se cargan directo, sin pasar por un carrito.
     public int? CarritoId { get; set; }

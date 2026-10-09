@@ -16,7 +16,7 @@ namespace TiendaRopa.Shared.DTO.Cliente
 
         public string? Dni { get; set; }
 
-        public DateTime? FechaNacimiento { get; set; }
+        public DateOnly? FechaNacimiento { get; set; }
 
         public string? Domicilio { get; set; }
 
@@ -25,6 +25,6 @@ namespace TiendaRopa.Shared.DTO.Cliente
         [Column(TypeName = "decimal(18,2)")]
         public decimal Saldo { get; set; }
 
-        public string Rol { get; set; } = string.Empty;
+       
     }
 }

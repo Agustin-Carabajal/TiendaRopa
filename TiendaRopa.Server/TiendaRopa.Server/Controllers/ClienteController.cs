@@ -61,7 +61,6 @@ namespace TiendaRopa.Server.Controllers
                 Domicilio = DTO.Domicilio,
                 Telefono = DTO.Telefono,
                 Saldo = DTO.Saldo,
-                Rol = DTO.Rol
             };
 
             var id = await repositorio.Insert(entidad);

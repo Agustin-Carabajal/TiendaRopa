@@ -19,7 +19,7 @@ namespace TiendaRopa.Shared.DTO.Cliente
         [MaxLength(8, ErrorMessage = "El DNI no puede exceder los 8 caracteres.")]
         public string? Dni { get; set; }
 
-        public DateTime? FechaNacimiento { get; set; }
+        public DateOnly? FechaNacimiento { get; set; }
 
         [MaxLength(300, ErrorMessage = "El domicilio no puede exceder los 300 caracteres.")]
         public string? Domicilio { get; set; }
@@ -30,8 +30,7 @@ namespace TiendaRopa.Shared.DTO.Cliente
         [Column(TypeName = "decimal(18,2)")]
         public decimal Saldo { get; set; }
 
-        [MaxLength(50, ErrorMessage = "El rol no puede exceder los 50 caracteres.")]
-        public string Rol { get; set; } = string.Empty;
+   
 
      
     }

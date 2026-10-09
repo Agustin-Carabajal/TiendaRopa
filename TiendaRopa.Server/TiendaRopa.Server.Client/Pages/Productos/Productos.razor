@@ -1,5 +1,7 @@
-﻿@page "/productos"
+﻿@page "/admin/productos"
+@attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveAuto
+@using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Producto_y_mas;
 @inject IHttpServicio http
 

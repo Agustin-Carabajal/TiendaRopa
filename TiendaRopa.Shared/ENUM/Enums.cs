@@ -1,6 +1,6 @@
 namespace TiendaRopa.Shared.ENUM;
 
-public enum OrigenComprador
+public enum OrigenCliente
 {
     Presencial,
     Web

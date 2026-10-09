@@ -1,7 +1,9 @@
 ﻿@page "/admin/detalles-pedido/detalle"
 @page "/admin/detalles-pedido/detalle/{Id:int}"
-@using TiendaRopa.Shared.DTO.Proveedor
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Producto_y_mas
+@using TiendaRopa.Shared.DTO.Proveedor
 @inject HttpClient Http
 @inject NavigationManager Navigation
 

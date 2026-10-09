@@ -20,11 +20,11 @@ namespace TiendaRopa.BD.Datos.Entity
         [MaxLength(100, ErrorMessage = "El estado del envío no puede exceder los 100 caracteres.")]
         public string Estado { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La fecha de inicio del envío es obligatoria.")]
+        
         public DateTime HoraInicio { get; set; }
 
-        [Required(ErrorMessage = "La fecha de llegada del envío es obligatoria.")]
-        public DateTime? HoraLlegada { get; set; }
+        
+        public DateTime HoraLlegada { get; set; }
 
         public int VentaId { get; set; }
         public Venta? Venta { get; set; }

@@ -32,7 +32,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ClientesRep
                 Domicilio = x.Domicilio,
                 Telefono = x.Telefono,
                 Saldo = x.Saldo,
-                Rol = x.Rol
+                
             }).ToListAsync();
             return lista;
         }
@@ -63,7 +63,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ClientesRep
                     Domicilio = c.Domicilio,
                     Telefono = c.Telefono,
                     Saldo = c.Saldo,
-                    Rol = c.Rol
+                   
                 })
                 .FirstOrDefaultAsync();
         }

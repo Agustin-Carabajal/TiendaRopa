@@ -1,0 +1,21 @@
+﻿@page "/admin/usuarios"
+@using TiendaRopa.Servicio
+@rendermode InteractiveServer
+@inject UsuarioAdminService Servicio
+
+<h3>Administradores</h3>
+
+<input @bind="email" placeholder="Email de la cuenta" />
+<button @onclick="Promover">Dar rol de administrador</button>
+<p>@mensaje</p>
+
+@code {
+    private string email = "";
+    private string? mensaje;
+
+    private async Task Promover()
+    {
+        var (ok, error) = await Servicio.HacerAdminAsync(email.Trim());
+        mensaje = ok ? "Listo: la cuenta ahora es administradora." : error;
+    }
+}

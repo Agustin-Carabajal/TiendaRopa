@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class PostgreMigracion : Migration
+    public partial class InicioPostgre : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,12 +31,6 @@ namespace TiendaRopa.BD.Migrations
                 columns: table => new
                 {
                     IdentityId = table.Column<string>(type: "text", nullable: false),
-                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Apellido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Dni = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    FechaNacimiento = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Direccion = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    Observacion = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -56,28 +50,6 @@ namespace TiendaRopa.BD.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.IdentityId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Clientes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Apellido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Dni = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
-                    FechaNacimiento = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Domicilio = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    Telefono = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    Saldo = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Rol = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
-                    Observacion = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Clientes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -309,32 +281,33 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Compradores",
+                name: "Clientes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ClienteId = table.Column<int>(type: "integer", nullable: true),
+                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Apellido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Dni = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: true),
+                    FechaNacimiento = table.Column<DateOnly>(type: "date", nullable: true),
+                    Domicilio = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    Telefono = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Saldo = table.Column<decimal>(type: "numeric(18,2)", nullable: false, defaultValue: 0m),
+                    Origen = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Presencial"),
                     ApplicationUserId = table.Column<string>(type: "text", nullable: true),
-                    Origen = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Compradores", x => x.Id);
-                    table.CheckConstraint("CK_Comprador_OrigenUnico", "(\"ClienteId\" IS NOT NULL AND \"ApplicationUserId\" IS NULL) OR (\"ClienteId\" IS NULL AND \"ApplicationUserId\" IS NOT NULL)");
+                    table.PrimaryKey("PK_Clientes", x => x.Id);
+                    table.CheckConstraint("CK_Clientes_Origen_Usuario", "(\"Origen\" = 'Web' AND \"ApplicationUserId\" IS NOT NULL) OR (\"Origen\" = 'Presencial' AND \"ApplicationUserId\" IS NULL)");
+                    table.CheckConstraint("CK_Clientes_Saldo_Solo_Presencial", "(\"Origen\" = 'Presencial') OR (\"Saldo\" = 0)");
                     table.ForeignKey(
-                        name: "FK_Compradores_AspNetUsers_ApplicationUserId",
+                        name: "FK_Clientes_AspNetUsers_ApplicationUserId",
                         column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "IdentityId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Compradores_Clientes_ClienteId",
-                        column: x => x.ClienteId,
-                        principalTable: "Clientes",
-                        principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -396,7 +369,7 @@ namespace TiendaRopa.BD.Migrations
                     FechaCreacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Estado = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CompradorId = table.Column<int>(type: "integer", nullable: false),
+                    ClienteId = table.Column<int>(type: "integer", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
                 },
@@ -404,9 +377,9 @@ namespace TiendaRopa.BD.Migrations
                 {
                     table.PrimaryKey("PK_Carritos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Carritos_Compradores_CompradorId",
-                        column: x => x.CompradorId,
-                        principalTable: "Compradores",
+                        name: "FK_Carritos_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -519,7 +492,7 @@ namespace TiendaRopa.BD.Migrations
                     CanalDeVenta = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Estado = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CompradorId = table.Column<int>(type: "integer", nullable: false),
+                    ClienteId = table.Column<int>(type: "integer", nullable: false),
                     CarritoId = table.Column<int>(type: "integer", nullable: true),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
@@ -534,9 +507,9 @@ namespace TiendaRopa.BD.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Ventas_Compradores_CompradorId",
-                        column: x => x.CompradorId,
-                        principalTable: "Compradores",
+                        name: "FK_Ventas_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -732,23 +705,27 @@ namespace TiendaRopa.BD.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Carritos_CompradorId",
+                name: "IX_Carritos_ClienteId",
                 table: "Carritos",
-                column: "CompradorId");
+                column: "ClienteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Compradores_ApplicationUserId",
-                table: "Compradores",
+                name: "IX_Clientes_Apellido_Nombre",
+                table: "Clientes",
+                columns: new[] { "Apellido", "Nombre" });
+
+            migrationBuilder.CreateIndex(
+                name: "UX_Clientes_ApplicationUserId",
+                table: "Clientes",
                 column: "ApplicationUserId",
-                unique: true,
-                filter: "\"ApplicationUserId\" IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Compradores_ClienteId",
-                table: "Compradores",
-                column: "ClienteId",
+                name: "UX_Clientes_Dni_Presencial",
+                table: "Clientes",
+                column: "Dni",
                 unique: true,
-                filter: "\"ClienteId\" IS NOT NULL");
+                filter: "\"Dni\" IS NOT NULL AND \"Origen\" = 'Presencial'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DetallesPedidos_PedidoId",
@@ -853,9 +830,9 @@ namespace TiendaRopa.BD.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ventas_CompradorId",
+                name: "IX_Ventas_ClienteId_FechaHora",
                 table: "Ventas",
-                column: "CompradorId");
+                columns: new[] { "ClienteId", "FechaHora" });
         }
 
         /// <inheritdoc />
@@ -934,16 +911,13 @@ namespace TiendaRopa.BD.Migrations
                 name: "Productos");
 
             migrationBuilder.DropTable(
-                name: "Compradores");
+                name: "Clientes");
 
             migrationBuilder.DropTable(
                 name: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "Clientes");
         }
     }
 }

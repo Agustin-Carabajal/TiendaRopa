@@ -1,6 +1,8 @@
 ﻿<h3>Proveedores</h3>
 
 @page "/admin/proveedores"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Proveedor
 @inject HttpClient Http
 @inject NavigationManager Navigation

@@ -12,15 +12,15 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260906235230_PostgreMigracion")]
-    partial class PostgreMigracion
+    [Migration("20261008225611_InicioPostgre")]
+    partial class InicioPostgre
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -187,24 +187,9 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Apellido")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
-
-                    b.Property<string>("Direccion")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
-
-                    b.Property<string>("Dni")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -216,19 +201,11 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("FechaNacimiento")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -237,11 +214,6 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<string>("Observacion")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
@@ -283,7 +255,7 @@ namespace TiendaRopa.BD.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CompradorId")
+                    b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Estado")
@@ -306,7 +278,7 @@ namespace TiendaRopa.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompradorId");
+                    b.HasIndex("ClienteId");
 
                     b.ToTable("Carritos", (string)null);
                 });
@@ -323,6 +295,9 @@ namespace TiendaRopa.BD.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Dni")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)");
@@ -334,8 +309,8 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("FechaNacimiento")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly?>("FechaNacimiento")
+                        .HasColumnType("date");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -346,13 +321,17 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Rol")
+                    b.Property<string>("Origen")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Presencial");
 
                     b.Property<decimal>("Saldo")
-                        .HasColumnType("decimal(18,2)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<string>("Telefono")
                         .HasMaxLength(20)
@@ -360,7 +339,24 @@ namespace TiendaRopa.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Clientes");
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Clientes_ApplicationUserId");
+
+                    b.HasIndex("Dni")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Clientes_Dni_Presencial")
+                        .HasFilter("\"Dni\" IS NOT NULL AND \"Origen\" = 'Presencial'");
+
+                    b.HasIndex("Apellido", "Nombre")
+                        .HasDatabaseName("IX_Clientes_Apellido_Nombre");
+
+                    b.ToTable("Clientes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Clientes_Origen_Usuario", "(\"Origen\" = 'Web' AND \"ApplicationUserId\" IS NOT NULL) OR (\"Origen\" = 'Presencial' AND \"ApplicationUserId\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Clientes_Saldo_Solo_Presencial", "(\"Origen\" = 'Presencial') OR (\"Saldo\" = 0)");
+                        });
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Color", b =>
@@ -385,48 +381,6 @@ namespace TiendaRopa.BD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Colores");
-                });
-
-            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("ClienteId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EstadoRegistro")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Observacion")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Origen")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique()
-                        .HasFilter("\"ApplicationUserId\" IS NOT NULL");
-
-                    b.HasIndex("ClienteId")
-                        .IsUnique()
-                        .HasFilter("\"ClienteId\" IS NOT NULL");
-
-                    b.ToTable("Compradores", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_Comprador_OrigenUnico", "(\"ClienteId\" IS NOT NULL AND \"ApplicationUserId\" IS NULL) OR (\"ClienteId\" IS NULL AND \"ApplicationUserId\" IS NOT NULL)");
-                        });
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetalleVenta", b =>
@@ -1021,7 +975,7 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int?>("CarritoId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CompradorId")
+                    b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Estado")
@@ -1047,7 +1001,7 @@ namespace TiendaRopa.BD.Migrations
                     b.HasIndex("CarritoId")
                         .IsUnique();
 
-                    b.HasIndex("CompradorId");
+                    b.HasIndex("ClienteId", "FechaHora");
 
                     b.ToTable("Ventas", (string)null);
                 });
@@ -1156,30 +1110,23 @@ namespace TiendaRopa.BD.Migrations
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Carrito", b =>
                 {
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Comprador", "Comprador")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Cliente", "Cliente")
                         .WithMany("Carritos")
-                        .HasForeignKey("CompradorId")
+                        .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Comprador");
+                    b.Navigation("Cliente");
                 });
 
-            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Cliente", b =>
                 {
                     b.HasOne("TiendaRopa.BD.Datos.ApplicationUser", "ApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Cliente", "Cliente")
-                        .WithMany()
-                        .HasForeignKey("ClienteId")
+                        .WithOne("Cliente")
+                        .HasForeignKey("TiendaRopa.BD.Datos.Entity.Cliente", "ApplicationUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ApplicationUser");
-
-                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.DetalleVenta", b =>
@@ -1362,15 +1309,20 @@ namespace TiendaRopa.BD.Migrations
                         .HasForeignKey("TiendaRopa.BD.Datos.Entity.Venta", "CarritoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Comprador", "Comprador")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Cliente", "Cliente")
                         .WithMany("Ventas")
-                        .HasForeignKey("CompradorId")
+                        .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Carrito");
 
-                    b.Navigation("Comprador");
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.ApplicationUser", b =>
+                {
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Carrito", b =>
@@ -1378,7 +1330,7 @@ namespace TiendaRopa.BD.Migrations
                     b.Navigation("Venta");
                 });
 
-            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Comprador", b =>
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Cliente", b =>
                 {
                     b.Navigation("Carritos");
 

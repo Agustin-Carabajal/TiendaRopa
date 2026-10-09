@@ -8,8 +8,8 @@ public class Carrito : EntityBase
     public string Estado { get; set; } = string.Empty;
     public decimal Monto { get; set; }
 
-    public int CompradorId { get; set; }
-    public Comprador Comprador { get; set; } = null!;
+    public int ClienteId { get; set; }
+    public Cliente Cliente { get; set; } = null!;
 
     // Relación 1 a 1: un carrito confirmado genera a lo sumo una venta.
     public Venta? Venta { get; set; }

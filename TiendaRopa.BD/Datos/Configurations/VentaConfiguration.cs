@@ -17,10 +17,12 @@ public class VentaConfiguration : IEntityTypeConfiguration<Venta>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.HasOne(v => v.Comprador)
+        builder.HasOne(v => v.Cliente)
             .WithMany(c => c.Ventas)
-            .HasForeignKey(v => v.CompradorId)
+            .HasForeignKey(v => v.ClienteId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(v => new { v.ClienteId, v.FechaHora });
 
         // 1 a 1 opcional: solo las ventas web nacen de un carrito.
         builder.HasOne(v => v.Carrito)

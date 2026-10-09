@@ -6,10 +6,10 @@ using TiendaRopa.BD.Datos;
 using TiendaRopa.Repositorio.Repositorios.ClientesRep;
 using TiendaRopa.Repositorio.Repositorios.PedidosRep;
 using TiendaRopa.Repositorio.Repositorios.ProductoRep;
-using TiendaRopa.Repositorio.Repositorios.Usuario;
 using TiendaRopa.Server.Client.Pages;
 using TiendaRopa.Server.Components;
 using TiendaRopa.Server.Components.Account;
+using TiendaRopa.Servicio;
 using TiendaRopa.Servicio.ServiciosHttp;
 
 
@@ -64,7 +64,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddScoped<IApplicationUserRepositorio, ApplicationUserRepositorio>();
 builder.Services.AddScoped<ITalleRepositorio, TalleRepositorio>();
 builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
 builder.Services.AddScoped<IProductoColorRepositorio, ProductoColorRepositorio>();
@@ -74,7 +73,7 @@ builder.Services.AddScoped<IProveedorRepositorio, ProveedorRepositorio>();
 builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
-
+builder.Services.AddScoped<UsuarioAdminService>();
 #endregion
 
 
@@ -115,6 +114,14 @@ app.MapRazorComponents<App>()
 
 app.MapAdditionalIdentityEndpoints();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();   // aplica migraciones pendientes (opcional pero útil)
+}
+
+await IdentitySeeder.SeedAsync(app.Services);
 
 #endregion
 app.Run();

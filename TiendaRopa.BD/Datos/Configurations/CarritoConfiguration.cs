@@ -13,9 +13,9 @@ public class CarritoConfiguration : IEntityTypeConfiguration<Carrito>
         builder.Property(c => c.Monto).HasColumnType("decimal(18,2)");
         builder.Property(c => c.Estado).HasMaxLength(30).IsRequired();
 
-        builder.HasOne(c => c.Comprador)
+        builder.HasOne(c => c.Cliente)
             .WithMany(cp => cp.Carritos)
-            .HasForeignKey(c => c.CompradorId)
+            .HasForeignKey(c => c.ClienteId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

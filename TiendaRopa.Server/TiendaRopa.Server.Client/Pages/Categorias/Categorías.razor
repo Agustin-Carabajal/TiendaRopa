@@ -1,4 +1,6 @@
 ﻿@page "/admin/categorias"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Producto_y_mas
 @rendermode InteractiveAuto
 @inject IHttpServicio http

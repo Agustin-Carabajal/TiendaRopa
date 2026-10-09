@@ -1,5 +1,7 @@
-﻿@page "/clientes"
+﻿@page "/admin/clientes"
+@attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveAuto
+@using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Cliente;
 @inject IHttpServicio http
 
@@ -129,11 +131,7 @@
                                 <ValidationMessage For="@(() => clienteForm.Saldo)" class="text-danger small" />
                             </div>
 
-                            <div class="col-md-12">
-                                <label class="form-label fw-bold">Rol</label>
-                                <InputText class="form-control" @bind-Value="clienteForm.Rol" placeholder="Cliente / Mayorista / VIP" />
-                                <ValidationMessage For="@(() => clienteForm.Rol)" class="text-danger small" />
-                            </div>
+
                         </div>
                     </div>
 
@@ -214,7 +212,7 @@
             Domicilio = cliente.Domicilio,
             Telefono = cliente.Telefono,
             Saldo = cliente.Saldo,
-            Rol = cliente.Rol
+            
         };
 
         mostrarModal = true;
@@ -244,7 +242,6 @@
                 Domicilio = clienteForm.Domicilio,
                 Telefono = clienteForm.Telefono,
                 Saldo = clienteForm.Saldo,
-                Rol = clienteForm.Rol
             };
 
             var response = await http.Put($"api/Cliente/editar/{clienteIdEditar}", clienteUpdate);
