@@ -30,8 +30,30 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
 
         public async Task AddAsync(Pedido pedido)
         {
-            await _context.Pedidos.AddAsync(pedido);
-            await _context.SaveChangesAsync();
+            try
+            {
+                pedido.Proveedor = null;
+
+                if (string.IsNullOrWhiteSpace(pedido.FacturaPedidos))
+                {
+                    pedido.FacturaPedidos = $"PED-{DateTime.UtcNow:yyyyMMdd-HHmm}";
+                }
+
+                pedido.FechaDePedido = DateTime.SpecifyKind(pedido.FechaDePedido, DateTimeKind.Utc);
+
+                if (pedido.FechaDeEntrega.HasValue)
+                {
+                    pedido.FechaDeEntrega = DateTime.SpecifyKind(pedido.FechaDeEntrega.Value, DateTimeKind.Utc);
+                }
+
+                await _context.Pedidos.AddAsync(pedido);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                throw new Exception($"Error al guardar el pedido en la base de datos: {innerMsg}", ex);
+            }
         }
 
         public async Task UpdateAsync(Pedido pedido)
@@ -48,6 +70,14 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
                 _context.Pedidos.Remove(pedido);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        // <-- Nueva implementación requerida por la interfaz
+        public async Task<IEnumerable<DetallesPedido>> GetDetallesByPedidoIdAsync(int pedidoId)
+        {
+            return await _context.DetallesPedidos
+                                 .Where(d => d.PedidoId == pedidoId)
+                                 .ToListAsync();
         }
     }
 }

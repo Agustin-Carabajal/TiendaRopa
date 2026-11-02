@@ -1,0 +1,88 @@
+﻿@page "/admin/recepciones"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@using TiendaRopa.Shared.DTO.Proveedor
+@using TiendaRopa.Shared.DTO.Producto_y_mas
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Historial de Recepciones</h3>
+        <button class="btn btn-primary" @onclick="IrNuevaRecepcion">
+            <i class="bi bi-plus-circle"></i> Registrar Nueva Recepción
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeError))
+    {
+        <div class="alert alert-danger">@mensajeError</div>
+    }
+
+    @if (listaRecepciones == null)
+    {
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando recepciones...</p>
+        </div>
+    }
+    else if (!listaRecepciones.Any())
+    {
+        <div class="alert alert-info">No hay recepciones registradas todavía.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Remito Proveedor</th>
+                        <th>Fecha de Entrega</th>
+                        <th>Recibido Por</th>
+                        <th>Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rec in listaRecepciones)
+                    {
+                        <tr>
+                            <td>@rec.Id</td>
+                            <td>@rec.RemitoProveedor</td>
+                            <td>@rec.FechaDeEntrega.ToShortDateString()</td>
+                            <td>@rec.RecibidoPor</td>
+                            <td>@(string.IsNullOrEmpty(rec.Notas) ? "-" : rec.Notas)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<RecepcionDto>? listaRecepciones;
+    private string mensajeError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarRecepciones();
+    }
+
+    private async Task CargarRecepciones()
+    {
+        try
+        {
+            listaRecepciones = await Http.GetFromJsonAsync<List<RecepcionDto>>("api/recepciones");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar las recepciones: {ex.Message}";
+        }
+    }
+
+    private void IrNuevaRecepcion()
+    {
+        Navigation.NavigateTo("/admin/recepciones/nueva");
+    }
+}

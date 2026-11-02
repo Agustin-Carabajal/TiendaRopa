@@ -75,6 +75,7 @@ builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IVentaRepositorio, VentaRepositorio>();
+builder.Services.AddScoped<IRecepcionRepositorio, RecepcionRepositorio>();
 builder.Services.AddScoped<UsuarioAdminService>();
 
 #endregion

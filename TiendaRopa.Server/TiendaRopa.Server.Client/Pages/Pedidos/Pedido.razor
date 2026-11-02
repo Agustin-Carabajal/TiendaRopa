@@ -3,89 +3,376 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Proveedor
+@using TiendaRopa.Shared.DTO.Producto_y_mas
 @inject HttpClient Http
 @inject NavigationManager Navigation
 
-<h3>@(Id == null ? "Nuevo Pedido" : "Editar Pedido")</h3>
+<h3>@(Id == null ? "Nuevo Pedido a Proveedor" : "Editar Pedido")</h3>
 
-<EditForm Model="@modeloPedido" OnValidSubmit="Guardar">
+@if (mensajeError != null)
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+<EditForm Model="@modeloPedido" OnValidSubmit="GuardarPedidoCompleto">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="mb-3">
-        <label class="form-label">Proveedor</label>
-        <InputSelect @bind-Value="modeloPedido.IdProveedor" class="form-control">
-            <option value="0">-- Seleccione un Proveedor --</option>
-            @if (listaProveedores != null)
+    <!-- 1. DATOS GENERALES DEL PEDIDO -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">1. Datos de Encabezado</div>
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Proveedor</label>
+                <InputSelect @bind-Value="modeloPedido.IdProveedor" class="form-select">
+                    <option value="0">-- Seleccione Proveedor --</option>
+                    @if (listaProveedores != null && listaProveedores.Any())
+                    {
+                        @foreach (var prov in listaProveedores)
+                        {
+                            <option value="@prov.Id">@prov.RazonSocialProveedores</option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Nro. Factura / Código de Pedido</label>
+                <InputText @bind-Value="modeloPedido.FacturaPedido" class="form-control" readonly />
+                <small class="text-muted">Generado automáticamente</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Fecha de Realización</label>
+                <InputDate @bind-Value="modeloPedido.FechaDePedido" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Fecha Estimada de Entrega</label>
+                <InputDate @bind-Value="modeloPedido.FechaDeEntrega" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SECCIÓN PARA ARMAR LA LISTA DE PRENDAS A PEDIR -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span>2. Prendas / Productos a Solicitar</span>
+            <button type="button" class="btn btn-success btn-sm" @onclick="AbrirSelectorPrenda">
+                + Agregar Producto del Catálogo
+            </button>
+        </div>
+        <div class="card-body">
+
+            @if (mostrarSelectorPrenda)
             {
-                @foreach (var prov in listaProveedores)
-                {
-                    <option value="@prov.Id">@prov.RazonSocialProveedores</option>
-                }
+                <div class="p-3 mb-3 border rounded bg-light">
+                    <h6 class="text-primary mb-3">Seleccionar Producto Activo</h6>
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label">Producto / Prenda</label>
+                            <select class="form-select" @onchange="OnProductoSeleccionado">
+                                <option value="0">-- Elegir Producto --</option>
+                                @if (listaProductosCargados != null && listaProductosCargados.Any())
+                                {
+                                    @foreach (var prod in listaProductosCargados)
+                                    {
+                                        <option value="@prod.Id">@prod.Nombre (@prod.Marca)</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="0" disabled>No hay productos activos cargados en el sistema</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" min="1" class="form-control" 
+                                   @bind="itemDetalleNuevo.Cant_prod_Pedido" 
+                                   @bind:event="oninput" 
+                                   @onchange="CalcularSubtotalItem" />
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Precio Unit. ($)</label>
+                            <input type="number" step="0.01" class="form-control" 
+                                   @bind="itemDetalleNuevo.Valor_uni" 
+                                   @bind:event="oninput" 
+                                   @onchange="CalcularSubtotalItem" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Subtotal Estimado ($)</label>
+                            <input type="number" step="0.01" class="form-control" 
+                                   @bind="itemDetalleNuevo.Valor_est" readonly />
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <button type="button" class="btn btn-primary btn-sm me-2" @onclick="AgregarPrendaALista">
+                            Añadir a la Lista
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => mostrarSelectorPrenda = false">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
             }
-        </InputSelect>
+
+            @if (!prendasSolicitadas.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    Aún no agregaste productos a este pedido. Haz clic en <strong>"+ Agregar Producto del Catálogo"</strong> para comenzar.
+                </div>
+            }
+            else
+            {
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Precio Unitario</th>
+                            <th class="text-end">Subtotal Estimado</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in prendasSolicitadas)
+                        {
+                            <tr>
+                                <td>@item.NombreProducto</td>
+                                <td class="text-center">@item.Cant_prod_Pedido</td>
+                                <td class="text-end">$@item.Valor_uni</td>
+                                <td class="text-end fw-bold">$@item.Valor_est</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => QuitarPrenda(item)">
+                                        Quitar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <div class="d-flex justify-content-end align-items-center mt-3">
+                <h4 class="me-3">Total del Pedido:</h4>
+                <h3 class="text-success font-weight-bold">$@modeloPedido.TotalPedido</h3>
+            </div>
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Nro. Factura</label>
-        <InputText @bind-Value="modeloPedido.FacturaPedido" class="form-control" />
+    <div class="d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-success btn-lg" disabled="@(modeloPedido.IdProveedor == 0 || !prendasSolicitadas.Any())">
+            Guardar Pedido
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg" @onclick="Cancelar">
+            Cancelar
+        </button>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Total Pedido</label>
-        <InputNumber @bind-Value="modeloPedido.TotalPedido" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Fecha de Pedido</label>
-        <InputDate @bind-Value="modeloPedido.FechaDePedido" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Fecha de Entrega (Opcional)</label>
-        <InputDate @bind-Value="modeloPedido.FechaDeEntrega" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary" disabled="@(modeloPedido.IdProveedor == 0)">Guardar</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
 </EditForm>
 
 @code {
     [Parameter] public int? Id { get; set; }
 
     public PedidoDTO modeloPedido { get; set; } = new PedidoDTO();
-    private List<ProveedorDto>? listaProveedores;
+    private List<DetallePedidoDTO> prendasSolicitadas = new();
+    
+    private DetallePedidoDTO itemDetalleNuevo = new();
+    private bool mostrarSelectorPrenda = false;
+    private string? mensajeError;
+
+    private List<ProveedorDto>? listaProveedores = new();
+    private List<ProductoMostrarDTO>? listaProductosCargados = new();
 
     protected override async Task OnInitializedAsync()
     {
-        
-        listaProveedores = await Http.GetFromJsonAsync<List<ProveedorDto>>("api/proveedores");
-
-        
-        if (Id.HasValue)
+        try
         {
-            var respuesta = await Http.GetFromJsonAsync<PedidoDTO>($"api/pedidos/{Id}");
-            if (respuesta != null)
+            // 1. Cargar Proveedores
+            var respProveedores = await Http.GetAsync("api/proveedores");
+            if (respProveedores.IsSuccessStatusCode)
             {
-                modeloPedido = respuesta;
+                listaProveedores = await respProveedores.Content.ReadFromJsonAsync<List<ProveedorDto>>();
+            }
+
+            // 2. Cargar Productos Activos usando la ruta exacta de tu backend
+            var respProductos = await Http.GetAsync("api/Producto/lista-productos-activos");
+            if (respProductos.IsSuccessStatusCode)
+            {
+                listaProductosCargados = await respProductos.Content.ReadFromJsonAsync<List<ProductoMostrarDTO>>();
+            }
+            else
+            {
+                // Si devuelve 404 (Sin registros) dejamos la lista vacía para no arrojar excepción
+                listaProductosCargados = new List<ProductoMostrarDTO>();
+            }
+
+            // 3. Cargar Pedido si estamos en Edición
+            if (Id.HasValue)
+            {
+                var ped = await Http.GetFromJsonAsync<PedidoDTO>($"api/pedidos/{Id}");
+                if (ped != null)
+                {
+                    modeloPedido = ped;
+                    var det = await Http.GetFromJsonAsync<List<DetallePedidoDTO>>($"api/detallespedidos/porpedido/{Id}");
+                    if (det != null) prendasSolicitadas = det;
+                }
+            }
+            else
+            {
+                GenerarCodigoPedido();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al comunicarse con el servidor: {ex.Message}";
+        }
+    }
+
+    private void GenerarCodigoPedido()
+    {
+        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmm");
+        modeloPedido.FacturaPedido = $"PED-{timestamp}";
+    }
+
+    private void AbrirSelectorPrenda()
+    {
+        itemDetalleNuevo = new DetallePedidoDTO { Cant_prod_Pedido = 1, Valor_uni = 0 };
+        mostrarSelectorPrenda = true;
+    }
+
+    private void OnProductoSeleccionado(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int productoId) && productoId > 0)
+        {
+            var prod = listaProductosCargados?.FirstOrDefault(p => p.Id == productoId);
+            if (prod != null)
+            {
+                itemDetalleNuevo.VarianteId = prod.Id; // ID del producto
+                itemDetalleNuevo.NombreProducto = $"{prod.Nombre} ({prod.Marca})";
+                CalcularSubtotalItem();
             }
         }
     }
 
-    private async Task Guardar()
+    private void CalcularSubtotalItem()
     {
-        if (modeloPedido.IdProveedor == 0) return; 
+        itemDetalleNuevo.Valor_est = itemDetalleNuevo.Cant_prod_Pedido * itemDetalleNuevo.Valor_uni;
+    }
 
-        if (Id == null)
-        {
-            await Http.PostAsJsonAsync("api/pedidos", modeloPedido);
-        }
-        else
-        {
-            await Http.PutAsJsonAsync($"api/pedidos/{Id}", modeloPedido);
-        }
+    private void AgregarPrendaALista()
+    {
+        if (itemDetalleNuevo.VarianteId == 0 || itemDetalleNuevo.Cant_prod_Pedido <= 0) return;
 
-        Navigation.NavigateTo("/admin/pedidos");
+        prendasSolicitadas.Add(new DetallePedidoDTO
+        {
+            VarianteId = itemDetalleNuevo.VarianteId,
+            NombreProducto = itemDetalleNuevo.NombreProducto,
+            Cant_prod_Pedido = itemDetalleNuevo.Cant_prod_Pedido,
+            Valor_uni = itemDetalleNuevo.Valor_uni,
+            Valor_est = itemDetalleNuevo.Valor_est
+        });
+
+        RecalcularTotalGeneral();
+        mostrarSelectorPrenda = false;
+    }
+
+    private void QuitarPrenda(DetallePedidoDTO item)
+    {
+        prendasSolicitadas.Remove(item);
+        RecalcularTotalGeneral();
+    }
+
+    private void RecalcularTotalGeneral()
+    {
+        modeloPedido.TotalPedido = prendasSolicitadas.Sum(d => d.Valor_est);
+    }
+
+    private async Task GuardarPedidoCompleto()
+    {
+        if (modeloPedido.IdProveedor == 0 || !prendasSolicitadas.Any()) return;
+
+        try
+        {
+            if (Id == null)
+            {
+                var response = await Http.PostAsJsonAsync("api/pedidos", modeloPedido);
+                if (response.IsSuccessStatusCode)
+                {
+                    var pedidoCreado = await response.Content.ReadFromJsonAsync<PedidoDTO>();
+
+                    foreach (var prenda in prendasSolicitadas)
+                    {
+                        // Creamos el DTO limpio para asegurar el Content-Type correcto
+                        var detalleDto = new
+                        {
+                            Cant_prod_Pedido = prenda.Cant_prod_Pedido,
+                            Valor_est = prenda.Valor_est,
+                            Valor_uni = prenda.Valor_uni,
+                            PedidoId = pedidoCreado!.Id,
+                            VarianteId = prenda.VarianteId
+                        };
+
+                        var detalleResponse = await Http.PostAsJsonAsync("api/detallespedido", detalleDto);
+                        if (!detalleResponse.IsSuccessStatusCode)
+                        {
+                            var errorDetalle = await detalleResponse.Content.ReadAsStringAsync();
+                            throw new Exception($"Error al guardar el detalle (Variante ID {prenda.VarianteId}): {errorDetalle}");
+                        }
+                    }
+                }
+                else
+                {
+                    var errorPedido = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Error al crear el pedido: {errorPedido}");
+                }
+            }
+            else
+            {
+                var updateResponse = await Http.PutAsJsonAsync($"api/pedidos/{Id}", modeloPedido);
+                if (!updateResponse.IsSuccessStatusCode)
+                {
+                    var errorUpdate = await updateResponse.Content.ReadAsStringAsync();
+                    throw new Exception($"Error al actualizar el pedido: {errorUpdate}");
+                }
+
+                foreach (var prenda in prendasSolicitadas)
+                {
+                    var detalleDto = new
+                    {
+                        Id = prenda.Id,
+                        Cant_prod_Pedido = prenda.Cant_prod_Pedido,
+                        Valor_est = prenda.Valor_est,
+                        Valor_uni = prenda.Valor_uni,
+                        PedidoId = Id.Value,
+                        VarianteId = prenda.VarianteId
+                    };
+
+                    HttpResponseMessage detalleResponse;
+
+                    if (prenda.Id == 0)
+                        detalleResponse = await Http.PostAsJsonAsync("api/detallespedido", detalleDto);
+                    else
+                        detalleResponse = await Http.PutAsJsonAsync($"api/detallespedido/{prenda.Id}", detalleDto);
+
+                    if (!detalleResponse.IsSuccessStatusCode)
+                    {
+                        var errorDetalle = await detalleResponse.Content.ReadAsStringAsync();
+                        throw new Exception($"Error al procesar el detalle: {errorDetalle}");
+                    }
+                }
+            }
+
+            Navigation.NavigateTo("/admin/pedidos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al procesar el pedido: {ex.Message}";
+        }
     }
 
     private void Cancelar() => Navigation.NavigateTo("/admin/pedidos");

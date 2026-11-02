@@ -1,0 +1,215 @@
+﻿@page "/admin/recepciones/nueva"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@using TiendaRopa.Shared.DTO
+@using TiendaRopa.Shared.DTO.Proveedor
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<h3>Registrar Recepción de Mercadería</h3>
+
+@if (mensajeError != null)
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+
+<EditForm Model="@nuevaRecepcion" OnValidSubmit="GuardarRecepcion">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- CABECERA DE RECEPCIÓN -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">Datos del Remito / Recepción</div>
+        <div class="card-body row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Pedido Relacionado</label>
+                <select class="form-select" @onchange="OnPedidoCambiado">
+                    <option value="0">-- Seleccionar Pedido --</option>
+                    @if (listaPedidos != null && listaPedidos.Any())
+                    {
+                        @foreach (var ped in listaPedidos)
+                        {
+                            <option value="@ped.Id">Factura: @ped.FacturaPedido - ID: @ped.Id</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Nro. Remito Proveedor</label>
+                <InputText @bind-Value="nuevaRecepcion.RemitoProveedor" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Recibido Por</label>
+                <InputText @bind-Value="nuevaRecepcion.RecibidoPor" class="form-control" />
+            </div>
+
+            <div class="col-md-12">
+                <label class="form-label">Notas / Observaciones</label>
+                <InputText @bind-Value="nuevaRecepcion.Notas" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROL DE ITEMS PENDIENTES DEL PEDIDO -->
+    @if (itemsPendientes != null && itemsPendientes.Any())
+    {
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-dark text-white">Verificación de Prendas Recibidas</div>
+            <div class="card-body">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Producto / Variante</th>
+                            <th class="text-center">Ped. Orig.</th>
+                            <th class="text-center">Ya Recibido</th>
+                            <th class="text-center">Pendiente</th>
+                            <th style="width: 180px;">Ingreso Ahora</th>
+                            <th class="text-center">Subtotal ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in itemsPendientes)
+                        {
+                            <tr class="@(item.CantidadPendiente == 0 ? "table-success" : "")">
+                                <td>@item.NombreProducto</td>
+                                <td class="text-center">@item.CantidadPedida</td>
+                                <td class="text-center">@item.CantidadYaRecibida</td>
+                                <td class="text-center fw-bold text-danger">@item.CantidadPendiente</td>
+                                <td>
+                                    @if (item.CantidadPendiente > 0)
+                                    {
+                                        <input type="number"
+                                               class="form-control"
+                                               min="0"
+                                               max="@item.CantidadPendiente"
+                                               @bind="item.CantidadARecibirAhora"
+                                               @bind:event="oninput" />
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Completado</span>
+                                    }
+                                </td>
+                                <td class="text-center fw-bold">
+                                    $@(item.CantidadARecibirAhora * item.PrecioUnitario)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-success btn-lg" disabled="@(pedidoSeleccionadoId == 0)">
+                Guardar Recepción
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" @onclick="Cancelar">Cancelar</button>
+        </div>
+    }
+    else if (pedidoSeleccionadoId > 0)
+    {
+        <div class="alert alert-info">Este pedido ya fue recibido por completo o no contiene ítems pendientes.</div>
+    }
+</EditForm>
+
+@code {
+    private RecepcionDto nuevaRecepcion = new();
+    private List<PedidoDTO>? listaPedidos;
+    private List<ItemPedidoPendienteDTO>? itemsPendientes;
+    private int pedidoSeleccionadoId = 0;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar la lista de pedidos: {ex.Message}";
+        }
+    }
+
+    private async Task OnPedidoCambiado(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id) && id > 0)
+        {
+            pedidoSeleccionadoId = id;
+            try
+            {
+                // Llama al endpoint del backend que calcula lo que falta recibir restando los remitos anteriores
+                itemsPendientes = await Http.GetFromJsonAsync<List<ItemPedidoPendienteDTO>>($"api/recepciones/pendientes/{id}");
+            }
+            catch (Exception ex)
+            {
+                mensajeError = $"Error al cargar los ítems pendientes del pedido: {ex.Message}";
+            }
+        }
+        else
+        {
+            pedidoSeleccionadoId = 0;
+            itemsPendientes = null;
+        }
+    }
+
+    private async Task GuardarRecepcion()
+{
+    var itemsAProcesar = itemsPendientes?.Where(i => i.CantidadARecibirAhora > 0).ToList();
+
+    if (itemsAProcesar == null || !itemsAProcesar.Any())
+    {
+        mensajeError = "Debes ingresar una cantidad mayor a cero en al menos un producto para registrar la recepción.";
+        return;
+    }
+
+    try
+    {
+        // 1. Guardar la cabecera de la Recepción
+        var response = await Http.PostAsJsonAsync("api/recepciones", nuevaRecepcion);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var recepcionCreada = await response.Content.ReadFromJsonAsync<RecepcionDto>();
+
+            // 2. Guardar cada detalle de recepción asociado a este remito y pedido
+            foreach (var item in itemsAProcesar)
+            {
+                var detalleDto = new DetallesRecepcionDto
+                {
+                    RecepcionId = recepcionCreada!.Id,
+                    PedidoId = pedidoSeleccionadoId,
+                    VarianteId = item.VarianteId,
+                    CantidadRecibida = item.CantidadARecibirAhora,
+                    PrecioUnitario = item.PrecioUnitario,
+                    TotalPedidos = item.CantidadARecibirAhora * item.PrecioUnitario
+                };
+
+                var detalleResponse = await Http.PostAsJsonAsync("api/detallesrecepciones", detalleDto);
+                if (!detalleResponse.IsSuccessStatusCode)
+                {
+                    var errorDetalle = await detalleResponse.Content.ReadAsStringAsync();
+                    throw new Exception($"Error al guardar el detalle de recepción: {errorDetalle}");
+                }
+            }
+
+            Navigation.NavigateTo("/admin/recepciones");
+        }
+        else
+        {
+            // Capturamos el error exacto que envía el backend
+            var errorServer = await response.Content.ReadAsStringAsync();
+            mensajeError = $"No se pudo registrar la cabecera de la recepción: {errorServer}";
+        }
+    }
+    catch (Exception ex)
+    {
+        mensajeError = $"Error al guardar la recepción: {ex.Message}";
+    }
+}
+
+    private void Cancelar() => Navigation.NavigateTo("/admin/recepciones");
+}

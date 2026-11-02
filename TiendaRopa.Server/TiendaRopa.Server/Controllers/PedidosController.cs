@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos.Entity;
+using TiendaRopa.Repositorio.Repositorios.Generico;
 using TiendaRopa.Repositorio.Repositorios.PedidosRep;
 using TiendaRopa.Shared.DTO.Proveedor;
 
@@ -52,19 +53,31 @@ namespace TiendaRopa.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] PedidoDTO dto)
+        public async Task<ActionResult<PedidoDTO>> Post([FromBody] PedidoDTO dto)
         {
-            var pedido = new Pedido
+            if (dto == null || dto.IdProveedor <= 0)
             {
-                TotalPedidos = dto.TotalPedido,
+                return BadRequest("El proveedor es obligatorio.");
+            }
+
+            var nuevoPedido = new Pedido
+            {
+                ProveedorId = dto.IdProveedor,
+                FacturaPedidos = string.IsNullOrWhiteSpace(dto.FacturaPedido)
+                                    ? $"PED-{DateTime.Now:yyyyMMdd-HHmm}"
+                                    : dto.FacturaPedido,
                 FechaDePedido = dto.FechaDePedido,
                 FechaDeEntrega = dto.FechaDeEntrega,
-                FacturaPedidos = dto.FacturaPedido,
-                ProveedorId = dto.IdProveedor
+                TotalPedidos = dto.TotalPedido
             };
 
-            await _repository.AddAsync(pedido);
-            return CreatedAtAction(nameof(Get), new { id = pedido.Id }, dto);
+            // 1. Cambiá '_repositorio' por la variable de tu repositorio (ej: repositorio, _pedidoRepositorio, etc.)
+            await _repository.AddAsync(nuevoPedido);
+
+            dto.Id = nuevoPedido.Id;
+
+            // 2. Reemplazamos CreatedAtAction por Ok(dto) para evitar depender del nombre del GET
+            return Ok(dto);
         }
 
         [HttpPut("{id}")]

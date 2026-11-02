@@ -55,6 +55,7 @@ namespace TiendaRopa.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DetallePedidoDTO dto)
         {
+            // Tu lógica de guardado...
             var detalle = new DetallesPedido
             {
                 Cant_prod_Pedido = dto.Cant_prod_Pedido,
@@ -65,7 +66,7 @@ namespace TiendaRopa.Server.Controllers
             };
 
             await _repository.AddAsync(detalle);
-            return CreatedAtAction(nameof(Get), new { id = detalle.Id }, dto);
+            return Ok(dto);
         }
 
         [HttpPut("{id}")]
