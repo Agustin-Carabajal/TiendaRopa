@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.Repositorio.Repositorios.VentasRep;
-using TiendaRopa.Shared.DTO.Cliente;
-using TiendaRopa.Shared.DTO.Producto_y_mas;
 using TiendaRopa.Shared.DTO.Venta;
 using TiendaRopa.Shared.ENUM;
 
@@ -92,26 +90,6 @@ namespace TiendaRopa.Server.Controllers
             return Ok($"Venta {id} anulada correctamente. El stock fue repuesto.");
         }
 
-        // ------------------------------------------------------------------
-        // Datos de apoyo para la pantalla de venta
-        // ------------------------------------------------------------------
 
-        [HttpGet("clientes")] //api/Venta/clientes
-        public async Task<ActionResult<List<ClienteMostrarDTO>>> GetClientes()
-        {
-            return Ok(await repositorio.GetClientesActivos());
-        }
-
-        [HttpGet("variantes-disponibles")] //api/Venta/variantes-disponibles
-        public async Task<ActionResult<List<VarianteMostrarDTO>>> GetVariantes()
-        {
-            return Ok(await repositorio.GetVariantesDisponibles());
-        }
-
-        [HttpGet("metodos-pago")] //api/Venta/metodos-pago
-        public async Task<ActionResult<List<PagoMostrarDTO>>> GetMetodosPago()
-        {
-            return Ok(await repositorio.GetMetodosPago());
-        }
     }
 }

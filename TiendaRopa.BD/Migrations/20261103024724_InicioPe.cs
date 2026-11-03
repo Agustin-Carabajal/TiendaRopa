@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class InicioPostgre : Migration
+    public partial class InicioPe : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -610,6 +610,7 @@ namespace TiendaRopa.BD.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PagoId = table.Column<int>(type: "integer", nullable: false),
+                    Monto = table.Column<decimal>(type: "numeric(18,2)", nullable: false, defaultValue: 0m),
                     VentaId = table.Column<int>(type: "integer", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)

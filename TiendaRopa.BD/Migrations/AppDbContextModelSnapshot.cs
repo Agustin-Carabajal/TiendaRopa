@@ -17,7 +17,7 @@ namespace TiendaRopa.BD.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -672,6 +672,11 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Monto")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("text");
@@ -688,7 +693,7 @@ namespace TiendaRopa.BD.Migrations
 
                     b.HasIndex("VentaId");
 
-                    b.ToTable("PagosVenta");
+                    b.ToTable("PagosVenta", (string)null);
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Pedido", b =>

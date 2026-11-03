@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TiendaRopa.BD.Datos;
+using TiendaRopa.BD.Datos.Entity;
 using TiendaRopa.Shared.ENUM;
 
 public static class IdentitySeeder
@@ -12,6 +13,11 @@ public static class IdentitySeeder
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        foreach (var tipo in new[] { "Efectivo", "Débito", "Crédito", "QR", "Transferencia Bancaria" })
+            if (!db.Pagos.Any(p => p.Tipo == tipo))
+                db.Pagos.Add(new Pago { Tipo = tipo, EstadoRegistro = EstadoRegistro.activo });
+        await db.SaveChangesAsync();
 
         // Roles: se crean si no existen (también los necesita el registro web)
         foreach (var rol in new[] { "Admin", "Cliente" })
