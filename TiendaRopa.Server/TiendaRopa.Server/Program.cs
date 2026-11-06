@@ -67,6 +67,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ITalleRepositorio, TalleRepositorio>();
 builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
+builder.Services.AddScoped<IEtiquetaRepositorio, EtiquetaRepositorio>();
 builder.Services.AddScoped<IProductoColorRepositorio, ProductoColorRepositorio>();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IVarianteRepositorio, VarianteRepositorio>();
@@ -75,6 +76,8 @@ builder.Services.AddScoped<IPedidoRepositorio, PedidoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IVentaRepositorio, VentaRepositorio>();
+builder.Services.AddScoped<IPagoRepositorio, PagoRepositorio>();
+builder.Services.AddScoped<ICuentaCorrienteRepositorio, CuentaCorrienteRepositorio>();
 builder.Services.AddScoped<IRecepcionRepositorio, RecepcionRepositorio>();
 builder.Services.AddScoped<UsuarioAdminService>();
 

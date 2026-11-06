@@ -7,6 +7,7 @@ using TiendaRopa.BD.Datos.Entity;
 using TiendaRopa.Repositorio.Repositorios.Generico;
 using TiendaRopa.Shared.DTO.Producto_y_mas;
 using Microsoft.EntityFrameworkCore;
+using TiendaRopa.Shared.ENUM;
 
 namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 {
@@ -21,7 +22,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
         public async Task<List<TalleMostrarDTO>> SelectListaTalles()
         {
-            var lista = await context.Talles.Select(x => new TalleMostrarDTO
+            var lista = await context.Talles.Where(x => x.EstadoRegistro == EstadoRegistro.activo).Select(x => new TalleMostrarDTO
             {
                 IdTalle = x.Id,
                 NombreTalle = x.NombreTalle
@@ -33,7 +34,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
         {
             // Busca en la base de datos si hay coincidencia exacta sin importar mayúsculas
             return await context.Set<Talle>()
-                .AnyAsync(m => m.NombreTalle.ToLower().Trim() == nombre.ToLower().Trim());
+                .AnyAsync(m => m.EstadoRegistro != EstadoRegistro.eliminado && m.NombreTalle.ToLower().Trim() == nombre.ToLower().Trim());
         }
     }
 }

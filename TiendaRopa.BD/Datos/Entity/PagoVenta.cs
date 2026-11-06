@@ -7,6 +7,7 @@ namespace TiendaRopa.BD.Datos.Entity
     public class PagoVenta : EntityBase
     {
         public int PagoId { get; set; }
+        public decimal Monto { get; set; }
         public Pago? Pago { get; set; }
 
         public int VentaId { get; set; }

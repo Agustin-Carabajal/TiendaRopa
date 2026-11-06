@@ -30,6 +30,9 @@ namespace TiendaRopa.BD.Datos
         public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
         public DbSet<DetalleVenta> DetallesVenta => Set<DetalleVenta>();
 
+        public DbSet<Etiqueta> Etiquetas { get; set; }
+        public DbSet<VarianteEtiqueta> VariantesEtiquetas { get; set; }
+
         public AppDbContext(DbContextOptions options) : base(options)
         {
         }
