@@ -67,6 +67,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ITalleRepositorio, TalleRepositorio>();
 builder.Services.AddScoped<IColorRepositorio, ColorRepositorio>();
+builder.Services.AddScoped<IEtiquetaRepositorio, EtiquetaRepositorio>();
 builder.Services.AddScoped<IProductoColorRepositorio, ProductoColorRepositorio>();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IVarianteRepositorio, VarianteRepositorio>();

@@ -2,8 +2,10 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Producto_y_mas
+@using Microsoft.JSInterop
 @rendermode InteractiveAuto
 @inject IHttpServicio http
+@inject IJSRuntime JS
 
 <div class="container-fluid mt-4">
     <h2 class="mb-4 text center">Gestión de Categorías de Ropa</h2>
@@ -97,9 +99,43 @@
                 </div>
             </div>
         </div>
-
-        
-         
+        <!-- ================= TABLA DE ETIQUETAS ================= -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Etiquetas</h5>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Etiqueta")'>+</button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Descripción</th><th class="text-end px-3">Acciones</th></tr></thead>
+                        <tbody>
+                            @if (listaEtiquetas == null)
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
+                            }
+                            else if (!listaEtiquetas.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var etiqueta in listaEtiquetas)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@etiqueta.Nombre</td>
+                                        <td class="text-end px-3">
+                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarEtiqueta(etiqueta.IdEtiqueta, etiqueta.Nombre)'>Editar</button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(etiqueta.IdEtiqueta, "Etiqueta")'>Borrar</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -124,6 +160,10 @@
                         {
                             <input type="text" class="form-control" @bind="textoColor" placeholder="Ej: Azul, Negro, Rojo..." />
                         }
+                        else if (tipoAtributoSeleccionado == "Etiqueta")
+                        {
+                            <input type="text" class="form-control" @bind="textoEtiqueta" placeholder="Ej: Algodón, Impermeable..." />
+                        }
 
                         @if (!string.IsNullOrEmpty(mensajeValidacion))
                         {
@@ -142,6 +182,7 @@
 @code {
     private List<TalleMostrarDTO>? listaTalles;
     private List<ColorMostrarDTO>? listaColores;
+    private List<EtiquetaMostrarDTO>? listaEtiquetas;
   
 
 
@@ -150,6 +191,7 @@
     private int idRegistroSeleccionado = 0;
     private string textoTalle = "";
     private string textoColor = "";
+    private string textoEtiqueta = "";
     private string mensajeValidacion = "";
     private string tituloModal = "";
     private bool mostrarModal = false;
@@ -172,6 +214,10 @@
             mensajeError = "Error al cargar los talles.";
 
         }
+        var responseEtiquetas = await http.Get<List<EtiquetaMostrarDTO>>("api/Etiqueta/listaetiquetas");
+        listaEtiquetas = !responseEtiquetas.Error && responseEtiquetas.Respuesta != null
+            ? responseEtiquetas.Respuesta
+            : new List<EtiquetaMostrarDTO>();
         var responseColores = await http.Get<List<ColorMostrarDTO>>("api/Color/listacolores");
         if (!responseColores.Error && responseColores.Respuesta != null)
         {
@@ -202,6 +248,11 @@
             if (tituloModal == "Agregar") await CrearColor();
             else if (tituloModal == "Editar") await ActualizarColor();
         }
+        else if (tipoAtributoSeleccionado == "Etiqueta")
+        {
+            if (tituloModal == "Agregar") await CrearEtiqueta();
+            else if (tituloModal == "Editar") await ActualizarEtiqueta();
+        }
     }
 
     private void Agregar(string tipo)
@@ -219,6 +270,7 @@
         {
             textoColor = "";
         }
+        else if (tipo == "Etiqueta") textoEtiqueta = "";
         mostrarModal = true;
 
     }
@@ -247,6 +299,16 @@
         tituloModal = "Editar";
 
         mostrarModal = true; // Abrimos el modal
+    }
+
+    private void EditarEtiqueta(int id, string descripcionActual)
+    {
+        idRegistroSeleccionado = id;
+        textoEtiqueta = descripcionActual;
+        mensajeValidacion = string.Empty;
+        tipoAtributoSeleccionado = "Etiqueta";
+        tituloModal = "Editar";
+        mostrarModal = true;
     }
     private void CerrarModal()
     {
@@ -331,9 +393,27 @@
         }
     }
 
+    private async Task CrearEtiqueta()
+    {
+        if (string.IsNullOrWhiteSpace(textoEtiqueta)) return;
+        var resultado = await http.Post<EtiquetaCrearDTO, int>("api/Etiqueta", new EtiquetaCrearDTO { Nombre = textoEtiqueta });
+        if (!resultado.Error) await RecargarDatos();
+        else mensajeValidacion = "El registro ya existe o los datos son inválidos.";
+    }
+
+    private async Task ActualizarEtiqueta()
+    {
+        if (string.IsNullOrWhiteSpace(textoEtiqueta)) return;
+        var etiqueta = new { Id = idRegistroSeleccionado, Nombre = textoEtiqueta };
+        var resultado = await http.Put($"api/Etiqueta/editar/{idRegistroSeleccionado}", etiqueta);
+        if (!resultado.Error) await RecargarDatos();
+        else mensajeValidacion = "No se pudo actualizar el registro.";
+    }
+
     private async Task Borrar(int id, string tipo)
     {
-        // Ajustamos la URL a tu formato de controlador: api/Marcas/Borrar/5
+        var confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Está seguro de que desea borrar este {tipo.ToLower()}? Esta acción realizará una baja lógica.");
+        if (!confirmar) return;
         string url = $"api/{tipo}/borrar/{id}";
 
         // Asumo que tu método Delete sigue una estructura similar a tu Get

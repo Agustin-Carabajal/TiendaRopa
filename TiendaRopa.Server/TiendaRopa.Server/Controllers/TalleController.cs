@@ -78,7 +78,7 @@ namespace TiendaRopa.Server.Controllers
         [HttpDelete("borrar/{id:int}")] //api/Talle/Borrar/{id}
         public async Task<ActionResult> Delete(int id)
         {
-            var flag = await repositorio.Delete(id);
+            var flag = await repositorio.DeleteLogico(id);
             if (!flag)
             {
                 return NotFound($"No existe el registro con el id: {id} o ya fue eliminado.");

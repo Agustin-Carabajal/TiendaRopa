@@ -14,61 +14,619 @@
     <h3>Ventas presenciales</h3>
     <button class="btn btn-primary" @onclick="NuevaVenta">Nueva Venta</button>
 </div>
-@if (!string.IsNullOrWhiteSpace(error)){<div class="alert alert-danger">@error</div>}
+@if (!string.IsNullOrWhiteSpace(errorPagina)){<div class="alert alert-danger">@errorPagina</div>}
 @if (!string.IsNullOrWhiteSpace(mensaje)){<div class="alert alert-success">@mensaje</div>}
-<div class="card card-body mb-3"><div class="row g-2 align-items-end">
-    <div class="col-md-3"><label class="form-label">Desde</label><input class="form-control" type="date" @bind="desde" /></div>
-    <div class="col-md-3"><label class="form-label">Hasta</label><input class="form-control" type="date" @bind="hasta" /></div>
-    <div class="col-md-3"><button class="btn btn-outline-primary me-2" @onclick="CargarVentas">Filtrar</button><button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar</button></div>
-</div></div>
-@if (cargando){<p><em>Cargando ventas...</em></p>}
+<div class="card card-body mb-3">
+<div class="row g-2 align-items-end">
+    <div class="col-md-3">
+<label class="form-label">Desde</label>
+<input class="form-control" type="date" @bind="desde" />
+</div>
+    <div class="col-md-3">
+<label class="form-label">Hasta</label>
+<input class="form-control" type="date" @bind="hasta" />
+</div>
+    <div class="col-md-3">
+<button class="btn btn-outline-primary me-2" @onclick="CargarVentas">Filtrar</button>
+<button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar</button>
+</div>
+</div>
+</div>
+@if (cargando){<p>
+<em>Cargando ventas...</em>
+</p>}
 else if(ventas.Count==0){<div class="alert alert-info">Todavía no hay ventas presenciales para mostrar.</div>}
 else{
-<div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Pagos</th><th class="text-end">Artículos</th><th class="text-end">Total</th><th>Estado</th><th></th></tr></thead><tbody>
-@foreach(var v in ventas){var anulada=v.Estado==EstadosVenta.Anulada;<tr class="@(anulada?"text-muted":"")"><td>@v.Id</td><td>@v.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@v.Cliente</td><td>@ResumenPagos(v.Pagos,v.MontoCuentaCorriente)</td><td class="text-end">@v.CantidadArticulos</td><td class="text-end">$@v.Monto.ToString("N2")</td><td><span class="badge @(anulada?"bg-secondary":"bg-success")">@v.Estado</span></td><td><button class="btn btn-sm btn-outline-primary" @onclick="()=>VerDetalles(v.Id)">Ver Detalles</button></td></tr>}
-</tbody><tfoot><tr class="table-light fw-bold"><td colspan="5" class="text-end">Total (sin anuladas)</td><td class="text-end">$@TotalVendido.ToString("N2")</td><td colspan="2"></td></tr></tfoot></table></div>}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+<thead class="table-light">
+<tr>
+<th>N°</th>
+<th>Fecha</th>
+<th>Cliente</th>
+<th>Pagos</th>
+<th class="text-end">Artículos</th>
+<th class="text-end">Total</th>
+<th>Estado</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+@foreach(var v in ventas){var anulada=v.Estado==EstadosVenta.Anulada;<tr class="@(anulada?"text-muted":"")">
+<td>@v.Id</td>
+<td>@v.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+<td>@v.Cliente</td>
+<td>@ResumenPagos(v.Pagos,v.MontoCuentaCorriente)</td>
+<td class="text-end">@v.CantidadArticulos</td>
+<td class="text-end">$@v.Monto.ToString("N2")</td>
+<td>
+<span class="badge @(anulada?"bg-secondary":"bg-success")">@v.Estado</span>
+</td>
+<td>
+<button class="btn btn-sm btn-outline-primary" @onclick="()=>VerDetalles(v.Id)">Ver Detalles</button>
+</td>
+</tr>}
+</tbody>
+<tfoot>
+<tr class="table-light fw-bold">
+<td colspan="5" class="text-end">Total (sin anuladas)</td>
+<td class="text-end">$@TotalVendido.ToString("N2")</td>
+<td colspan="2">
+</td>
+</tr>
+</tfoot>
+</table>
+</div>}
 
-@if(modal){<div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
-<div class="modal-header"><h5 class="modal-title">@(ventaActual==null?"Nueva venta":edicion?"Editar venta #"+ventaActual.Id:"Detalle de venta #"+ventaActual.Id)</h5><button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal"></button></div>
+@if(modal){<div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+<div class="modal-dialog modal-xl modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">@(ventaActual==null?"Nueva venta":edicion?"Editar venta #"+ventaActual.Id:"Detalle de venta #"+ventaActual.Id)</h5>
+<button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal">
+</button>
+</div>
 <div class="modal-body">
-@if(ventaActual!=null && !edicion){<div class="row mb-3"><div class="col-md-4"><b>Cliente:</b> @ventaActual.Cliente</div><div class="col-md-4"><b>Fecha:</b> @ventaActual.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div><div class="col-md-4"><b>Estado:</b> @ventaActual.Estado</div><div class="col-12 mt-2"><b>Pagos:</b> @ResumenPagos(ventaActual.Pagos,ventaActual.MontoCuentaCorriente)</div></div>
-<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Artículo</th><th>Talle</th><th>Código</th><th class="text-end">Cantidad</th><th class="text-end">Precio unitario</th><th class="text-end">Subtotal</th></tr></thead><tbody>@foreach(var d in ventaActual.Detalles){<tr><td>@d.Producto - @d.Color</td><td>@d.Talle</td><td>@d.CodVariante</td><td class="text-end">@d.Cantidad</td><td class="text-end">$@d.PrecioUnitario.ToString("N2")</td><td class="text-end">$@d.Subtotal.ToString("N2")</td></tr>}</tbody></table></div><h5 class="text-end">Total: $@ventaActual.Monto.ToString("N2")</h5>
+@if (!string.IsNullOrWhiteSpace(errorModal)) { <div class="alert alert-danger" role="alert">@errorModal</div> }
+@if(ventaActual!=null && !edicion){
+@if (confirmarAnulacion) { <div class="alert alert-warning d-flex justify-content-between align-items-center">
+<span>¿Confirma anular la venta #@ventaActual.Id? Se repondrá el stock y se revertirá el cargo en cuenta corriente.</span>
+<span>
+<button class="btn btn-sm btn-secondary me-2" @onclick="CancelarAnulacion">Volver</button>
+<button class="btn btn-sm btn-danger" @onclick="AnularVenta">Confirmar anulación</button>
+</span>
+</div> }<div class="row mb-3">
+<div class="col-md-4">
+<b>Cliente:</b> @ventaActual.Cliente</div>
+<div class="col-md-4">
+<b>Fecha:</b> @ventaActual.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+<div class="col-md-4">
+<b>Estado:</b> @ventaActual.Estado</div>
+<div class="col-12 mt-2">
+<b>Pagos:</b> @ResumenPagos(ventaActual.Pagos,ventaActual.MontoCuentaCorriente)</div>
+</div>
+<div class="table-responsive">
+<table class="table align-middle">
+<thead>
+<tr>
+<th>Artículo</th>
+<th>Talle</th>
+<th>Código</th>
+<th class="text-end">Cantidad</th>
+<th class="text-end">Precio unitario</th>
+<th class="text-end">Subtotal</th>
+</tr>
+</thead>
+<tbody>@foreach(var d in ventaActual.Detalles){<tr>
+<td>@d.Producto - @d.Color</td>
+<td>@d.Talle</td>
+<td>@d.CodVariante</td>
+<td class="text-end">@d.Cantidad</td>
+<td class="text-end">$@d.PrecioUnitario.ToString("N2")</td>
+<td class="text-end">$@d.Subtotal.ToString("N2")</td>
+</tr>}</tbody>
+</table>
+</div>
+<h5 class="text-end">Total: $@ventaActual.Monto.ToString("N2")</h5>
 }else{
 @if(clientes.Count==0){<div class="alert alert-warning">No hay clientes cargados. Registre un cliente para poder cerrar una venta.</div>}
 @if(variantes.Count==0){<div class="alert alert-warning">No hay variantes activas con stock disponible.</div>}
-<div class="row g-3"><div class="col-lg-5"><label class="form-label">Cliente *</label><select class="form-select" @bind="clienteId"><option value="0">Seleccione cliente</option>@foreach(var c in clientes){<option value="@c.Id">@NombreCliente(c)</option>}</select></div></div>
-<hr/><h6>Medios de pago</h6>@if(metodosPago.Count==0){<div class="alert alert-warning">No hay métodos de pago configurados. Puede usar cuenta corriente o cargar métodos de pago.</div>}<div class="row g-2">@foreach(var p in metodosPago){var lineaPago=pagosSeleccionados.FirstOrDefault(x=>x.PagoId==p.Id);<div class="col-md-6"><div class="border rounded p-2"><div class="form-check"><input class="form-check-input" type="checkbox" checked="@(lineaPago!=null)" @onchange="e=>SeleccionarPago(p.Id,e)"/><label class="form-check-label">@p.Tipo</label></div>@if(lineaPago!=null){<label class="form-label mt-2">Importe</label><input class="form-control" type="number" min="0.01" step="0.01" @bind="lineaPago.Monto"/>}</div></div>}</div>
-<div class="row mt-2"><div class="col-md-6"><label class="form-label">Importe a cuenta corriente</label><input class="form-control" type="number" min="0" step="0.01" @bind="montoCuentaCorriente" /></div><div class="col-md-6 align-self-end"><span class="text-muted">Asignado: $@ImporteAsignado.ToString("N2") / $@Total.ToString("N2")</span></div></div>
-<hr/><h6>Agregar artículos</h6><div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Buscar producto, color, talle o código</label><input class="form-control" @bind="filtro" @bind:event="oninput" placeholder="Escriba para buscar..."/>@if(!string.IsNullOrWhiteSpace(filtro)){<div class="list-group mt-1" style="max-height:220px;overflow:auto">@foreach(var r in VariantesFiltradas){<button type="button" class="list-group-item list-group-item-action" @onclick="()=>ElegirVariante(r.Id)">@r.ProductoColor · Talle @r.Talle · Stock @r.Stock · $@r.PrecioVenta.ToString("N2")</button>}@if(!VariantesFiltradas.Any()){<div class="list-group-item text-muted">No hay coincidencias.</div>}</div>}</div>
-<div class="col-md-3"><label class="form-label">Variante seleccionada</label><select class="form-select" @bind="varianteId" @bind:after="ActualizarPrecio"><option value="0">Seleccione</option>@foreach(var v in VariantesFiltradas){<option value="@v.Id">@v.ProductoColor · @v.Talle · stock @v.Stock</option>}</select></div><div class="col"><label class="form-label">Precio</label><input class="form-control" type="number" min="0" step="0.01" @bind="precio"/></div><div class="col"><label class="form-label">Cantidad</label><input class="form-control" type="number" min="1" @bind="cantidadAgregar"/></div><div class="col"><label class="form-label">Desc. %</label><input class="form-control" type="number" min="0" max="100" step="0.01" @bind="descuento"/></div><div class="col"><label class="form-label">Recargo %</label><input class="form-control" type="number" min="0" step="0.01" @bind="recargo"/></div><div class="col"><button class="btn btn-outline-primary" disabled="@(varianteId==0)" @onclick="AgregarLinea">Añadir</button></div></div>
-@if(lineas.Count==0){<div class="alert alert-info mt-3">Agregue al menos un artículo para iniciar la venta.</div>}else{<div class="table-responsive mt-3"><table class="table align-middle"><thead><tr><th>Artículo</th><th>Talle</th><th class="text-end">Stock máximo</th><th style="width:100px">Cantidad</th><th style="width:150px">Precio unitario</th><th class="text-end">Subtotal</th><th></th></tr></thead><tbody>@foreach(var l in lineas){<tr><td>@l.Descripcion</td><td>@l.Talle</td><td class="text-end">@l.StockMaximo</td><td><input class="form-control form-control-sm" type="number" min="1" max="@l.StockMaximo" @bind="l.Cantidad"/></td><td><input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.PrecioUnitario"/></td><td class="text-end">$@l.Subtotal.ToString("N2")</td><td><button class="btn btn-sm btn-outline-danger" @onclick="()=>QuitarLinea(l)">Quitar</button></td></tr>}</tbody></table></div><h5 class="text-end">Total: $@Total.ToString("N2")</h5>}
+<div class="row g-3">
+<div class="col-lg-5">
+<label class="form-label">Cliente *</label>
+<select class="form-select" @bind="clienteId">
+<option value="0">Seleccione cliente</option>@foreach(var c in clientes){<option value="@c.Id">@NombreCliente(c)</option>}</select>
+</div>
+</div>
+<hr/>
+<h6>Medios de pago</h6>@if(metodosPago.Count==0){<div class="alert alert-warning">No hay métodos de pago configurados. Puede usar cuenta corriente o cargar métodos de pago.</div>}<div class="row g-2">@foreach(var p in metodosPago){var lineaPago=pagosSeleccionados.FirstOrDefault(x=>x.PagoId==p.Id);<div class="col-md-6">
+<div class="border rounded p-2">
+<div class="form-check">
+<input class="form-check-input" type="checkbox" checked="@(lineaPago!=null)" @onchange="e=>SeleccionarPago(p.Id,e)"/>
+<label class="form-check-label">@p.Tipo</label>
+</div>@if(lineaPago!=null){<label class="form-label mt-2">Importe</label>
+<input class="form-control" type="number" min="0.01" step="0.01" @bind="lineaPago.Monto"/>}</div>
+</div>}</div>
+<div class="row mt-2">
+<div class="col-md-6">
+<label class="form-label">Importe a cuenta corriente</label>
+<input class="form-control" type="number" min="0" step="0.01" @bind="montoCuentaCorriente" />
+</div>
+<div class="col-md-6 align-self-end">
+<span class="text-muted">Asignado: $@ImporteAsignado.ToString("N2") · Falta: $@ImportePendiente.ToString("N2")</span>
+</div>
+</div>
+<hr/>
+<h6>Agregar artículos</h6>
+<div class="row g-2 align-items-end">
+<div class="col-md-4">
+<label class="form-label">Buscar producto, color, talle o código</label>
+<input class="form-control" @bind="filtro" @bind:event="oninput" placeholder="Escriba para buscar..."/>@if(!string.IsNullOrWhiteSpace(filtro)){<div class="list-group mt-1" style="max-height:220px;overflow:auto">@foreach(var r in VariantesFiltradas){<button type="button" class="list-group-item list-group-item-action" @onclick="()=>ElegirVariante(r.Id)">@r.ProductoColor · Talle @r.Talle · Stock @r.Stock · $@r.PrecioVenta.ToString("N2")</button>}@if(!VariantesFiltradas.Any()){<div class="list-group-item text-muted">No hay coincidencias.</div>}</div>}</div>
+<div class="col-md-3">
+<label class="form-label">Variante seleccionada</label>
+<select class="form-select" @bind="varianteId" @bind:after="ActualizarPrecio">
+<option value="0">Seleccione</option>@foreach(var v in VariantesFiltradas){<option value="@v.Id">@v.ProductoColor · @v.Talle · stock @v.Stock</option>}</select>
+</div>
+<div class="col">
+<label class="form-label">Precio</label>
+<input class="form-control" type="number" min="0" step="0.01" @bind="precio"/>
+</div>
+<div class="col">
+<label class="form-label">Cantidad</label>
+<input class="form-control" type="number" min="1" @bind="cantidadAgregar"/>
+</div>
+<div class="col">
+<label class="form-label">Desc. %</label>
+<input class="form-control" type="number" min="0" max="100" step="0.01" @bind="descuento"/>
+</div>
+<div class="col">
+<label class="form-label">Recargo %</label>
+<input class="form-control" type="number" min="0" step="0.01" @bind="recargo"/>
+</div>
+<div class="col">
+<button class="btn btn-outline-primary" disabled="@(varianteId==0)" @onclick="AgregarLinea">Añadir</button>
+</div>
+</div>
+@if(lineas.Count==0){<div class="alert alert-info mt-3">Agregue al menos un artículo para iniciar la venta.</div>}else{<div class="table-responsive mt-3">
+<table class="table align-middle">
+<thead>
+<tr>
+<th>Artículo</th>
+<th>Talle</th>
+<th class="text-end">Stock máximo</th>
+<th style="width:100px">Cantidad</th>
+<th style="width:130px">Precio base</th>
+<th class="text-end">Desc.</th>
+<th class="text-end">Recargo</th>
+<th class="text-end">Precio final</th>
+<th class="text-end">Subtotal</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>@foreach(var l in lineas){<tr>
+<td>@l.Descripcion</td>
+<td>@l.Talle</td>
+<td class="text-end">@l.StockMaximo</td>
+<td>
+<input class="form-control form-control-sm" type="number" min="1" max="@l.StockMaximo" @bind="l.Cantidad"/>
+</td>
+<td>
+<input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.PrecioBase"/>
+</td>
+<td>
+<input class="form-control form-control-sm" type="number" min="0" max="100" step="0.01" @bind="l.DescuentoPorcentaje" />
+<small class="text-muted">-$@l.ImporteDescuento.ToString("N2")</small>
+</td>
+<td>
+<input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.RecargoPorcentaje" />
+<small class="text-muted">+$@l.ImporteRecargo.ToString("N2")</small>
+</td>
+<td class="text-end">$@l.PrecioUnitario.ToString("N2")</td>
+<td class="text-end">$@l.Subtotal.ToString("N2")</td>
+<td>
+<button class="btn btn-sm btn-outline-danger" @onclick="()=>QuitarLinea(l)">Quitar</button>
+</td>
+</tr>}</tbody>
+</table>
+</div>
+<h5 class="text-end">Total: $@Total.ToString("N2")</h5>}
 }
-</div><div class="modal-footer"><button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>@if(ventaActual==null||edicion){<button type="button" class="btn btn-primary" disabled="@guardando" @onclick="GuardarVenta">@(guardando?"Guardando...":edicion?"Guardar cambios":"Cerrar venta")</button>}else if(ventaActual.Estado!=EstadosVenta.Anulada && ventaActual.Canal==CanalVenta.Presencial){<button type="button" class="btn btn-primary" @onclick="EditarVenta">Editar</button><button type="button" class="btn btn-outline-danger" @onclick="AnularVenta">Anular venta</button>}</div>
-</div></div></div>}
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>@if(ventaActual==null||edicion){<button type="button" class="btn btn-primary" disabled="@guardando" @onclick="GuardarVenta">@(guardando?"Guardando...":edicion?"Guardar cambios":"Cerrar venta")</button>}else if(ventaActual.Estado!=EstadosVenta.Anulada && ventaActual.Canal==CanalVenta.Presencial){<button type="button" class="btn btn-primary" @onclick="EditarVenta">Editar</button>
+<button type="button" class="btn btn-outline-danger" @onclick="SolicitarAnulacion">Anular venta</button>}</div>
+</div>
+</div>
+</div>}
 
 @code {
-    private List<VentaMostrarDTO> ventas=new(); private List<ClienteMostrarDTO> clientes=new(); private List<VarianteMostrarDTO> variantes=new(); private List<PagoMostrarDTO> metodosPago=new(); private List<PagoVentaCrearDTO> pagosSeleccionados=new(); private List<LineaVenta> lineas=new();
-    private VentaDetalleDTO? ventaActual; private bool cargando=true,guardando,modal,edicion; private int clienteId,varianteId,cantidadAgregar=1; private decimal precio,descuento,recargo,montoCuentaCorriente; private string filtro=""; private string? error,mensaje; private DateTime? desde,hasta;
-    private decimal Total=>lineas.Sum(l=>l.Subtotal); private decimal ImporteAsignado=>pagosSeleccionados.Sum(p=>p.Monto)+montoCuentaCorriente; private decimal TotalVendido=>ventas.Where(v=>v.Estado!=EstadosVenta.Anulada).Sum(v=>v.Monto);
-    private IEnumerable<VarianteMostrarDTO> VariantesFiltradas=>variantes.Where(v=>v.Stock>0 && (string.IsNullOrWhiteSpace(filtro)||$"{v.ProductoColor} {v.Talle} {v.CodVariante}".Contains(filtro.Trim(),StringComparison.OrdinalIgnoreCase)));
-    protected override async Task OnInitializedAsync(){await CargarCombos();await CargarVentas();}
-    private async Task CargarCombos(){try{var c=await http.Get<List<ClienteMostrarDTO>>("api/Cliente/listarclientes");clientes=c.Respuesta??new();var v=await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");variantes=v.Respuesta??new();var p=await http.Get<List<PagoMostrarDTO>>("api/Pago");metodosPago=p.Respuesta??new();}catch(Exception ex){error="No se pudieron cargar los datos para ventas: "+ex.Message;}}
-    private async Task CargarVentas(){cargando=true;error=null;var q=new List<string>{"canal=Presencial"};if(desde.HasValue)q.Add("desde="+Uri.EscapeDataString(InicioUtc(desde.Value).ToString("o")));if(hasta.HasValue)q.Add("hasta="+Uri.EscapeDataString(InicioUtc(hasta.Value.AddDays(1)).ToString("o")));var r=await http.Get<List<VentaMostrarDTO>>("api/Venta/historial?"+string.Join("&",q));if(r.Error){error=await r.ObtenerMensajeAsync();ventas=new();}else ventas=r.Respuesta??new();cargando=false;}
-    private async Task LimpiarFiltros(){desde=null;hasta=null;await CargarVentas();}
-    private void NuevaVenta(){LimpiarEstadoModal();modal=true;edicion=false;ventaActual=null;}
-    private async Task VerDetalles(int id){error=null;modal=true;edicion=false;ventaActual=null;var r=await http.Get<VentaDetalleDTO>($"api/Venta/{id}");if(r.Error){error=await r.ObtenerMensajeAsync();CerrarModal();return;}ventaActual=r.Respuesta;}
-    private async Task EditarVenta(){if(ventaActual==null)return;if(!await js.InvokeAsync<bool>("confirm",$"¿Editar la venta #{ventaActual.Id}? Podrá quitar productos y guardar los cambios."))return;edicion=true;clienteId=ventaActual.ClienteId;pagosSeleccionados=ventaActual.Pagos.Select(p=>new PagoVentaCrearDTO{PagoId=p.PagoId,Monto=p.Monto}).ToList();montoCuentaCorriente=ventaActual.MontoCuentaCorriente;lineas=ventaActual.Detalles.Select(d=>new LineaVenta{VarianteId=d.VarianteId,Descripcion=$"{d.Producto} - {d.Color}",Talle=d.Talle,Cantidad=d.Cantidad,PrecioUnitario=d.PrecioUnitario,StockMaximo=d.StockActual+d.Cantidad}).ToList();}
-    private void LimpiarEstadoModal(){error=null;mensaje=null;clienteId=0;varianteId=0;cantidadAgregar=1;precio=0;descuento=0;recargo=0;montoCuentaCorriente=0;filtro="";lineas.Clear();pagosSeleccionados.Clear();}
-    private void CerrarModal(){modal=false;ventaActual=null;edicion=false;}
-    private void SeleccionarPago(int id,ChangeEventArgs e){if(string.Equals(e.Value?.ToString(),"true",StringComparison.OrdinalIgnoreCase)){if(!pagosSeleccionados.Any(x=>x.PagoId==id))pagosSeleccionados.Add(new(){PagoId=id});}else pagosSeleccionados.RemoveAll(x=>x.PagoId==id);}
-    private void ElegirVariante(int id){varianteId=id;ActualizarPrecio();filtro="";}
-    private void ActualizarPrecio(){precio=variantes.FirstOrDefault(v=>v.Id==varianteId)?.PrecioVenta??0m;}
-    private void AgregarLinea(){error=null;var v=variantes.FirstOrDefault(x=>x.Id==varianteId && x.Stock>0);if(v==null){error="Seleccione una variante disponible.";return;}var cantidad=Math.Max(1,cantidadAgregar);var existente=lineas.FirstOrDefault(x=>x.VarianteId==v.Id);var yaAgregada=existente?.Cantidad??0;if(yaAgregada+cantidad>v.Stock+(edicion?lineas.FirstOrDefault(x=>x.VarianteId==v.Id)?.StockMaximo-v.Stock??0:0)){error=$"Stock insuficiente para {v.ProductoColor}, talle {v.Talle}.";return;}var precioFinal=Math.Round(precio*(1-descuento/100m)*(1+recargo/100m),2,MidpointRounding.AwayFromZero);if(precioFinal<0){error="El precio no puede ser negativo.";return;}if(existente==null)lineas.Add(new(){VarianteId=v.Id,Descripcion=v.ProductoColor,Talle=v.Talle,Cantidad=cantidad,PrecioUnitario=precioFinal,StockMaximo=v.Stock});else{existente.Cantidad+=cantidad;existente.PrecioUnitario=precioFinal;}varianteId=0;cantidadAgregar=1;precio=0;descuento=recargo=0;}
-    private async Task QuitarLinea(LineaVenta l){if(await js.InvokeAsync<bool>("confirm",$"¿Quitar {l.Descripcion} de la venta?"))lineas.Remove(l);}
-    private async Task GuardarVenta(){error=null;if(clienteId<=0){error="Seleccione un cliente.";return;}if(lineas.Count==0){error="Agregue al menos un artículo.";return;}if(lineas.Any(l=>l.Cantidad<1||l.Cantidad>l.StockMaximo||l.PrecioUnitario<0)){error="Revise cantidades, stock y precios de los artículos.";return;}if(montoCuentaCorriente<0){error="El importe de cuenta corriente no puede ser negativo.";return;}if(Math.Round(ImporteAsignado,2,MidpointRounding.AwayFromZero)!=Math.Round(Total,2,MidpointRounding.AwayFromZero)){error="Los importes de pago y cuenta corriente deben coincidir con el total de la venta.";return;}guardando=true;var dto=new VentaCrearDTO{ClienteId=clienteId,Pagos=pagosSeleccionados.Select(p=>new PagoVentaCrearDTO{PagoId=p.PagoId,Monto=p.Monto}).ToList(),MontoCuentaCorriente=montoCuentaCorriente,Detalles=lineas.Select(l=>new DetalleVentaCrearDTO{VarianteId=l.VarianteId,Cantidad=l.Cantidad,PrecioUnitario=l.PrecioUnitario}).ToList()};if(edicion&&ventaActual!=null){var r=await http.Put($"api/Venta/editar/{ventaActual.Id}",dto);if(r.Error){error=await r.ObtenerMensajeAsync();guardando=false;return;}}else{var r=await http.Post<VentaCrearDTO,int>("api/Venta/crear",dto);if(r.Error){error=await r.ObtenerMensajeAsync();guardando=false;return;}}mensaje="Venta guardada correctamente.";CerrarModal();await CargarVentas();guardando=false;}
-    private async Task AnularVenta(){if(ventaActual==null)return;var ok=await js.InvokeAsync<bool>("confirm",$"¿Anular la venta #{ventaActual.Id}? Se repondrá el stock y se revertirá el cargo en cuenta corriente.");if(!ok)return;var r=await http.Delete($"api/Venta/anular/{ventaActual.Id}");if(r.Error)error=await r.ObtenerMensajeAsync();else{mensaje=$"Venta #{ventaActual.Id} anulada.";CerrarModal();await CargarVentas();}}
-    private static string ResumenPagos(IEnumerable<PagoVentaMostrarDTO> pagos,decimal cuenta){var partes=pagos.Select(p=>p.Metodo+" $"+p.Monto.ToString("N2")).ToList();if(cuenta>0)partes.Add("Cuenta corriente $"+cuenta.ToString("N2"));return partes.Count==0?"Sin registrar":string.Join(" · ",partes);}
-    private static string NombreCliente(ClienteMostrarDTO c)=>string.IsNullOrWhiteSpace(c.Apellido)?c.Nombre:$"{c.Apellido}, {c.Nombre}";
-    private static DateTime InicioUtc(DateTime fecha)=>DateTime.SpecifyKind(fecha.Date,DateTimeKind.Local).ToUniversalTime();
-    private sealed class LineaVenta{public int VarianteId{get;set;}public string Descripcion{get;set;}=string.Empty;public string Talle{get;set;}=string.Empty;public int Cantidad{get;set;}=1;public decimal PrecioUnitario{get;set;}public int StockMaximo{get;set;}public decimal Subtotal=>Math.Round(Cantidad*PrecioUnitario,2,MidpointRounding.AwayFromZero);}
+    private List<VentaMostrarDTO> ventas = new();
+    private List<ClienteMostrarDTO> clientes = new();
+    private List<VarianteMostrarDTO> variantes = new();
+    private List<PagoMostrarDTO> metodosPago = new();
+    private List<PagoVentaCrearDTO> pagosSeleccionados = new();
+    private List<LineaVenta> lineas = new();
+
+    private VentaDetalleDTO? ventaActual;
+    private bool cargando = true;
+    private bool guardando;
+    private bool modal;
+    private bool edicion;
+    private bool confirmarAnulacion;
+    private int clienteId;
+    private int varianteId;
+    private int cantidadAgregar = 1;
+    private decimal precio;
+    private decimal descuento;
+    private decimal recargo;
+    private decimal montoCuentaCorriente;
+    private string filtro = string.Empty;
+    private string? errorPagina;
+    private string? errorModal;
+    private string? mensaje;
+    private DateTime? desde;
+    private DateTime? hasta;
+
+    private decimal Total => lineas.Sum(linea => linea.Subtotal);
+    private decimal ImporteAsignado => pagosSeleccionados.Sum(pago => pago.Monto) + montoCuentaCorriente;
+    private decimal ImportePendiente => Math.Max(0, Total - ImporteAsignado);
+    private decimal TotalVendido => ventas
+        .Where(venta => venta.Estado != EstadosVenta.Anulada)
+        .Sum(venta => venta.Monto);
+
+    private IEnumerable<VarianteMostrarDTO> VariantesFiltradas => variantes.Where(variante =>
+        variante.Stock > 0 &&
+        (string.IsNullOrWhiteSpace(filtro) ||
+         $"{variante.ProductoColor} {variante.Talle} {variante.CodVariante}"
+             .Contains(filtro.Trim(), StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCombos();
+        await CargarVentas();
+    }
+
+    private async Task CargarCombos()
+    {
+        try
+        {
+            var clientesRespuesta = await http.Get<List<ClienteMostrarDTO>>("api/Cliente/listarclientes");
+            clientes = clientesRespuesta.Respuesta ?? new();
+
+            var variantesRespuesta = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
+            variantes = variantesRespuesta.Respuesta ?? new();
+
+            var pagosRespuesta = await http.Get<List<PagoMostrarDTO>>("api/Pago");
+            metodosPago = pagosRespuesta.Respuesta ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorPagina = "No se pudieron cargar los datos para ventas: " + ex.Message;
+        }
+    }
+
+    private async Task CargarVentas()
+    {
+        cargando = true;
+        errorPagina = null;
+        var parametros = new List<string> { "canal=Presencial" };
+
+        if (desde.HasValue)
+            parametros.Add("desde=" + Uri.EscapeDataString(InicioUtc(desde.Value).ToString("o")));
+        if (hasta.HasValue)
+            parametros.Add("hasta=" + Uri.EscapeDataString(InicioUtc(hasta.Value.AddDays(1)).ToString("o")));
+
+        var respuesta = await http.Get<List<VentaMostrarDTO>>(
+            "api/Venta/historial?" + string.Join("&", parametros));
+
+        if (respuesta.Error)
+        {
+            errorPagina = await respuesta.ObtenerMensajeAsync();
+            ventas = new();
+        }
+        else
+        {
+            ventas = respuesta.Respuesta ?? new();
+        }
+
+        cargando = false;
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        desde = null;
+        hasta = null;
+        await CargarVentas();
+    }
+
+    private void NuevaVenta()
+    {
+        LimpiarEstadoModal();
+        modal = true;
+        edicion = false;
+        ventaActual = null;
+    }
+
+    private async Task VerDetalles(int id)
+    {
+        errorModal = null;
+        modal = true;
+        edicion = false;
+        ventaActual = null;
+
+        var respuesta = await http.Get<VentaDetalleDTO>($"api/Venta/{id}");
+        if (respuesta.Error)
+        {
+            errorModal = await respuesta.ObtenerMensajeAsync();
+            return;
+        }
+
+        ventaActual = respuesta.Respuesta;
+    }
+
+    private async Task EditarVenta()
+    {
+        if (ventaActual is null)
+            return;
+
+        var confirmar = await js.InvokeAsync<bool>("confirm",
+            $"¿Editar la venta #{ventaActual.Id}? Podrá quitar productos y guardar los cambios.");
+        if (!confirmar)
+            return;
+
+        edicion = true;
+        clienteId = ventaActual.ClienteId;
+        pagosSeleccionados = ventaActual.Pagos
+            .Select(pago => new PagoVentaCrearDTO { PagoId = pago.PagoId, Monto = pago.Monto })
+            .ToList();
+        montoCuentaCorriente = ventaActual.MontoCuentaCorriente;
+        lineas = ventaActual.Detalles.Select(detalle => new LineaVenta
+        {
+            VarianteId = detalle.VarianteId,
+            Descripcion = $"{detalle.Producto} - {detalle.Color}",
+            Talle = detalle.Talle,
+            Cantidad = detalle.Cantidad,
+            PrecioBase = detalle.PrecioUnitario,
+            StockMaximo = detalle.StockActual + detalle.Cantidad
+        }).ToList();
+    }
+
+    private void LimpiarEstadoModal()
+    {
+        errorModal = null;
+        mensaje = null;
+        clienteId = 0;
+        varianteId = 0;
+        cantidadAgregar = 1;
+        precio = descuento = recargo = montoCuentaCorriente = 0;
+        filtro = string.Empty;
+        lineas.Clear();
+        pagosSeleccionados.Clear();
+    }
+
+    private void CerrarModal()
+    {
+        modal = false;
+        ventaActual = null;
+        edicion = false;
+        confirmarAnulacion = false;
+        errorModal = null;
+    }
+
+    private void SeleccionarPago(int id, ChangeEventArgs evento)
+    {
+        if (string.Equals(evento.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!pagosSeleccionados.Any(pago => pago.PagoId == id))
+                pagosSeleccionados.Add(new PagoVentaCrearDTO { PagoId = id });
+        }
+        else
+        {
+            pagosSeleccionados.RemoveAll(pago => pago.PagoId == id);
+        }
+    }
+
+    private void ElegirVariante(int id)
+    {
+        varianteId = id;
+        ActualizarPrecio();
+        filtro = string.Empty;
+    }
+
+    private void ActualizarPrecio()
+    {
+        precio = variantes.FirstOrDefault(variante => variante.Id == varianteId)?.PrecioVenta ?? 0m;
+    }
+
+    private void AgregarLinea()
+    {
+        errorModal = null;
+        var variante = variantes.FirstOrDefault(item => item.Id == varianteId && item.Stock > 0);
+        if (variante is null)
+        {
+            errorModal = "Seleccione una variante disponible.";
+            return;
+        }
+
+        if (precio < 0 || descuento < 0 || descuento > 100 || recargo < 0)
+        {
+            errorModal = "Revise el precio base, el descuento y el recargo.";
+            return;
+        }
+
+        var cantidad = Math.Max(1, cantidadAgregar);
+        var existente = lineas.FirstOrDefault(item => item.VarianteId == variante.Id);
+        var cantidadActual = existente?.Cantidad ?? 0;
+        var stockDisponible = variante.Stock + (edicion ? existente?.StockMaximo - variante.Stock ?? 0 : 0);
+        if (cantidadActual + cantidad > stockDisponible)
+        {
+            errorModal = $"Stock insuficiente para {variante.ProductoColor}, talle {variante.Talle}.";
+            return;
+        }
+
+        if (existente is null)
+        {
+            lineas.Add(new LineaVenta
+            {
+                VarianteId = variante.Id,
+                Descripcion = variante.ProductoColor,
+                Talle = variante.Talle,
+                Cantidad = cantidad,
+                PrecioBase = precio,
+                DescuentoPorcentaje = descuento,
+                RecargoPorcentaje = recargo,
+                StockMaximo = variante.Stock
+            });
+        }
+        else
+        {
+            existente.Cantidad += cantidad;
+            existente.PrecioBase = precio;
+            existente.DescuentoPorcentaje = descuento;
+            existente.RecargoPorcentaje = recargo;
+        }
+
+        varianteId = 0;
+        cantidadAgregar = 1;
+        precio = descuento = recargo = 0;
+    }
+
+    private async Task QuitarLinea(LineaVenta linea)
+    {
+        var confirmar = await js.InvokeAsync<bool>("confirm", $"¿Quitar {linea.Descripcion} de la venta?");
+        if (confirmar)
+            lineas.Remove(linea);
+    }
+
+    private async Task GuardarVenta()
+    {
+        errorModal = null;
+        if (clienteId <= 0)
+        {
+            errorModal = "Seleccione un cliente.";
+            return;
+        }
+        if (lineas.Count == 0)
+        {
+            errorModal = "Agregue al menos un artículo.";
+            return;
+        }
+        if (lineas.Any(linea => linea.Cantidad < 1 || linea.Cantidad > linea.StockMaximo || linea.PrecioBase < 0))
+        {
+            errorModal = "Revise cantidades, stock y precios de los artículos.";
+            return;
+        }
+        if (montoCuentaCorriente < 0)
+        {
+            errorModal = "El importe de cuenta corriente no puede ser negativo.";
+            return;
+        }
+        if (pagosSeleccionados.Any(pago => pago.Monto <= 0))
+        {
+            errorModal = "Cada importe de pago debe ser mayor que cero.";
+            return;
+        }
+        if (Math.Round(ImporteAsignado, 2, MidpointRounding.AwayFromZero) !=
+            Math.Round(Total, 2, MidpointRounding.AwayFromZero))
+        {
+            errorModal = "Los importes de pago y cuenta corriente deben coincidir con el total de la venta.";
+            return;
+        }
+
+        guardando = true;
+        var dto = new VentaCrearDTO
+        {
+            ClienteId = clienteId,
+            Pagos = pagosSeleccionados
+                .Select(pago => new PagoVentaCrearDTO { PagoId = pago.PagoId, Monto = pago.Monto })
+                .ToList(),
+            MontoCuentaCorriente = montoCuentaCorriente,
+            Detalles = lineas.Select(linea => new DetalleVentaCrearDTO
+            {
+                VarianteId = linea.VarianteId,
+                Cantidad = linea.Cantidad,
+                PrecioUnitario = linea.PrecioUnitario
+            }).ToList()
+        };
+
+        if (edicion && ventaActual is not null)
+        {
+            var respuesta = await http.Put($"api/Venta/editar/{ventaActual.Id}", dto);
+            if (respuesta.Error)
+            {
+                errorModal = await respuesta.ObtenerMensajeAsync();
+                guardando = false;
+                return;
+            }
+        }
+        else
+        {
+            var respuesta = await http.Post<VentaCrearDTO, int>("api/Venta/crear", dto);
+            if (respuesta.Error)
+            {
+                errorModal = await respuesta.ObtenerMensajeAsync();
+                guardando = false;
+                return;
+            }
+        }
+
+        mensaje = "Venta guardada correctamente.";
+        CerrarModal();
+        await CargarVentas();
+        guardando = false;
+    }
+
+    private void SolicitarAnulacion() => confirmarAnulacion = true;
+    private void CancelarAnulacion() => confirmarAnulacion = false;
+
+    private async Task AnularVenta()
+    {
+        if (ventaActual is null)
+            return;
+
+        errorModal = null;
+        var respuesta = await http.Delete($"api/Venta/anular/{ventaActual.Id}");
+        if (respuesta.Error)
+        {
+            errorModal = await respuesta.ObtenerMensajeAsync();
+            return;
+        }
+
+        mensaje = $"Venta #{ventaActual.Id} anulada.";
+        CerrarModal();
+        await CargarVentas();
+    }
+
+    private static string ResumenPagos(IEnumerable<PagoVentaMostrarDTO> pagos, decimal cuenta)
+    {
+        var partes = pagos.Select(pago => pago.Metodo + " $" + pago.Monto.ToString("N2")).ToList();
+        if (cuenta > 0)
+            partes.Add("Cuenta corriente $" + cuenta.ToString("N2"));
+        return partes.Count == 0 ? "Sin registrar" : string.Join(" · ", partes);
+    }
+
+    private static string NombreCliente(ClienteMostrarDTO cliente) =>
+        string.IsNullOrWhiteSpace(cliente.Apellido) ? cliente.Nombre : $"{cliente.Apellido}, {cliente.Nombre}";
+
+    private static DateTime InicioUtc(DateTime fecha) =>
+        DateTime.SpecifyKind(fecha.Date, DateTimeKind.Local).ToUniversalTime();
+
+    private sealed class LineaVenta
+    {
+        public int VarianteId { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public string Talle { get; set; } = string.Empty;
+        public int Cantidad { get; set; } = 1;
+        public decimal PrecioBase { get; set; }
+        public decimal DescuentoPorcentaje { get; set; }
+        public decimal RecargoPorcentaje { get; set; }
+        public int StockMaximo { get; set; }
+
+        public decimal ImporteDescuento => Math.Round(PrecioBase * DescuentoPorcentaje / 100m, 2, MidpointRounding.AwayFromZero);
+        public decimal ImporteRecargo => Math.Round(PrecioBase * RecargoPorcentaje / 100m, 2, MidpointRounding.AwayFromZero);
+        public decimal PrecioUnitario => Math.Round(PrecioBase - ImporteDescuento + ImporteRecargo, 2, MidpointRounding.AwayFromZero);
+        public decimal Subtotal => Math.Round(Cantidad * PrecioUnitario, 2, MidpointRounding.AwayFromZero);
+    }
 }
