@@ -1,0 +1,343 @@
+/* CSS for Productos component */
+.productos-page {
+    --color1: #FDE2E4;
+    --color2: #FAD2E1;
+    --color3: #E2ECE9;
+    --color4: #BEE1E6;
+    --color5: #DFE7FD;
+    --ink: #4A3B47;
+    --ink-soft: #7A6A77;
+    --rose-deep: #9B3D52; /* solo para acciones destructivas y errores */
+    --line: rgba(74, 59, 71, 0.14);
+    color: var(--ink);
+}
+
+/* ---------- Título ---------- */
+.page-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 1.75rem;
+    font-weight: 400;
+    margin: 0;
+    color: var(--ink);
+}
+
+.titulo-seccion {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--ink);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--color2);
+}
+
+.texto-suave {
+    color: var(--ink-soft);
+}
+
+/* ---------- Botones ---------- */
+.btn-fb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink);
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+    .btn-fb:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+    }
+
+.btn-fb-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+}
+
+/* Acción principal: la única con relleno oscuro */
+.btn-fb-primary {
+    background-color: var(--ink);
+    color: #fff;
+}
+
+    .btn-fb-primary:hover {
+        background-color: #3a2d37;
+    }
+
+.btn-fb-ver {
+    background-color: var(--color4);
+    border-color: rgba(74, 59, 71, 0.12);
+}
+
+    .btn-fb-ver:hover {
+        background-color: #a8d6dd;
+    }
+
+.btn-fb-editar {
+    background-color: var(--color5);
+    border-color: rgba(74, 59, 71, 0.12);
+}
+
+    .btn-fb-editar:hover {
+        background-color: #cdd9fa;
+    }
+
+.btn-fb-borrar {
+    background-color: var(--color1);
+    border-color: rgba(155, 61, 82, 0.25);
+    color: var(--rose-deep);
+}
+
+    .btn-fb-borrar:hover {
+        background-color: var(--color2);
+    }
+
+.btn-fb-ghost {
+    background-color: #fff;
+    border-color: var(--line);
+}
+
+    .btn-fb-ghost:hover {
+        background-color: var(--color3);
+    }
+
+.acciones {
+    white-space: nowrap;
+}
+
+    .acciones .btn-fb + .btn-fb {
+        margin-left: 0.35rem;
+    }
+
+/* ---------- Tablas ---------- */
+.tabla-fb {
+    background-color: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+    .tabla-fb .table {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: var(--color3);
+        --bs-table-color: var(--ink);
+        --bs-table-border-color: rgba(74, 59, 71, 0.08);
+    }
+
+    .tabla-fb thead th {
+        background-color: var(--color5);
+        color: var(--ink);
+        font-weight: 600;
+        border-bottom: 1px solid var(--line);
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .tabla-fb tbody td {
+        padding-top: 0.7rem;
+        padding-bottom: 0.7rem;
+    }
+
+/* Tablas dentro de los modales: encabezado más suave */
+.tabla-fb-interna {
+    border-radius: 10px;
+}
+
+    .tabla-fb-interna thead th {
+        background-color: var(--color1);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+.nombre-producto {
+    font-weight: 600;
+}
+
+.nombre-talle {
+    font-weight: 600;
+}
+
+.fila-color td {
+    background-color: var(--color3);
+}
+
+.nombre-color {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* ---------- Modales ---------- */
+.modal-fb {
+    background-color: rgba(74, 59, 71, 0.4);
+}
+
+    .modal-fb .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        color: var(--ink);
+    }
+
+    .modal-fb .modal-header {
+        border-bottom: 1px solid var(--line);
+        color: var(--ink);
+    }
+
+    .modal-fb .modal-title {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.3rem;
+        font-weight: 400;
+    }
+
+    .modal-fb .modal-footer {
+        border-top: 1px solid var(--line);
+    }
+
+/* Cada modal tiene su propio color de encabezado */
+.modal-header-detalles {
+    background-color: var(--color4);
+}
+
+.modal-header-agregar {
+    background-color: var(--color2);
+}
+
+.modal-header-editar {
+    background-color: var(--color5);
+}
+
+/* ---------- Tarjeta de color ---------- */
+.color-card {
+    margin-bottom: 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.color-card-header {
+    padding: 0.65rem 1rem;
+    background-color: var(--color1);
+    font-weight: 600;
+}
+
+.color-card.activo .color-card-header {
+    background-color: var(--color3);
+}
+
+.color-card-body {
+    padding: 1rem 1rem 1rem 1.5rem;
+    border-left: 4px solid var(--color4);
+    background-color: #fff;
+}
+
+.etiqueta-chica {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+
+/* ---------- Formularios ---------- */
+.productos-page ::deep .form-label {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.productos-page ::deep .form-check-label {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.productos-page ::deep .form-control,
+.productos-page ::deep .form-select,
+.productos-page ::deep .input-group-text {
+    border-color: var(--line);
+    color: var(--ink);
+    border-radius: 8px;
+}
+
+.productos-page ::deep .input-group-text {
+    background-color: var(--color3);
+}
+
+.productos-page ::deep .form-control:focus,
+.productos-page ::deep .form-select:focus {
+    border-color: var(--ink-soft);
+    box-shadow: 0 0 0 0.2rem var(--color4);
+}
+
+.productos-page ::deep .form-control:disabled {
+    background-color: #f6f3f5;
+}
+
+.productos-page ::deep .form-check-input {
+    border-color: var(--ink-soft);
+}
+
+    .productos-page ::deep .form-check-input:checked {
+        background-color: var(--ink);
+        border-color: var(--ink);
+    }
+
+    .productos-page ::deep .form-check-input:focus {
+        border-color: var(--ink-soft);
+        box-shadow: 0 0 0 0.2rem var(--color4);
+    }
+
+.mensaje-error {
+    color: var(--rose-deep);
+    font-size: 0.85rem;
+}
+
+/* ---------- Avisos ---------- */
+.alerta-fb {
+    padding: 0.9rem 1.1rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    color: var(--ink);
+}
+
+.alerta-fb-info {
+    background-color: var(--color4);
+}
+
+.alerta-fb-warn {
+    background-color: var(--color1);
+}
+
+.productos-page ::deep .alerta-fb-error {
+    background-color: var(--color1);
+    border-color: rgba(155, 61, 82, 0.3);
+    color: var(--rose-deep);
+}
+
+    .productos-page ::deep .alerta-fb-error ul {
+        margin: 0;
+        padding-left: 1.2rem;
+    }
+
+/* ---------- Spinner ---------- */
+.productos-page ::deep .spinner-border {
+    color: var(--ink-soft);
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+    .acciones {
+        white-space: normal;
+    }
+
+        .acciones .btn-fb {
+            margin: 0.15rem 0;
+        }
+}

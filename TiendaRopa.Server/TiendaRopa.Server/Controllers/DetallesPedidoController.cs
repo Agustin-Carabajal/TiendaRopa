@@ -55,18 +55,17 @@ namespace TiendaRopa.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DetallePedidoDTO dto)
         {
-            // Tu lógica de guardado...
             var detalle = new DetallesPedido
             {
                 Cant_prod_Pedido = dto.Cant_prod_Pedido,
                 Valor_est = dto.Valor_est,
                 Valor_uni = dto.Valor_uni,
                 PedidoId = dto.PedidoId,
-                VarianteId = dto.VarianteId
+                VarianteId = dto.VarianteId // <-- Vinculado directamente a la variante seleccionada
             };
 
             await _repository.AddAsync(detalle);
-            return Ok(dto);
+            return CreatedAtAction(nameof(Get), new { id = detalle.Id }, dto);
         }
 
         [HttpPut("{id}")]
