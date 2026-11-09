@@ -378,3 +378,4 @@ TiendaRopa.Server/TiendaRopa.Server/Program.cs
 TiendaRopa.BD/Datos/AppDbContext.cs
 TiendaRopa.Server/TiendaRopa.Server.Client/Layout/NavMenu.razor
 /TiendaRopa.Server/TiendaRopa.Server/appsettings.json
+/TiendaRopa.Server/TiendaRopa.Server/appsettings.json
