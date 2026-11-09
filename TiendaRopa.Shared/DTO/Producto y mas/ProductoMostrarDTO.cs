@@ -14,10 +14,11 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         public string Descripcion { get; set; } = string.Empty;
 
         public string Marca { get; set; } = string.Empty;
+        public int MarcaId { get; set; }
 
         public string Proveedor {  get; set; } = string.Empty;
 
-        public int ProveedorId { get; set; }
+        public int? ProveedorId { get; set; }
 
         public EstadoRegistro Estado { get; set; }
     }

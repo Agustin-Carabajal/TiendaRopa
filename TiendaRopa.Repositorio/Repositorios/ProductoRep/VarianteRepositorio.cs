@@ -21,7 +21,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
         public async Task<List<VarianteMostrarDTO>> GetListaActivos()
         {
-            return await context.Variantes
+            var lista = await context.Variantes
                 .Where(v => v.EstadoRegistro == EstadoRegistro.activo)
                 .Include(v => v.ProductoColor)
                     .ThenInclude(pc => pc!.Producto)
@@ -41,6 +41,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                    Stock = v.Stock,
                    PrecioVenta = v.PrecioVenta,
                    Estado = v.EstadoRegistro,
+                   Marca = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Producto.Marca != null
+                        ? v.ProductoColor.Producto.Marca.NombreMarca
+                        : "Sin Marca",
                    Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                    ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
@@ -50,11 +53,13 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                    TalleId = v.TalleId
                })
                .ToListAsync();
+            await CargarEtiquetas(lista);
+            return lista;
         }
 
         public async Task<VarianteMostrarDTO?> ObtenerById(int id)
         {
-            return await context.Variantes
+            var variante = await context.Variantes
                 .Where(v => v.Id == id)
                 .Include(v => v.ProductoColor)
                     .ThenInclude(pc => pc!.Producto)
@@ -68,7 +73,10 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Stock = v.Stock,
                     PrecioVenta = v.PrecioVenta,
                     Estado = v.EstadoRegistro,
-                    Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
+                    Marca = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Producto.Marca != null
+                        ? v.ProductoColor.Producto.Marca.NombreMarca
+                        : "Sin Marca",
+                   Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
                         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
                         : "Producto/Color no asignado",
@@ -77,11 +85,13 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     TalleId = v.TalleId
                 })
                 .FirstOrDefaultAsync();
+            if (variante != null) await CargarEtiquetas(new List<VarianteMostrarDTO> { variante });
+            return variante;
         }
 
         public async Task<List<VarianteMostrarDTO>> GetListaInactivos()
         {
-            return await context.Variantes
+            var lista = await context.Variantes
                 .Where(v => v.EstadoRegistro == EstadoRegistro.inactivo)
                 .Include(v => v.ProductoColor)
                     .ThenInclude(pc => pc!.Producto)
@@ -101,7 +111,10 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Stock = v.Stock,
                     PrecioVenta = v.PrecioVenta,
                     Estado = v.EstadoRegistro,
-                    Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
+                    Marca = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Producto.Marca != null
+                        ? v.ProductoColor.Producto.Marca.NombreMarca
+                        : "Sin Marca",
+                   Talle = v.Talle != null ? v.Talle.NombreTalle : "Sin Talle",
                     ProductoColor = v.ProductoColor != null && v.ProductoColor.Producto != null && v.ProductoColor.Color != null
         ? $"{v.ProductoColor.Producto.NombreProducto} - {v.ProductoColor.Color.NombreColor}"
         : "Producto/Color no asignado",
@@ -110,6 +123,31 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     TalleId = v.TalleId
                 })
                 .ToListAsync();
+            await CargarEtiquetas(lista);
+            return lista;
+        }
+
+        private async Task CargarEtiquetas(List<VarianteMostrarDTO> variantes)
+        {
+            if (variantes.Count == 0) return;
+
+            var ids = variantes.Select(v => v.Id).ToList();
+            var asignaciones = await context.VariantesEtiquetas
+                .Where(ve => ids.Contains(ve.VarianteId)
+                    && ve.EstadoRegistro != EstadoRegistro.eliminado
+                    && ve.EstadoRegistro != EstadoRegistro.inactivo
+                    && ve.Etiqueta != null
+                    && ve.Etiqueta.EstadoRegistro != EstadoRegistro.eliminado
+                    && ve.Etiqueta.EstadoRegistro != EstadoRegistro.inactivo)
+                .Select(ve => new { ve.VarianteId, ve.EtiquetaId, Nombre = ve.Etiqueta!.Nombre })
+                .ToListAsync();
+
+            foreach (var variante in variantes)
+            {
+                var etiquetas = asignaciones.Where(a => a.VarianteId == variante.Id).ToList();
+                variante.EtiquetaIds = etiquetas.Select(a => a.EtiquetaId).Distinct().ToList();
+                variante.Etiquetas = etiquetas.Select(a => a.Nombre).Distinct().ToList();
+            }
         }
 
 

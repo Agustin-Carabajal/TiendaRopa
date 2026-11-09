@@ -17,12 +17,10 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
 
         public string? DescripcionProducto { get; set; }
 
-        [Required(ErrorMessage = "La marca del producto es obligatoria.")]
-        [MaxLength(100, ErrorMessage = "La marca no puede exceder los 100 caracteres.")]
-        public string MarcaProducto { get; set; } = string.Empty;
+        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una marca.")]
+        public int MarcaId { get; set; }
 
-        [Required(ErrorMessage = "El proveedor es obligatorio.")]
-        public int ProveedorId { get; set; }
+        public int? ProveedorId { get; set; }
 
         public bool Activo { get; set; } = true;
 

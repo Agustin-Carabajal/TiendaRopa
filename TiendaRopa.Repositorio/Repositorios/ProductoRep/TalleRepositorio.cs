@@ -22,7 +22,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
         public async Task<List<TalleMostrarDTO>> SelectListaTalles()
         {
-            var lista = await context.Talles.Where(x => x.EstadoRegistro == EstadoRegistro.activo).Select(x => new TalleMostrarDTO
+            var lista = await context.Talles
+                .Where(x => x.EstadoRegistro != EstadoRegistro.eliminado && x.EstadoRegistro != EstadoRegistro.inactivo)
+                .Select(x => new TalleMostrarDTO
             {
                 IdTalle = x.Id,
                 NombreTalle = x.NombreTalle

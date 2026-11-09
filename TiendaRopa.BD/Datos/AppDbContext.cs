@@ -32,6 +32,7 @@ namespace TiendaRopa.BD.Datos
 
         public DbSet<Etiqueta> Etiquetas { get; set; }
         public DbSet<VarianteEtiqueta> VariantesEtiquetas { get; set; }
+        public DbSet<Marca> Marcas { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -43,12 +44,17 @@ namespace TiendaRopa.BD.Datos
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-            // 2. Renombrar la columna Id a IdentityId (si aún deseas mantener este nombre en la base de datos)
+            // 2. Renombrar la columna Id a IdentityId 
             modelBuilder.Entity<ApplicationUser>()
                 .Property(u => u.Id)
                 .HasColumnName("IdentityId");
 
-  
+            // 3. Configurar la relación muchos a muchos entre Variante y Etiqueta
+            modelBuilder.Entity<VarianteEtiqueta>()
+                .HasIndex(x => new { x.VarianteId, x.EtiquetaId })
+                .IsUnique();
+
+
 
             // 4. Desactivar el borrado en cascada global para evitar bloqueos en SQL Server
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()

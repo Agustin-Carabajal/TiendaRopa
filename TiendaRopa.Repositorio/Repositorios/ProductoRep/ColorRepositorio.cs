@@ -22,7 +22,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
         public async Task<List<ColorMostrarDTO>> SelectListaColores()
         {
-            var lista = await context.Colores.Where(x => x.EstadoRegistro == EstadoRegistro.activo).Select(x => new ColorMostrarDTO
+            var lista = await context.Colores
+                .Where(x => x.EstadoRegistro != EstadoRegistro.eliminado && x.EstadoRegistro != EstadoRegistro.inactivo)
+                .Select(x => new ColorMostrarDTO
             {
                 IdColor = x.Id,
                 NombreColor = x.NombreColor

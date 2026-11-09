@@ -23,15 +23,7 @@ namespace TiendaRopa.Server.Controllers
         [HttpGet("lista-productos-activos")] //api/Producto/lista-productos-activos
         public async Task<ActionResult<List<ProductoMostrarDTO>>> GetLista()
         {
-            var lista = await repositorio.GetListaActivos();
-            if (lista == null)
-            {
-                return NotFound("No se encontraron elementos de la lista, VERIFICAR.");
-            }
-            if (lista.Count == 0)
-            {
-                return NotFound("Lista sin registros.");
-            }
+            var lista = await repositorio.GetListaActivos() ?? new List<ProductoMostrarDTO>();
             return Ok(lista);
         }
 
@@ -65,12 +57,14 @@ namespace TiendaRopa.Server.Controllers
         [HttpPost("crear")] //api/Producto/crear
         public async Task<ActionResult<int>> Post(ProductoCrearDTO DTO)
         {
+            if (!await context.Marcas.AnyAsync(m => m.Id == DTO.MarcaId && m.EstadoRegistro != EstadoRegistro.eliminado && m.EstadoRegistro != EstadoRegistro.inactivo))
+                return BadRequest("La marca seleccionada no existe o está inactiva.");
            
             Producto entidad = new Producto
             {
                 NombreProducto = DTO.Nombre,
                 DescripcionProducto = DTO.Descripcion,
-                MarcaProducto = DTO.Marca,
+                MarcaId = DTO.MarcaId,
                 ProveedorId = DTO.ProveedorId,
                 EstadoRegistro = DTO.Estado
             };
@@ -84,6 +78,11 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult> RegistrarProductoCompleto([FromBody] RegistrarProductoCompletoDTO dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!await context.Marcas.AnyAsync(m => m.Id == dto.MarcaId && m.EstadoRegistro != EstadoRegistro.eliminado && m.EstadoRegistro != EstadoRegistro.inactivo))
+                return BadRequest("La marca seleccionada no existe o está inactiva.");
+            var etiquetasSolicitadas = ObtenerEtiquetaIds(dto);
+            if (!await EtiquetasActivasExisten(etiquetasSolicitadas))
+                return BadRequest("Una o más etiquetas seleccionadas no existen o están inactivas.");
 
             // Iniciamos una transacción usando el contexto de EF Core
             using var transaction = await context.Database.BeginTransactionAsync();
@@ -95,7 +94,7 @@ namespace TiendaRopa.Server.Controllers
                 {
                     NombreProducto = dto.NombreProducto,
                     DescripcionProducto = dto.DescripcionProducto,
-                    MarcaProducto = dto.MarcaProducto,
+                    MarcaId = dto.MarcaId,
                     ProveedorId = dto.ProveedorId,
                     EstadoRegistro = dto.Activo ? EstadoRegistro.activo : EstadoRegistro.inactivo
 
@@ -104,6 +103,8 @@ namespace TiendaRopa.Server.Controllers
 
                 context.Productos.Add(nuevoProducto);
                 await context.SaveChangesAsync(); // Genera el nuevoProducto.Id
+
+                var asignacionesEtiquetas = new List<(Variante Variante, List<int> EtiquetaIds)>();
 
                 // 2. Recorrer los colores seleccionados
                 foreach (var colorDto in dto.Colores)
@@ -133,12 +134,14 @@ namespace TiendaRopa.Server.Controllers
                         };
 
                         context.Variantes.Add(nuevaVariante);
+                        asignacionesEtiquetas.Add((nuevaVariante, varianteDto.EtiquetaIds ?? new List<int>()));
                     }
                 }
            
 
                 // 4. Guardar todas las variantes juntas
                 await context.SaveChangesAsync();
+                await SincronizarEtiquetas(asignacionesEtiquetas);
 
                 // 5. Confirmar la transacción en la base de datos
                 await transaction.CommitAsync();
@@ -158,6 +161,11 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult> EditarProductoCompleto(int id, [FromBody] RegistrarProductoCompletoDTO dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!await context.Marcas.AnyAsync(m => m.Id == dto.MarcaId && m.EstadoRegistro != EstadoRegistro.eliminado && m.EstadoRegistro != EstadoRegistro.inactivo))
+                return BadRequest("La marca seleccionada no existe o está inactiva.");
+            var etiquetasSolicitadas = ObtenerEtiquetaIds(dto);
+            if (!await EtiquetasActivasExisten(etiquetasSolicitadas))
+                return BadRequest("Una o más etiquetas seleccionadas no existen o están inactivas.");
 
             using var transaction = await context.Database.BeginTransactionAsync();
 
@@ -169,7 +177,7 @@ namespace TiendaRopa.Server.Controllers
                 // 1. Actualizar datos básicos del producto
                 producto.NombreProducto = dto.NombreProducto;
                 producto.DescripcionProducto = dto.DescripcionProducto;
-                producto.MarcaProducto = dto.MarcaProducto;
+                producto.MarcaId = dto.MarcaId;
                 producto.ProveedorId = dto.ProveedorId;
                 producto.EstadoRegistro = dto.Activo ? EstadoRegistro.activo : EstadoRegistro.inactivo;
 
@@ -182,6 +190,7 @@ namespace TiendaRopa.Server.Controllers
                 var variantesExistentes = await context.Variantes
                     .Where(v => idsColoresExistentes.Contains(v.ProductoColorId))
                     .ToListAsync();
+                var asignacionesEtiquetas = new List<(Variante Variante, List<int> EtiquetaIds)>();
 
                 // 3. Recorrer los colores que llegan del formulario de edición
                 foreach (var colorDto in dto.Colores)
@@ -203,7 +212,7 @@ namespace TiendaRopa.Server.Controllers
 
                         foreach (var varianteDto in colorDto.Variantes)
                         {
-                            context.Variantes.Add(new Variante
+                            var varianteNueva = new Variante
                             {
                                 ProductoColorId = productoColor.Id,
                                 TalleId = varianteDto.TalleId,
@@ -211,7 +220,9 @@ namespace TiendaRopa.Server.Controllers
                                 PrecioVenta = varianteDto.PrecioVenta,
                                 CodVariante = varianteDto.CodVariante,
                                 EstadoRegistro = EstadoRegistro.activo
-                            });
+                            };
+                            context.Variantes.Add(varianteNueva);
+                            asignacionesEtiquetas.Add((varianteNueva, varianteDto.EtiquetaIds ?? new List<int>()));
                         }
                     }
                     else
@@ -229,7 +240,7 @@ namespace TiendaRopa.Server.Controllers
                             if (varianteExistente == null)
                             {
                                 // Talle nuevo dentro de un color que ya existía
-                                context.Variantes.Add(new Variante
+                                var varianteNueva = new Variante
                                 {
                                     ProductoColorId = productoColor.Id,
                                     TalleId = varianteDto.TalleId,
@@ -237,7 +248,9 @@ namespace TiendaRopa.Server.Controllers
                                     PrecioVenta = varianteDto.PrecioVenta,
                                     CodVariante = varianteDto.CodVariante,
                                     EstadoRegistro = EstadoRegistro.activo
-                                });
+                                };
+                                context.Variantes.Add(varianteNueva);
+                                asignacionesEtiquetas.Add((varianteNueva, varianteDto.EtiquetaIds ?? new List<int>()));
                             }
                             else
                             {
@@ -246,6 +259,7 @@ namespace TiendaRopa.Server.Controllers
                                 varianteExistente.PrecioVenta = varianteDto.PrecioVenta;
                                 varianteExistente.CodVariante = varianteDto.CodVariante;
                                 varianteExistente.EstadoRegistro = EstadoRegistro.activo;
+                                asignacionesEtiquetas.Add((varianteExistente, varianteDto.EtiquetaIds ?? new List<int>()));
                             }
                         }
 
@@ -254,6 +268,7 @@ namespace TiendaRopa.Server.Controllers
                         foreach (var varianteVieja in variantesDeEsteColor.Where(v => !talleIdsEnviados.Contains(v.TalleId)))
                         {
                             varianteVieja.EstadoRegistro = EstadoRegistro.inactivo;
+                            asignacionesEtiquetas.Add((varianteVieja, new List<int>()));
                         }
                     }
                 }
@@ -266,10 +281,12 @@ namespace TiendaRopa.Server.Controllers
                     foreach (var v in variantesExistentes.Where(v => v.ProductoColorId == colorViejo.Id))
                     {
                         v.EstadoRegistro = EstadoRegistro.inactivo;
+                        asignacionesEtiquetas.Add((v, new List<int>()));
                     }
                 }
 
                 await context.SaveChangesAsync();
+                await SincronizarEtiquetas(asignacionesEtiquetas);
                 await transaction.CommitAsync();
 
                 return Ok(new { Mensaje = "Producto actualizado con éxito.", ProductoId = id });
@@ -303,6 +320,72 @@ namespace TiendaRopa.Server.Controllers
                 return NotFound($"No existe el registro con el id: {id} o ya fue eliminado.");
             }
             return Ok($"Registro con el id: {id} eliminado correctamente.");
+        }
+
+        private static List<int> ObtenerEtiquetaIds(RegistrarProductoCompletoDTO dto) => dto.Colores
+            .Where(c => c.Variantes != null)
+            .SelectMany(c => c.Variantes)
+            .Where(v => v.EtiquetaIds != null)
+            .SelectMany(v => v.EtiquetaIds)
+            .Distinct()
+            .ToList();
+
+        private async Task<bool> EtiquetasActivasExisten(List<int> ids)
+        {
+            if (ids.Count == 0) return true;
+            var cantidadActivas = await context.Etiquetas.CountAsync(e =>
+                ids.Contains(e.Id)
+                && e.EstadoRegistro != EstadoRegistro.eliminado
+                && e.EstadoRegistro != EstadoRegistro.inactivo);
+            return cantidadActivas == ids.Count;
+        }
+
+        private async Task SincronizarEtiquetas(List<(Variante Variante, List<int> EtiquetaIds)> asignaciones)
+        {
+            if (asignaciones.Count == 0) return;
+
+            var porVariante = asignaciones
+                .GroupBy(x => x.Variante.Id)
+                .Select(g => (VarianteId: g.Key, EtiquetaIds: g.Last().EtiquetaIds.Distinct().ToHashSet()))
+                .ToList();
+            var varianteIds = porVariante.Select(x => x.VarianteId).ToList();
+            var relaciones = await context.VariantesEtiquetas
+                .Where(ve => varianteIds.Contains(ve.VarianteId))
+                .ToListAsync();
+
+            foreach (var asignacion in porVariante)
+            {
+                var existentes = relaciones.Where(ve => ve.VarianteId == asignacion.VarianteId).ToList();
+                foreach (var relacion in existentes)
+                {
+                    if (asignacion.EtiquetaIds.Contains(relacion.EtiquetaId))
+                    {
+                        relacion.EstadoRegistro = EstadoRegistro.activo;
+                        relacion.Observacion = string.Empty;
+                    }
+                    else if (relacion.EstadoRegistro != EstadoRegistro.eliminado
+                        && relacion.EstadoRegistro != EstadoRegistro.inactivo)
+                    {
+                        relacion.EstadoRegistro = EstadoRegistro.eliminado;
+                        relacion.Observacion = $"Asignación retirada el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+                    }
+                }
+
+                foreach (var etiquetaId in asignacion.EtiquetaIds)
+                {
+                    if (!existentes.Any(ve => ve.EtiquetaId == etiquetaId))
+                    {
+                        context.VariantesEtiquetas.Add(new VarianteEtiqueta
+                        {
+                            VarianteId = asignacion.VarianteId,
+                            EtiquetaId = etiquetaId,
+                            EstadoRegistro = EstadoRegistro.activo
+                        });
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
     }
 }

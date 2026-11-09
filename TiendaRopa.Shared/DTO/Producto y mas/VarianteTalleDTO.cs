@@ -21,6 +21,9 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         [MaxLength(100, ErrorMessage = "El código no puede exceder los 100 caracteres.")]
         public string CodVariante { get; set; } = string.Empty;
 
+        // Las etiquetas se asignan a esta combinación específica de color y talle.
+        public List<int> EtiquetaIds { get; set; } = new();
+
       
     }
 }

@@ -20,16 +20,70 @@ public class VentaRepositorio : Repositorio<Venta>, IRepositorio<Venta>, IVentaR
         if (desde.HasValue) query = query.Where(v => v.FechaHora >= ComoUtc(desde.Value));
         if (hasta.HasValue) query = query.Where(v => v.FechaHora < ComoUtc(hasta.Value));
 
-        return await query.OrderByDescending(v => v.FechaHora).ThenByDescending(v => v.Id)
+        var ventas = await query.OrderByDescending(v => v.FechaHora).ThenByDescending(v => v.Id)
             .Select(v => new VentaMostrarDTO
             {
                 Id = v.Id, FechaHora = v.FechaHora, Canal = v.CanalDeVenta, Estado = v.Estado,
                 Monto = v.Monto, ClienteId = v.ClienteId,
-                Cliente = v.Cliente.Nombre + (v.Cliente.Apellido != null ? " " + v.Cliente.Apellido : ""),
-                Pagos = v.PagosVenta.Select(p => new PagoVentaMostrarDTO { PagoId = p.PagoId, Metodo = p.Pago!.Tipo, Monto = p.Monto }).ToList(),
-                MontoCuentaCorriente = context.MovimientosCuentaCorriente.Where(m => m.VentaId == v.Id && m.Tipo == TipoMovimientoCuentaCorriente.Cargo).Select(m => (decimal?)m.Monto).FirstOrDefault() ?? 0m,
-                CantidadArticulos = v.DetallesVenta.Sum(d => d.CantidadProducto)
+                Cliente = v.Cliente.Nombre + (v.Cliente.Apellido != null ? " " + v.Cliente.Apellido : "")
             }).ToListAsync();
+
+        if (ventas.Count == 0)
+            return ventas;
+
+        var ventaIds = ventas.Select(v => v.Id).ToList();
+
+        var pagos = await context.PagosVenta.AsNoTracking()
+            .Where(p => ventaIds.Contains(p.VentaId))
+            .Select(p => new
+            {
+                p.VentaId,
+                Pago = new PagoVentaMostrarDTO
+                {
+                    PagoId = p.PagoId,
+                    Metodo = p.Pago!.Tipo,
+                    Monto = p.Monto
+                }
+            })
+            .ToListAsync();
+
+        var marcas = await context.DetallesVenta.AsNoTracking()
+            .Where(d => ventaIds.Contains(d.VentaId))
+            .Select(d => new
+            {
+                d.VentaId,
+                Marca = d.Variante.ProductoColor!.Producto!.Marca != null
+                    ? d.Variante.ProductoColor.Producto.Marca.NombreMarca
+                    : "Sin Marca"
+            })
+            .ToListAsync();
+
+        var montosCuentaCorriente = await context.MovimientosCuentaCorriente.AsNoTracking()
+            .Where(m => ventaIds.Contains(m.VentaId ?? 0) && m.Tipo == TipoMovimientoCuentaCorriente.Cargo)
+            .GroupBy(m => m.VentaId)
+            .Select(g => new { VentaId = g.Key, Monto = g.Sum(m => m.Monto) })
+            .ToListAsync();
+
+        var cantidades = await context.DetallesVenta.AsNoTracking()
+            .Where(d => ventaIds.Contains(d.VentaId))
+            .GroupBy(d => d.VentaId)
+            .Select(g => new { VentaId = g.Key, Cantidad = g.Sum(d => d.CantidadProducto) })
+            .ToListAsync();
+
+        var pagosPorVenta = pagos.GroupBy(p => p.VentaId).ToDictionary(g => g.Key, g => g.Select(p => p.Pago).ToList());
+        var marcasPorVenta = marcas.GroupBy(m => m.VentaId).ToDictionary(g => g.Key, g => g.Select(m => m.Marca).Distinct().ToList());
+        var montosPorVenta = montosCuentaCorriente.ToDictionary(g => g.VentaId!.Value, g => g.Monto);
+        var cantidadesPorVenta = cantidades.ToDictionary(g => g.VentaId, g => g.Cantidad);
+
+        foreach (var venta in ventas)
+        {
+            venta.Pagos = pagosPorVenta.GetValueOrDefault(venta.Id, new List<PagoVentaMostrarDTO>());
+            venta.Marcas = marcasPorVenta.GetValueOrDefault(venta.Id, new List<string>());
+            venta.MontoCuentaCorriente = montosPorVenta.GetValueOrDefault(venta.Id);
+            venta.CantidadArticulos = cantidadesPorVenta.GetValueOrDefault(venta.Id);
+        }
+
+        return ventas;
     }
 
     public async Task<VentaDetalleDTO?> ObtenerById(int id)
@@ -45,6 +99,7 @@ public class VentaRepositorio : Repositorio<Venta>, IRepositorio<Venta>, IVentaR
                 {
                     Id = d.Id, VarianteId = d.VarianteId, CodVariante = d.Variante.CodVariante,
                     Producto = d.Variante.ProductoColor!.Producto!.NombreProducto,
+                    Marca = d.Variante.ProductoColor!.Producto!.Marca != null ? d.Variante.ProductoColor.Producto.Marca.NombreMarca : "Sin Marca",
                     Color = d.Variante.ProductoColor!.Color!.NombreColor, Talle = d.Variante.Talle!.NombreTalle,
                     UrlImagen = d.Variante.ProductoColor!.UrlImagen, Cantidad = d.CantidadProducto,
                     PrecioUnitario = d.PrecioUnitario, Subtotal = d.Subtotal, StockActual = d.Variante.Stock

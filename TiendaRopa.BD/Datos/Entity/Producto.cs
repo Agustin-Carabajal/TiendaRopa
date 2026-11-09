@@ -14,9 +14,7 @@ namespace TiendaRopa.BD.Datos.Entity
 
         public string? DescripcionProducto { get; set; }
 
-        [Required(ErrorMessage = "El nombre de la marca del producto es obligatorio.")]
-        [MaxLength(100, ErrorMessage = "El nombre de la marca del producto no puede exceder los 100 caracteres.")]
-        public required string MarcaProducto { get; set; }
+
 
 
   
@@ -25,9 +23,12 @@ namespace TiendaRopa.BD.Datos.Entity
         //Foraneas
 
 
-        [Required(ErrorMessage = "El proveedor del producto es obligatorio.")]
-        public required int ProveedorId { get; set; }
+
+        public int? ProveedorId { get; set; }
         public Proveedor? Proveedor  { get; set; }
+
+        public int MarcaId { get; set; }
+        public Marca? Marca { get; set; }
 
     }
 }

@@ -13,6 +13,7 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         public string CodVariante { get; set; } = string.Empty;
         public int ProductoId { get; set; }
         public string ProductoColor { get; set; } = " - ";
+        public string Marca { get; set; } = "Sin Marca";
         public string Talle { get; set; } = string.Empty;
         public  int Stock { get; set; }
   
@@ -22,5 +23,7 @@ namespace TiendaRopa.Shared.DTO.Producto_y_mas
         public string? UrlImagen { get; set; }
         public int ColorId { get; set; }
         public int TalleId { get; set; }
+        public List<int> EtiquetaIds { get; set; } = new();
+        public List<string> Etiquetas { get; set; } = new();
     }
 }

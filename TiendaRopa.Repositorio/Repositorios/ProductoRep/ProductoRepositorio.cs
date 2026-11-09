@@ -31,8 +31,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Id = pc.Id,
                     Nombre = pc.NombreProducto,
                     Descripcion = pc.DescripcionProducto,
-                    Marca = pc.MarcaProducto,
-                    Proveedor = pc.Proveedor!.RazonSocialProveedores,
+                    Marca = pc.Marca != null ? pc.Marca.NombreMarca : "Sin Marca",
+                    MarcaId = pc.MarcaId,
+                    Proveedor = pc.Proveedor != null ? pc.Proveedor.RazonSocialProveedores : "Sin Proveedor",
                     ProveedorId = pc.ProveedorId,
                     Estado = pc.EstadoRegistro
                 })
@@ -50,8 +51,9 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Id = pc.Id,
                     Nombre = pc.NombreProducto,
                     Descripcion = pc.DescripcionProducto,
-                    Marca = pc.MarcaProducto,
-                    Proveedor = pc.Proveedor!.RazonSocialProveedores,
+                    Marca = pc.Marca != null ? pc.Marca.NombreMarca : "Sin Marca",
+                    MarcaId = pc.MarcaId,
+                    Proveedor = pc.Proveedor != null ? pc.Proveedor.RazonSocialProveedores : "Sin Proveedor",
                     ProveedorId = pc.ProveedorId,
                     Estado = pc.EstadoRegistro
                 })
@@ -68,10 +70,12 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
 
             if (registroExistente == null) return false;
 
+            if (!await context.Marcas.AnyAsync(m => m.Id == dto.MarcaId && m.EstadoRegistro == EstadoRegistro.activo)) return false;
+
 
             registroExistente.NombreProducto = dto.Nombre;
             registroExistente.DescripcionProducto = dto.Descripcion;
-            registroExistente.MarcaProducto = dto.Marca;
+            registroExistente.MarcaId = dto.MarcaId;
             registroExistente.ProveedorId = dto.ProveedorId;
             registroExistente.EstadoRegistro = dto.Estado;
 
@@ -88,7 +92,8 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
                     Id = p.Id,
                     Nombre = p.NombreProducto,
                     Descripcion = p.DescripcionProducto,
-                    Marca = p.MarcaProducto,
+                    Marca = p.Marca != null ? p.Marca.NombreMarca : "Sin Marca",
+                    MarcaId = p.MarcaId,
                     Proveedor = p.Proveedor != null ? p.Proveedor.RazonSocialProveedores : "Sin Proveedor",
                     ProveedorId = p.ProveedorId,
                     Estado = p.EstadoRegistro

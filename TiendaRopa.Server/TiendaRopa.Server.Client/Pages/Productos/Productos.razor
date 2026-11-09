@@ -2,7 +2,8 @@
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveAuto
 @using Microsoft.AspNetCore.Authorization
-@using TiendaRopa.Shared.DTO.Producto_y_mas;
+@using TiendaRopa.Shared
+@using TiendaRopa.Shared.DTO.Producto_y_mas
 @inject IHttpServicio http
 
 <div class="productos-page">
@@ -96,13 +97,14 @@
                                             <th>Talle</th>
                                             <th style="width: 150px;">Stock</th>
                                             <th style="width: 180px;">Precio venta</th>
+                                            <th>Etiquetas</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach (var grupoColor in variantesProducto.GroupBy(v => v.ProductoColor))
                                         {
                                             <tr class="fila-color">
-                                                <td colspan="4">
+                                                <td colspan="5">
                                                     <div class="d-flex align-items-center gap-2">
                                                         @if (!string.IsNullOrEmpty(grupoColor.First().UrlImagen))
                                                         {
@@ -119,6 +121,19 @@
                                                     <td class="text-center font-monospace">@v.Talle</td>
                                                     <td class="text-center">@v.Stock</td>
                                                     <td class="text-center">$@v.PrecioVenta.ToString("N2")</td>
+                                                    <td class="text-center">
+                                                        @if (v.Etiquetas.Any())
+                                                        {
+                                                            @foreach (var etiqueta in v.Etiquetas)
+                                                            {
+                                                                <span class="badge bg-secondary me-1">@etiqueta</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">—</span>
+                                                        }
+                                                    </td>
                                                 </tr>
                                             }
                                         }
@@ -162,13 +177,19 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Marca</label>
-                                    <InputText @bind-Value="nuevoProductoDto.MarcaProducto" class="form-control" placeholder="Ej: Nike" />
-                                    <ValidationMessage For="() => nuevoProductoDto.MarcaProducto" class="mensaje-error" />
+                                    <select class="form-select" @bind="nuevoProductoDto.MarcaId">
+                                        <option value="0">-- Seleccione una marca --</option>
+                                        @foreach (var marca in marcasActivas)
+                                        {
+                                            <option value="@marca.IdMarca">@marca.NombreMarca</option>
+                                        }
+                                    </select>
+                                    <ValidationMessage For="() => nuevoProductoDto.MarcaId" class="mensaje-error" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Proveedor</label>
                                     <select class="form-select" @bind="nuevoProductoDto.ProveedorId">
-                                        <option value="0">-- Seleccione un proveedor --</option>
+                                        <option value="">-- Sin proveedor --</option>
                                         @foreach (var prov in proveedoresActivos)
                                         {
                                             <option value="@prov.IdProveedor">@prov.RazonSocialProveedores</option>
@@ -177,8 +198,8 @@
                                 </div>
                                 <div class="col-md-6 mb-3 d-flex align-items-end shadow-none">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="checkActivoProd" @bind="nuevoProductoDto.Activo" />
-                                        <label class="form-check-label" for="checkActivoProd">Producto publicado / activo</label>
+                                        <input class="form-check-input" type="checkbox" id="checkActivoProd" @bind="nuevoProductoDto.Activo" disabled />
+                                        <label class="form-check-label" for="checkActivoProd">Publicado en la Web (próximamente)</label>
                                     </div>
                                 </div>
                                 <div class="col-12 mb-3">
@@ -230,6 +251,7 @@
                                                             <th>Stock inicial</th>
                                                             <th>Precio de venta</th>
                                                             <th>Código de variante</th>
+                                                            <th>Etiquetas</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -259,6 +281,20 @@
                                                                 <td>
                                                                     <input type="text" class="form-control form-control-sm"
                                                                            disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).CodVariante" placeholder="Ejem: PROD-COL-TAL" />
+                                                                </td>
+                                                                <td>
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        @foreach (var etiqueta in etiquetasDisponibles)
+                                                                        {
+                                                                            <label class="form-check form-check-inline small mb-0">
+                                                                                <input type="checkbox" class="form-check-input"
+                                                                                       disabled="@(!talleChequeado)"
+                                                                                       checked="@(varDto?.EtiquetaIds.Contains(etiqueta.IdEtiqueta) == true)"
+                                                                                       @onchange="(e) => AlternarEtiqueta(colorSel, tal.IdTalle, etiqueta.IdEtiqueta, (bool)e.Value!)" />
+                                                                                <span class="form-check-label">@etiqueta.Nombre</span>
+                                                                            </label>
+                                                                        }
+                                                                    </div>
                                                                 </td>
                                                             </tr>
                                                         }
@@ -305,13 +341,19 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Marca</label>
-                                    <InputText @bind-Value="productoEditarDto.MarcaProducto" class="form-control" placeholder="Ej: Nike" />
-                                    <ValidationMessage For="() => productoEditarDto.MarcaProducto" class="mensaje-error" />
+                                    <select class="form-select" @bind="productoEditarDto.MarcaId">
+                                        <option value="0">-- Seleccione una marca --</option>
+                                        @foreach (var marca in marcasActivas)
+                                        {
+                                            <option value="@marca.IdMarca">@marca.NombreMarca</option>
+                                        }
+                                    </select>
+                                    <ValidationMessage For="() => productoEditarDto.MarcaId" class="mensaje-error" />
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Proveedor</label>
                                     <select class="form-select" @bind="productoEditarDto.ProveedorId">
-                                        <option value="0">-- Seleccione un proveedor --</option>
+                                        <option value="">-- Sin proveedor --</option>
                                         @foreach (var prov in proveedoresActivos)
                                         {
                                             <option value="@prov.IdProveedor">@prov.RazonSocialProveedores</option>
@@ -320,8 +362,8 @@
                                 </div>
                                 <div class="col-md-6 mb-3 d-flex align-items-end shadow-none">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="checkActivoProdEdit" @bind="productoEditarDto.Activo" />
-                                        <label class="form-check-label" for="checkActivoProdEdit">Producto publicado / activo</label>
+                                        <input class="form-check-input" type="checkbox" id="checkActivoProdEdit" @bind="productoEditarDto.Activo" disabled />
+                                        <label class="form-check-label" for="checkActivoProdEdit">Publicado en la Web (próximamente)</label>
                                     </div>
                                 </div>
                                 <div class="col-12 mb-3">
@@ -373,6 +415,7 @@
                                                             <th>Stock</th>
                                                             <th>Precio de venta</th>
                                                             <th>Código de variante</th>
+                                                            <th>Etiquetas</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -403,6 +446,20 @@
                                                                     <input type="text" class="form-control form-control-sm"
                                                                            disabled="@(!talleChequeado)" @bind="ObtenerOInstanciarVariante(colorSel, tal.IdTalle).CodVariante" placeholder="Ejem: PROD-COL-TAL" />
                                                                 </td>
+                                                                <td>
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        @foreach (var etiqueta in etiquetasDisponibles)
+                                                                        {
+                                                                            <label class="form-check form-check-inline small mb-0">
+                                                                                <input type="checkbox" class="form-check-input"
+                                                                                       disabled="@(!talleChequeado)"
+                                                                                       checked="@(varDto?.EtiquetaIds.Contains(etiqueta.IdEtiqueta) == true)"
+                                                                                       @onchange="(e) => AlternarEtiqueta(colorSel, tal.IdTalle, etiqueta.IdEtiqueta, (bool)e.Value!)" />
+                                                                                <span class="form-check-label">@etiqueta.Nombre</span>
+                                                                            </label>
+                                                                        }
+                                                                    </div>
+                                                                </td>
                                                             </tr>
                                                         }
                                                     </tbody>
@@ -432,6 +489,8 @@
     private List<ColorMostrarDTO> todosLosColores = new();
     private List<TalleMostrarDTO> todosLosTalles = new();
     private List<ProveedorMostrarDTO> proveedoresActivos = new();
+    private List<MarcaMostrarDTO> marcasActivas = new();
+    private List<EtiquetaMostrarDTO> etiquetasDisponibles = new();
 
  
     private List<VarianteMostrarDTO> variantesProducto = new();
@@ -463,14 +522,17 @@
         {
             todosLosTalles = respTalles.Respuesta;
         }
-        // proveedoresActivos = new List<ProveedorMostrarDTO>
-        // {
-        //     new ProveedorMostrarDTO { IdProveedor = 2, RazonSocialProveedores = "PEPE" },
-        //     new ProveedorMostrarDTO { IdProveedor = 3, RazonSocialProveedores = "Distribuidora Textil S.A." },
-        //     new ProveedorMostrarDTO { IdProveedor = 4, RazonSocialProveedores = "Indumentaria Mayorista Nike" },
-        //     new ProveedorMostrarDTO { IdProveedor = 5, RazonSocialProveedores = "Fábrica de Ropa Denim Hnos." }
-            
-        // };
+        var respMarcas = await http.Get<List<MarcaMostrarDTO>>("api/Marca/listamarcas");
+        if (!respMarcas.Error && respMarcas.Respuesta != null)
+        {
+            marcasActivas = respMarcas.Respuesta;
+        }
+        var respEtiquetas = await http.Get<List<EtiquetaMostrarDTO>>("api/Etiqueta/listaetiquetas");
+        if (!respEtiquetas.Error && respEtiquetas.Respuesta != null)
+        {
+            etiquetasDisponibles = respEtiquetas.Respuesta;
+        }
+
         var respProveedores = await http.Get<List<ProveedorMostrarDTO>>("/api/Proveedores");
         if (!respProveedores.Error && respProveedores.Respuesta != null)
         {
@@ -487,28 +549,6 @@
         }
     }
 
-    // private async Task VerDetallesProducto(int productoId)
-    // {
-    //     var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
-    //     productoSeleccionadoNombre = prod?.Nombre ?? string.Empty;
-    
-    //     var respTodasLasVariantes = await http.Get<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
-    //     if (!respTodasLasVariantes.Error && respTodasLasVariantes.Respuesta != null)
-    //     {
-    //         var todasLasVariantes = respTodasLasVariantes.Respuesta;
-    
-           
-    //         variantesProducto = todasLasVariantes
-    //             .Where(v => v.ProductoId == productoId)
-    //             .ToList();
-    //     }
-    //     else
-    //     {
-    //         variantesProducto = new List<VarianteMostrarDTO>();
-    //     }
-    
-    //     mostrarModalDetalles = true;
-    // }
 
     private async Task VerDetallesProducto(int productoId)
     {
@@ -556,7 +596,7 @@
     private void AbrirModalAgregar()
     {
         nuevoProductoDto = new RegistrarProductoCompletoDTO(); 
-        if (proveedoresActivos.Any()) nuevoProductoDto.ProveedorId = proveedoresActivos.First().IdProveedor;
+        if (marcasActivas.Any()) nuevoProductoDto.MarcaId = marcasActivas.First().IdMarca;
         mostrarModalAgregar = true;
     }
 
@@ -584,7 +624,7 @@
         }
     }
 
-    // Misma lógica que AlternarColor, pero para el modelo del modal de Editar (productoEditarDto)
+  
     private void AlternarColorEditar(int colorId, bool seleccionado)
     {
         if (seleccionado)
@@ -618,24 +658,34 @@
         }
     }
 
+    private void AlternarEtiqueta(ColorSeleccionadoDTO colorDto, int talleId, int etiquetaId, bool seleccionada)
+    {
+        var variante = colorDto.Variantes.FirstOrDefault(v => v.TalleId == talleId);
+        if (variante == null) return;
+
+        if (seleccionada && !variante.EtiquetaIds.Contains(etiquetaId))
+            variante.EtiquetaIds.Add(etiquetaId);
+        else if (!seleccionada)
+            variante.EtiquetaIds.Remove(etiquetaId);
+    }
+
     private VarianteTalleDTO ObtenerOInstanciarVariante(ColorSeleccionadoDTO colorDto, int talleId)
     {
         var variante = colorDto.Variantes.FirstOrDefault(v => v.TalleId == talleId);
         return variante ?? new VarianteTalleDTO();
     }
 
-    // Lee la imagen elegida por el usuario desde su PC y la guarda como Data URL (base64)
-    // en colorDto.UrlImagen, reutilizando el mismo campo string que ya recibe el controller.
+
     private async Task CargarImagenColor(InputFileChangeEventArgs e, ColorSeleccionadoDTO colorDto)
     {
         var archivo = e.File;
         if (archivo == null) return;
 
-        const long tamañoMaximoBytes = 2 * 1024 * 1024; // 2 MB, ajustar según necesidad
+        const long tamañoMaximoBytes = 5 * 1024 * 1024; // 5 MB
 
         if (archivo.Size > tamañoMaximoBytes)
         {
-            Console.WriteLine("La imagen supera el tamaño máximo permitido (2MB).");
+            Console.WriteLine("La imagen supera el tamaño máximo permitido (5MB).");
             return;
         }
 
@@ -649,8 +699,7 @@
         StateHasChanged();
     }
 
-    // Limpia la imagen cargada para el color (por si el usuario subió una equivocada).
-    // Sirve tanto para el modal de Agregar como el de Editar, ya que ambos usan ColorSeleccionadoDTO.
+
     private void EliminarImagenColor(ColorSeleccionadoDTO colorDto)
     {
         colorDto.UrlImagen = string.Empty;
@@ -660,10 +709,6 @@
 
     private async Task GuardarProductoCompleto()
     {
-        Console.WriteLine("Entró a GuardarProductoCompleto");
-        Console.WriteLine($"ProveedorId actual: {nuevoProductoDto.ProveedorId}");  // 👈 agregar esta línea
-        if (nuevoProductoDto.ProveedorId == 0) return;
-
         try
         {
             var response = await http.Post<RegistrarProductoCompletoDTO, object>("api/Producto/registrar-completo", nuevoProductoDto);
@@ -677,7 +722,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ EXCEPCIÓN: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine($"X EXCEPCIÓN: {ex.GetType().Name} - {ex.Message}");
             Console.WriteLine(ex.StackTrace);
         }
     }
@@ -692,8 +737,7 @@
         }
     }
 
-    // Carga los datos actuales del producto (básicos + colores + talles + imagen) en productoEditarDto
-    // para poder editarlos en un modal con la misma estructura que "Agregar".
+
     private async Task AbrirModalEditar(int productoId)
     {
         var prod = productosActivos?.FirstOrDefault(p => p.Id == productoId);
@@ -704,7 +748,7 @@
         productoEditarDto = new RegistrarProductoCompletoDTO
         {
             NombreProducto = prod.Nombre,
-            MarcaProducto = prod.Marca,
+            MarcaId = prod.MarcaId,
             DescripcionProducto = prod.Descripcion,
             ProveedorId = prod.ProveedorId,
             Activo = true
@@ -731,7 +775,8 @@
                         TalleId = v.TalleId,
                         Stock = v.Stock,
                         PrecioVenta = v.PrecioVenta,
-                        CodVariante = v.CodVariante
+                        CodVariante = v.CodVariante,
+                        EtiquetaIds = v.EtiquetaIds.ToList()
                     });
                 }
 
@@ -744,15 +789,6 @@
 
     private async Task GuardarProductoEditado()
     {
-        // NOTA IMPORTANTE: este endpoint todavía no existe en el backend.
-        // "registrar-completo" solo sirve para ALTAS (siempre inserta un Producto nuevo).
-        // Para editar hace falta un endpoint que sepa actualizar el Producto y hacer el
-        // "diff" de colores/talles (agregar los nuevos, actualizar los existentes, borrar
-        // los que ya no están tildados) dentro de una transacción, similar a la lógica de
-        // "registrar-completo" pero con UPDATE/DELETE en vez de solo INSERT.
-        //
-        // Te lo dejo armado del lado del cliente para que, en cuanto tengamos ese endpoint,
-        // sea cuestión de probarlo.
         try
         {
             var response = await http.Put($"api/Producto/editar-completo/{productoIdEnEdicion}", productoEditarDto);
@@ -769,7 +805,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ EXCEPCIÓN al editar: {ex.GetType().Name} - {ex.Message}");
+            Console.WriteLine($"X EXCEPCIÓN al editar: {ex.GetType().Name} - {ex.Message}");
         }
     }
 

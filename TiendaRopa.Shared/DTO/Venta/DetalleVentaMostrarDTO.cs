@@ -9,6 +9,7 @@ namespace TiendaRopa.Shared.DTO.Venta
         public int VarianteId { get; set; }
         public string CodVariante { get; set; } = string.Empty;
         public string Producto { get; set; } = string.Empty;
+        public string Marca { get; set; } = "Sin Marca";
         public string Color { get; set; } = string.Empty;
         public string Talle { get; set; } = string.Empty;
         public string? UrlImagen { get; set; }

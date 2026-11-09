@@ -12,8 +12,8 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261103024724_InicioPe")]
-    partial class InicioPe
+    [Migration("20261109030607_Correcciones")]
+    partial class Correcciones
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -550,6 +550,55 @@ namespace TiendaRopa.BD.Migrations
                     b.ToTable("Envios");
                 });
 
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Etiqueta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Etiquetas");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Marca", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NombreMarca")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Marcas");
+                });
+
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.MovimientoCuentaCorriente", b =>
                 {
                     b.Property<int>("Id")
@@ -752,10 +801,8 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
-                    b.Property<string>("MarcaProducto")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<int>("MarcaId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("NombreProducto")
                         .IsRequired()
@@ -766,10 +813,12 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ProveedorId")
+                    b.Property<int?>("ProveedorId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MarcaId");
 
                     b.HasIndex("ProveedorId");
 
@@ -962,6 +1011,37 @@ namespace TiendaRopa.BD.Migrations
                     b.HasIndex("TalleId");
 
                     b.ToTable("Variantes");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.VarianteEtiqueta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstadoRegistro")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EtiquetaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("VarianteId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EtiquetaId");
+
+                    b.HasIndex("VarianteId", "EtiquetaId")
+                        .IsUnique();
+
+                    b.ToTable("VariantesEtiquetas");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Venta", b =>
@@ -1260,11 +1340,17 @@ namespace TiendaRopa.BD.Migrations
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Producto", b =>
                 {
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Proveedor", "Proveedor")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Marca", "Marca")
                         .WithMany()
-                        .HasForeignKey("ProveedorId")
+                        .HasForeignKey("MarcaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Proveedor", "Proveedor")
+                        .WithMany()
+                        .HasForeignKey("ProveedorId");
+
+                    b.Navigation("Marca");
 
                     b.Navigation("Proveedor");
                 });
@@ -1305,6 +1391,25 @@ namespace TiendaRopa.BD.Migrations
                     b.Navigation("ProductoColor");
 
                     b.Navigation("Talle");
+                });
+
+            modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.VarianteEtiqueta", b =>
+                {
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Etiqueta", "Etiqueta")
+                        .WithMany()
+                        .HasForeignKey("EtiquetaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
+                        .WithMany()
+                        .HasForeignKey("VarianteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Etiqueta");
+
+                    b.Navigation("Variante");
                 });
 
             modelBuilder.Entity("TiendaRopa.BD.Datos.Entity.Venta", b =>

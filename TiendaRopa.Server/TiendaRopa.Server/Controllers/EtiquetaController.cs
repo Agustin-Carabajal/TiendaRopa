@@ -17,7 +17,7 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult<List<EtiquetaMostrarDTO>>> GetLista()
         {
             var lista = await repositorio.SelectListaEtiquetas();
-            return lista.Count == 0 ? NotFound("Lista sin registros.") : Ok(lista);
+            return Ok(lista);
         }
 
         [HttpGet("{id:int}")]
@@ -34,7 +34,7 @@ namespace TiendaRopa.Server.Controllers
             if (await repositorio.ExisteNombre(dto.Nombre))
                 return BadRequest($"El registro '{dto.Nombre}' ya se encuentra registrado.");
 
-            var entidad = new Etiqueta { Nombre = dto.Nombre.Trim() };
+            var entidad = new Etiqueta { Nombre = dto.Nombre.Trim(), EstadoRegistro = TiendaRopa.Shared.ENUM.EstadoRegistro.activo };
             await repositorio.Insert(entidad);
             return CreatedAtAction(nameof(GetById), new { id = entidad.Id }, entidad.Id);
         }

@@ -21,14 +21,6 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult<List<ColorMostrarDTO>>> GetLista()
         {
             var lista = await repositorio.SelectListaColores();
-            if (lista == null)
-            {
-                return NotFound("No se encontraron elementos de la lista, VERIFICAR.");
-            }
-            if (lista.Count == 0)
-            {
-                return NotFound("Lista sin registros.");
-            }
             return Ok(lista);
         }
 
@@ -54,7 +46,8 @@ namespace TiendaRopa.Server.Controllers
             }
             Color entidad = new Color
             {
-                NombreColor = DTO.NombreColor
+                NombreColor = DTO.NombreColor,
+                EstadoRegistro = TiendaRopa.Shared.ENUM.EstadoRegistro.activo
             };
 
             var id = await repositorio.Insert(entidad);

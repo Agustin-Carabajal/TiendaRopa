@@ -19,7 +19,7 @@ namespace TiendaRopa.Repositorio.Repositorios.ProductoRep
         public async Task<List<EtiquetaMostrarDTO>> SelectListaEtiquetas()
         {
             return await context.Etiquetas
-                .Where(e => e.EstadoRegistro == EstadoRegistro.activo)
+                .Where(e => e.EstadoRegistro != EstadoRegistro.eliminado && e.EstadoRegistro != EstadoRegistro.inactivo)
                 .Select(e => new EtiquetaMostrarDTO { IdEtiqueta = e.Id, Nombre = e.Nombre })
                 .ToListAsync();
         }

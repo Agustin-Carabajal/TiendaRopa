@@ -12,7 +12,7 @@
 
     <div class="row">
         <!--Talles -->
-        <div class="col-md-4 mb-4">
+        <div class="col-md-3 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Talles</h5>
@@ -56,7 +56,7 @@
             </div>
         </div>
         <!-- ================= TABLA DE COLORES ================= -->
-        <div class="col-md-4 mb-4">
+        <div class="col-md-3 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Colores</h5>
@@ -100,7 +100,7 @@
             </div>
         </div>
         <!-- ================= TABLA DE ETIQUETAS ================= -->
-        <div class="col-md-4 mb-4">
+        <div class="col-md-3 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Etiquetas</h5>
@@ -127,6 +127,43 @@
                                         <td class="text-end px-3">
                                             <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarEtiqueta(etiqueta.IdEtiqueta, etiqueta.Nombre)'>Editar</button>
                                             <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(etiqueta.IdEtiqueta, "Etiqueta")'>Borrar</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- ================= TABLA DE MARCAS ================= -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Marcas</h5>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Marca")'>+</button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Descripción</th><th class="text-end px-3">Acciones</th></tr></thead>
+                        <tbody>
+                            @if (listaMarcas == null)
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
+                            }
+                            else if (!listaMarcas.Any())
+                            {
+                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
+                            }
+                            else
+                            {
+                                @foreach (var marca in listaMarcas)
+                                {
+                                    <tr>
+                                        <td class="align-middle">@marca.NombreMarca</td>
+                                        <td class="text-end px-3">
+                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarMarca(marca.IdMarca, marca.NombreMarca)'>Editar</button>
+                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(marca.IdMarca, "Marca")'>Borrar</button>
                                         </td>
                                     </tr>
                                 }
@@ -164,6 +201,10 @@
                         {
                             <input type="text" class="form-control" @bind="textoEtiqueta" placeholder="Ej: Algodón, Impermeable..." />
                         }
+                        else if (tipoAtributoSeleccionado == "Marca")
+                        {
+                            <input type="text" class="form-control" @bind="textoMarca" placeholder="Ej: Nike, Adidas..." />
+                        }
 
                         @if (!string.IsNullOrEmpty(mensajeValidacion))
                         {
@@ -183,6 +224,7 @@
     private List<TalleMostrarDTO>? listaTalles;
     private List<ColorMostrarDTO>? listaColores;
     private List<EtiquetaMostrarDTO>? listaEtiquetas;
+    private List<MarcaMostrarDTO>? listaMarcas;
   
 
 
@@ -192,6 +234,7 @@
     private string textoTalle = "";
     private string textoColor = "";
     private string textoEtiqueta = "";
+    private string textoMarca = "";
     private string mensajeValidacion = "";
     private string tituloModal = "";
     private bool mostrarModal = false;
@@ -218,6 +261,10 @@
         listaEtiquetas = !responseEtiquetas.Error && responseEtiquetas.Respuesta != null
             ? responseEtiquetas.Respuesta
             : new List<EtiquetaMostrarDTO>();
+        var responseMarcas = await http.Get<List<MarcaMostrarDTO>>("api/Marca/listamarcas");
+        listaMarcas = !responseMarcas.Error && responseMarcas.Respuesta != null
+            ? responseMarcas.Respuesta
+            : new List<MarcaMostrarDTO>();
         var responseColores = await http.Get<List<ColorMostrarDTO>>("api/Color/listacolores");
         if (!responseColores.Error && responseColores.Respuesta != null)
         {
@@ -253,6 +300,11 @@
             if (tituloModal == "Agregar") await CrearEtiqueta();
             else if (tituloModal == "Editar") await ActualizarEtiqueta();
         }
+        else if (tipoAtributoSeleccionado == "Marca")
+        {
+            if (tituloModal == "Agregar") await CrearMarca();
+            else if (tituloModal == "Editar") await ActualizarMarca();
+        }
     }
 
     private void Agregar(string tipo)
@@ -271,6 +323,7 @@
             textoColor = "";
         }
         else if (tipo == "Etiqueta") textoEtiqueta = "";
+        else if (tipo == "Marca") textoMarca = "";
         mostrarModal = true;
 
     }
@@ -307,6 +360,16 @@
         textoEtiqueta = descripcionActual;
         mensajeValidacion = string.Empty;
         tipoAtributoSeleccionado = "Etiqueta";
+        tituloModal = "Editar";
+        mostrarModal = true;
+    }
+
+    private void EditarMarca(int id, string descripcionActual)
+    {
+        idRegistroSeleccionado = id;
+        textoMarca = descripcionActual;
+        mensajeValidacion = string.Empty;
+        tipoAtributoSeleccionado = "Marca";
         tituloModal = "Editar";
         mostrarModal = true;
     }
@@ -408,6 +471,22 @@
         var resultado = await http.Put($"api/Etiqueta/editar/{idRegistroSeleccionado}", etiqueta);
         if (!resultado.Error) await RecargarDatos();
         else mensajeValidacion = "No se pudo actualizar el registro.";
+    }
+
+    private async Task CrearMarca()
+    {
+        if (string.IsNullOrWhiteSpace(textoMarca)) return;
+        var resultado = await http.Post<MarcaCrearDTO, int>("api/Marca", new MarcaCrearDTO { NombreMarca = textoMarca });
+        if (!resultado.Error) await RecargarDatos();
+        else mensajeValidacion = "La marca ya existe o los datos son inválidos.";
+    }
+
+    private async Task ActualizarMarca()
+    {
+        if (string.IsNullOrWhiteSpace(textoMarca)) return;
+        var resultado = await http.Put($"api/Marca/editar/{idRegistroSeleccionado}", new MarcaCrearDTO { NombreMarca = textoMarca });
+        if (!resultado.Error) await RecargarDatos();
+        else mensajeValidacion = "No se pudo actualizar la marca.";
     }
 
     private async Task Borrar(int id, string tipo)

@@ -14,232 +14,388 @@
     <h3>Ventas presenciales</h3>
     <button class="btn btn-primary" @onclick="NuevaVenta">Nueva Venta</button>
 </div>
-@if (!string.IsNullOrWhiteSpace(errorPagina)){<div class="alert alert-danger">@errorPagina</div>}
-@if (!string.IsNullOrWhiteSpace(mensaje)){<div class="alert alert-success">@mensaje</div>}
-<div class="card card-body mb-3">
-<div class="row g-2 align-items-end">
-    <div class="col-md-3">
-<label class="form-label">Desde</label>
-<input class="form-control" type="date" @bind="desde" />
-</div>
-    <div class="col-md-3">
-<label class="form-label">Hasta</label>
-<input class="form-control" type="date" @bind="hasta" />
-</div>
-    <div class="col-md-3">
-<button class="btn btn-outline-primary me-2" @onclick="CargarVentas">Filtrar</button>
-<button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar</button>
-</div>
-</div>
-</div>
-@if (cargando){<p>
-<em>Cargando ventas...</em>
-</p>}
-else if(ventas.Count==0){<div class="alert alert-info">Todavía no hay ventas presenciales para mostrar.</div>}
-else{
-<div class="table-responsive">
-<table class="table table-hover align-middle">
-<thead class="table-light">
-<tr>
-<th>N°</th>
-<th>Fecha</th>
-<th>Cliente</th>
-<th>Pagos</th>
-<th class="text-end">Artículos</th>
-<th class="text-end">Total</th>
-<th>Estado</th>
-<th>
-</th>
-</tr>
-</thead>
-<tbody>
-@foreach(var v in ventas){var anulada=v.Estado==EstadosVenta.Anulada;<tr class="@(anulada?"text-muted":"")">
-<td>@v.Id</td>
-<td>@v.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-<td>@v.Cliente</td>
-<td>@ResumenPagos(v.Pagos,v.MontoCuentaCorriente)</td>
-<td class="text-end">@v.CantidadArticulos</td>
-<td class="text-end">$@v.Monto.ToString("N2")</td>
-<td>
-<span class="badge @(anulada?"bg-secondary":"bg-success")">@v.Estado</span>
-</td>
-<td>
-<button class="btn btn-sm btn-outline-primary" @onclick="()=>VerDetalles(v.Id)">Ver Detalles</button>
-</td>
-</tr>}
-</tbody>
-<tfoot>
-<tr class="table-light fw-bold">
-<td colspan="5" class="text-end">Total (sin anuladas)</td>
-<td class="text-end">$@TotalVendido.ToString("N2")</td>
-<td colspan="2">
-</td>
-</tr>
-</tfoot>
-</table>
-</div>}
-
-@if(modal){<div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-<div class="modal-dialog modal-xl modal-dialog-scrollable">
-<div class="modal-content">
-<div class="modal-header">
-<h5 class="modal-title">@(ventaActual==null?"Nueva venta":edicion?"Editar venta #"+ventaActual.Id:"Detalle de venta #"+ventaActual.Id)</h5>
-<button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal">
-</button>
-</div>
-<div class="modal-body">
-@if (!string.IsNullOrWhiteSpace(errorModal)) { <div class="alert alert-danger" role="alert">@errorModal</div> }
-@if(ventaActual!=null && !edicion){
-@if (confirmarAnulacion) { <div class="alert alert-warning d-flex justify-content-between align-items-center">
-<span>¿Confirma anular la venta #@ventaActual.Id? Se repondrá el stock y se revertirá el cargo en cuenta corriente.</span>
-<span>
-<button class="btn btn-sm btn-secondary me-2" @onclick="CancelarAnulacion">Volver</button>
-<button class="btn btn-sm btn-danger" @onclick="AnularVenta">Confirmar anulación</button>
-</span>
-</div> }<div class="row mb-3">
-<div class="col-md-4">
-<b>Cliente:</b> @ventaActual.Cliente</div>
-<div class="col-md-4">
-<b>Fecha:</b> @ventaActual.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
-<div class="col-md-4">
-<b>Estado:</b> @ventaActual.Estado</div>
-<div class="col-12 mt-2">
-<b>Pagos:</b> @ResumenPagos(ventaActual.Pagos,ventaActual.MontoCuentaCorriente)</div>
-</div>
-<div class="table-responsive">
-<table class="table align-middle">
-<thead>
-<tr>
-<th>Artículo</th>
-<th>Talle</th>
-<th>Código</th>
-<th class="text-end">Cantidad</th>
-<th class="text-end">Precio unitario</th>
-<th class="text-end">Subtotal</th>
-</tr>
-</thead>
-<tbody>@foreach(var d in ventaActual.Detalles){<tr>
-<td>@d.Producto - @d.Color</td>
-<td>@d.Talle</td>
-<td>@d.CodVariante</td>
-<td class="text-end">@d.Cantidad</td>
-<td class="text-end">$@d.PrecioUnitario.ToString("N2")</td>
-<td class="text-end">$@d.Subtotal.ToString("N2")</td>
-</tr>}</tbody>
-</table>
-</div>
-<h5 class="text-end">Total: $@ventaActual.Monto.ToString("N2")</h5>
-}else{
-@if(clientes.Count==0){<div class="alert alert-warning">No hay clientes cargados. Registre un cliente para poder cerrar una venta.</div>}
-@if(variantes.Count==0){<div class="alert alert-warning">No hay variantes activas con stock disponible.</div>}
-<div class="row g-3">
-<div class="col-lg-5">
-<label class="form-label">Cliente *</label>
-<select class="form-select" @bind="clienteId">
-<option value="0">Seleccione cliente</option>@foreach(var c in clientes){<option value="@c.Id">@NombreCliente(c)</option>}</select>
-</div>
-</div>
-<hr/>
-<h6>Medios de pago</h6>@if(metodosPago.Count==0){<div class="alert alert-warning">No hay métodos de pago configurados. Puede usar cuenta corriente o cargar métodos de pago.</div>}<div class="row g-2">@foreach(var p in metodosPago){var lineaPago=pagosSeleccionados.FirstOrDefault(x=>x.PagoId==p.Id);<div class="col-md-6">
-<div class="border rounded p-2">
-<div class="form-check">
-<input class="form-check-input" type="checkbox" checked="@(lineaPago!=null)" @onchange="e=>SeleccionarPago(p.Id,e)"/>
-<label class="form-check-label">@p.Tipo</label>
-</div>@if(lineaPago!=null){<label class="form-label mt-2">Importe</label>
-<input class="form-control" type="number" min="0.01" step="0.01" @bind="lineaPago.Monto"/>}</div>
-</div>}</div>
-<div class="row mt-2">
-<div class="col-md-6">
-<label class="form-label">Importe a cuenta corriente</label>
-<input class="form-control" type="number" min="0" step="0.01" @bind="montoCuentaCorriente" />
-</div>
-<div class="col-md-6 align-self-end">
-<span class="text-muted">Asignado: $@ImporteAsignado.ToString("N2") · Falta: $@ImportePendiente.ToString("N2")</span>
-</div>
-</div>
-<hr/>
-<h6>Agregar artículos</h6>
-<div class="row g-2 align-items-end">
-<div class="col-md-4">
-<label class="form-label">Buscar producto, color, talle o código</label>
-<input class="form-control" @bind="filtro" @bind:event="oninput" placeholder="Escriba para buscar..."/>@if(!string.IsNullOrWhiteSpace(filtro)){<div class="list-group mt-1" style="max-height:220px;overflow:auto">@foreach(var r in VariantesFiltradas){<button type="button" class="list-group-item list-group-item-action" @onclick="()=>ElegirVariante(r.Id)">@r.ProductoColor · Talle @r.Talle · Stock @r.Stock · $@r.PrecioVenta.ToString("N2")</button>}@if(!VariantesFiltradas.Any()){<div class="list-group-item text-muted">No hay coincidencias.</div>}</div>}</div>
-<div class="col-md-3">
-<label class="form-label">Variante seleccionada</label>
-<select class="form-select" @bind="varianteId" @bind:after="ActualizarPrecio">
-<option value="0">Seleccione</option>@foreach(var v in VariantesFiltradas){<option value="@v.Id">@v.ProductoColor · @v.Talle · stock @v.Stock</option>}</select>
-</div>
-<div class="col">
-<label class="form-label">Precio</label>
-<input class="form-control" type="number" min="0" step="0.01" @bind="precio"/>
-</div>
-<div class="col">
-<label class="form-label">Cantidad</label>
-<input class="form-control" type="number" min="1" @bind="cantidadAgregar"/>
-</div>
-<div class="col">
-<label class="form-label">Desc. %</label>
-<input class="form-control" type="number" min="0" max="100" step="0.01" @bind="descuento"/>
-</div>
-<div class="col">
-<label class="form-label">Recargo %</label>
-<input class="form-control" type="number" min="0" step="0.01" @bind="recargo"/>
-</div>
-<div class="col">
-<button class="btn btn-outline-primary" disabled="@(varianteId==0)" @onclick="AgregarLinea">Añadir</button>
-</div>
-</div>
-@if(lineas.Count==0){<div class="alert alert-info mt-3">Agregue al menos un artículo para iniciar la venta.</div>}else{<div class="table-responsive mt-3">
-<table class="table align-middle">
-<thead>
-<tr>
-<th>Artículo</th>
-<th>Talle</th>
-<th class="text-end">Stock máximo</th>
-<th style="width:100px">Cantidad</th>
-<th style="width:130px">Precio base</th>
-<th class="text-end">Desc.</th>
-<th class="text-end">Recargo</th>
-<th class="text-end">Precio final</th>
-<th class="text-end">Subtotal</th>
-<th>
-</th>
-</tr>
-</thead>
-<tbody>@foreach(var l in lineas){<tr>
-<td>@l.Descripcion</td>
-<td>@l.Talle</td>
-<td class="text-end">@l.StockMaximo</td>
-<td>
-<input class="form-control form-control-sm" type="number" min="1" max="@l.StockMaximo" @bind="l.Cantidad"/>
-</td>
-<td>
-<input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.PrecioBase"/>
-</td>
-<td>
-<input class="form-control form-control-sm" type="number" min="0" max="100" step="0.01" @bind="l.DescuentoPorcentaje" />
-<small class="text-muted">-$@l.ImporteDescuento.ToString("N2")</small>
-</td>
-<td>
-<input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.RecargoPorcentaje" />
-<small class="text-muted">+$@l.ImporteRecargo.ToString("N2")</small>
-</td>
-<td class="text-end">$@l.PrecioUnitario.ToString("N2")</td>
-<td class="text-end">$@l.Subtotal.ToString("N2")</td>
-<td>
-<button class="btn btn-sm btn-outline-danger" @onclick="()=>QuitarLinea(l)">Quitar</button>
-</td>
-</tr>}</tbody>
-</table>
-</div>
-<h5 class="text-end">Total: $@Total.ToString("N2")</h5>}
+@if (!string.IsNullOrWhiteSpace(errorPagina))
+{
+    <div class="alert alert-danger">@errorPagina</div>
 }
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-success">@mensaje</div>
+}
+<div class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Nombre del cliente</label>
+            <input class="form-control" type="search" @bind="nombreCliente" @bind:event="oninput" placeholder="Buscar cliente..." />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input class="form-control" type="date" @bind="desde" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input class="form-control" type="date" @bind="hasta" />
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-outline-primary me-2" @onclick="CargarVentas">Filtrar</button>
+            <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">Limpiar</button>
+        </div>
+    </div>
 </div>
-<div class="modal-footer">
-<button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>@if(ventaActual==null||edicion){<button type="button" class="btn btn-primary" disabled="@guardando" @onclick="GuardarVenta">@(guardando?"Guardando...":edicion?"Guardar cambios":"Cerrar venta")</button>}else if(ventaActual.Estado!=EstadosVenta.Anulada && ventaActual.Canal==CanalVenta.Presencial){<button type="button" class="btn btn-primary" @onclick="EditarVenta">Editar</button>
-<button type="button" class="btn btn-outline-danger" @onclick="SolicitarAnulacion">Anular venta</button>}</div>
-</div>
-</div>
-</div>}
+@if (cargando)
+{
+    <p>
+        <em>Cargando ventas...</em>
+    </p>
+}
+else if (!VentasFiltradas.Any())
+{
+    <div class="alert alert-info">
+        No hay ventas que coincidan con los filtros.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>N°</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Marcas</th>
+                    <th>Pagos</th>
+                    <th class="text-end">Artículos</th>
+                    <th class="text-end">Total</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in VentasFiltradas)
+                {
+                    var anulada = v.Estado == EstadosVenta.Anulada;
+                    <tr class="@(anulada ? "text-muted" : "")">
+                        <td>@v.Id</td>
+                        <td>@v.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@v.Cliente</td>
+                        <td>@(v.Marcas.Count == 0 ? "Sin marca" : string.Join(", ", v.Marcas))</td>
+                        <td>@ResumenPagos(v.Pagos, v.MontoCuentaCorriente)</td>
+                        <td class="text-end">@v.CantidadArticulos</td>
+                        <td class="text-end">$@v.Monto.ToString("N2")</td>
+                        <td>
+                            <span class="badge @(anulada ? "bg-secondary" : "bg-success")">@v.Estado</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => VerDetalles(v.Id)">Ver Detalles</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="6" class="text-end">Total (sin anuladas)</td>
+                    <td class="text-end">$@TotalVendido.ToString("N2")</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+@if (modal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, .5)">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="resize: both; overflow: auto; width: min(95vw, 1200px); height: min(90vh, 900px); min-width: min(95vw, 520px); min-height: 50vh; max-width: 95vw; max-height: 90vh;">
+            <div class="modal-content" style="height: 100%; min-height: 0;">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        @(ventaActual == null ? "Nueva venta" : edicion ? "Editar venta #" + ventaActual.Id : "Detalle de venta #" + ventaActual.Id)
+                    </h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body" style="min-height: 0; overflow: auto;">
+                    @if (!string.IsNullOrWhiteSpace(errorModal))
+                    {
+                        <div class="alert alert-danger" role="alert" tabindex="-1" @ref="errorModalRef">
+                            @errorModal
+                        </div>
+                    }
+
+                    @if (ventaActual != null && !edicion)
+                    {
+                        @if (confirmarAnulacion)
+                        {
+                            <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                                <span>¿Confirma anular la venta #@ventaActual.Id? Se repondrá el stock y se revertirá el cargo en cuenta corriente.</span>
+                                <span>
+                                    <button class="btn btn-sm btn-secondary me-2" @onclick="CancelarAnulacion">Volver</button>
+                                    <button class="btn btn-sm btn-danger" @onclick="AnularVenta">Confirmar anulación</button>
+                                </span>
+                            </div>
+                        }
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <b>Cliente:</b> @ventaActual.Cliente
+                            </div>
+                            <div class="col-md-4">
+                                <b>Fecha:</b> @ventaActual.FechaHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                            <div class="col-md-4">
+                                <b>Estado:</b> @ventaActual.Estado
+                            </div>
+                            <div class="col-12 mt-2">
+                                <b>Pagos:</b> @ResumenPagos(ventaActual.Pagos, ventaActual.MontoCuentaCorriente)
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Artículo</th>
+                                        <th>Marca</th>
+                                        <th>Talle</th>
+                                        <th>Código</th>
+                                        <th class="text-end">Cantidad</th>
+                                        <th class="text-end">Precio unitario</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var d in ventaActual.Detalles)
+                                    {
+                                        <tr>
+                                            <td>@d.Producto - @d.Color</td>
+                                            <td>@d.Marca</td>
+                                            <td>@d.Talle</td>
+                                            <td>@d.CodVariante</td>
+                                            <td class="text-end">@d.Cantidad</td>
+                                            <td class="text-end">$@d.PrecioUnitario.ToString("N2")</td>
+                                            <td class="text-end">$@d.Subtotal.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <h5 class="text-end">Total: $@ventaActual.Monto.ToString("N2")</h5>
+                    }
+                    else
+                    {
+                        @if (clientes.Count == 0)
+                        {
+                            <div class="alert alert-warning">
+                                No hay clientes cargados. Registre un cliente para poder cerrar una venta.
+                            </div>
+                        }
+                        @if (variantes.Count == 0)
+                        {
+                            <div class="alert alert-warning">No hay variantes activas con stock disponible.</div>
+                        }
+
+                        <div class="row g-3">
+                            <div class="col-lg-5">
+                                <label class="form-label">Cliente *</label>
+                                <select class="form-select" @bind="clienteId">
+                                    <option value="0">Seleccione cliente</option>
+                                    @foreach (var c in clientes)
+                                    {
+                                        <option value="@c.Id">@NombreCliente(c)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <h6>Medios de pago</h6>
+                        @if (metodosPago.Count == 0)
+                        {
+                            <div class="alert alert-warning">
+                                No hay métodos de pago configurados. Puede usar cuenta corriente o cargar métodos de pago.
+                            </div>
+                        }
+                        <div class="row g-2">
+                            @foreach (var p in metodosPago)
+                            {
+                                var lineaPago = pagosSeleccionados.FirstOrDefault(x => x.PagoId == p.Id);
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked="@(lineaPago != null)" @onchange="e => SeleccionarPago(p.Id, e)" />
+                                            <label class="form-check-label">@p.Tipo</label>
+                                        </div>
+                                        @if (lineaPago != null)
+                                        {
+                                            <label class="form-label mt-2">Importe</label>
+                                            <input class="form-control" type="number" min="0.01" step="0.01" @bind="lineaPago.Monto" />
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Importe a cuenta corriente</label>
+                                <input class="form-control" type="number" min="0" step="0.01" @bind="montoCuentaCorriente" />
+                            </div>
+                            <div class="col-md-6 align-self-end">
+                                <span class="text-muted">Asignado: $@ImporteAsignado.ToString("N2") · Falta: $@ImportePendiente.ToString("N2")</span>
+                            </div>
+                        </div>
+
+                        <hr />
+                        <h6>Agregar artículos</h6>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-lg-4">
+                                <label class="form-label">Buscar producto, color, talle o código</label>
+                                <input class="form-control" @bind="filtro" @bind:event="oninput" placeholder="Escriba para buscar..." />
+                                @if (!string.IsNullOrWhiteSpace(filtro))
+                                {
+                                    <div class="list-group mt-1" style="max-height: 220px; overflow: auto">
+                                        @foreach (var r in VariantesFiltradas)
+                                        {
+                                            <button type="button" class="list-group-item list-group-item-action" @onclick="() => ElegirVariante(r.Id)">
+                                                @r.ProductoColor · Marca: @r.Marca · Talle @r.Talle · Etiquetas: @(r.Etiquetas.Count == 0 ? "Sin etiquetas" : string.Join(", ", r.Etiquetas)) · Stock @r.Stock · $@r.PrecioVenta.ToString("N2")
+                                            </button>
+                                        }
+                                        @if (!VariantesFiltradas.Any())
+                                        {
+                                            <div class="list-group-item text-muted">No hay coincidencias.</div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label class="form-label">Variante seleccionada</label>
+                                <select class="form-select" @bind="varianteId" @bind:after="ActualizarPrecio">
+                                    <option value="0">Seleccione</option>
+                                    @foreach (var v in VariantesFiltradas)
+                                    {
+                                        <option value="@v.Id">
+                                            @v.ProductoColor · Marca: @v.Marca · Talle @v.Talle · Etiquetas: @(v.Etiquetas.Count == 0 ? "Sin etiquetas" : string.Join(", ", v.Etiquetas)) · stock @v.Stock
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-6 col-md">
+                                <label class="form-label">Precio</label>
+                                <input class="form-control" type="number" min="0" step="0.01" @bind="precio" />
+                            </div>
+                            <div class="col-6 col-md">
+                                <label class="form-label">Cantidad</label>
+                                <input class="form-control" type="number" min="1" @bind="cantidadAgregar" />
+                            </div>
+                            <div class="col-6 col-md">
+                                <label class="form-label">Desc. %</label>
+                                <input class="form-control" type="number" min="0" max="100" step="1" @bind="descuento" />
+                            </div>
+                            <div class="col-6 col-md">
+                                <label class="form-label">Recargo %</label>
+                                <input class="form-control" type="number" min="0" step="0.01" @bind="recargo" />
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <button class="btn btn-outline-primary w-100" disabled="@(varianteId == 0)" @onclick="AgregarLinea">Añadir</button>
+                            </div>
+                        </div>
+
+                        @if (VarianteSeleccionada is { } seleccionada)
+                        {
+                            <div class="card card-body mt-2">
+                                <div class="row g-2 align-items-center">
+                                    @if (!string.IsNullOrWhiteSpace(seleccionada.UrlImagen))
+                                    {
+                                        <div class="col-auto">
+                                            <img src="@seleccionada.UrlImagen" alt="@seleccionada.ProductoColor" style="width: 88px; height: 88px; object-fit: cover;" class="rounded" />
+                                        </div>
+                                    }
+                                    <div class="col">
+                                        <strong>@seleccionada.ProductoColor</strong>
+                                        <div>Marca: @seleccionada.Marca</div>
+                                        <div>Color y variante: @seleccionada.CodVariante · Talle @seleccionada.Talle</div>
+                                        <div>Etiquetas: @(seleccionada.Etiquetas.Count == 0 ? "Sin etiquetas" : string.Join(", ", seleccionada.Etiquetas))</div>
+                                        <div>Stock: @seleccionada.Stock · Precio: $@seleccionada.PrecioVenta.ToString("N2")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (lineas.Count == 0)
+                        {
+                            <div class="alert alert-info mt-3">Agregue al menos un artículo para iniciar la venta.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive mt-3">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Artículo</th>
+                                            <th>Talle</th>
+                                            <th class="text-end">Stock máximo</th>
+                                            <th style="width: 100px">Cantidad</th>
+                                            <th style="width: 130px">Precio base</th>
+                                            <th class="text-end">Desc.</th>
+                                            <th class="text-end">Recargo</th>
+                                            <th class="text-end">Precio final</th>
+                                            <th class="text-end">Subtotal</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var l in lineas)
+                                        {
+                                            <tr>
+                                                <td>@l.Descripcion</td>
+                                                <td>@l.Talle</td>
+                                                <td class="text-end">@l.StockMaximo</td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" type="number" min="1" max="@l.StockMaximo" @bind="l.Cantidad" />
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.PrecioBase" />
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" type="number" min="0" max="100" step="1" @bind="l.DescuentoPorcentaje" />
+                                                    <small class="text-muted">-$@l.ImporteDescuento.ToString("N2")</small>
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" type="number" min="0" step="0.01" @bind="l.RecargoPorcentaje" />
+                                                    <small class="text-muted">+$@l.ImporteRecargo.ToString("N2")</small>
+                                                </td>
+                                                <td class="text-end">$@l.PrecioUnitario.ToString("N2")</td>
+                                                <td class="text-end">$@l.Subtotal.ToString("N2")</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => QuitarLinea(l)">Quitar</button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <h5 class="text-end">Total: $@Total.ToString("N2")</h5>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>
+                    @if (ventaActual == null || edicion)
+                    {
+                        <button type="button" class="btn btn-primary" disabled="@guardando" @onclick="GuardarVenta">
+                            @(guardando ? "Guardando..." : edicion ? "Guardar cambios" : "Cerrar venta")
+                        </button>
+                    }
+                    else if (ventaActual.Estado != EstadosVenta.Anulada && ventaActual.Canal == CanalVenta.Presencial)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="EditarVenta">Editar</button>
+                        <button type="button" class="btn btn-outline-danger" @onclick="SolicitarAnulacion">Anular venta</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<VentaMostrarDTO> ventas = new();
@@ -249,6 +405,8 @@ else{
     private List<PagoVentaCrearDTO> pagosSeleccionados = new();
     private List<LineaVenta> lineas = new();
 
+    private ElementReference errorModalRef;
+    private string? errorModalEnfocado;
     private VentaDetalleDTO? ventaActual;
     private bool cargando = true;
     private bool guardando;
@@ -266,26 +424,48 @@ else{
     private string? errorPagina;
     private string? errorModal;
     private string? mensaje;
+    private string nombreCliente = string.Empty;
     private DateTime? desde;
     private DateTime? hasta;
 
     private decimal Total => lineas.Sum(linea => linea.Subtotal);
     private decimal ImporteAsignado => pagosSeleccionados.Sum(pago => pago.Monto) + montoCuentaCorriente;
     private decimal ImportePendiente => Math.Max(0, Total - ImporteAsignado);
-    private decimal TotalVendido => ventas
+    private IEnumerable<VentaMostrarDTO> VentasFiltradas => ventas.Where(venta =>
+        string.IsNullOrWhiteSpace(nombreCliente) ||
+        venta.Cliente.Contains(nombreCliente.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    private decimal TotalVendido => VentasFiltradas
         .Where(venta => venta.Estado != EstadosVenta.Anulada)
         .Sum(venta => venta.Monto);
+
+    private VarianteMostrarDTO? VarianteSeleccionada => variantes.FirstOrDefault(variante => variante.Id == varianteId);
 
     private IEnumerable<VarianteMostrarDTO> VariantesFiltradas => variantes.Where(variante =>
         variante.Stock > 0 &&
         (string.IsNullOrWhiteSpace(filtro) ||
-         $"{variante.ProductoColor} {variante.Talle} {variante.CodVariante}"
+         $"{variante.ProductoColor} {variante.Marca} {variante.Talle} {variante.CodVariante} {string.Join(" ", variante.Etiquetas)}"
              .Contains(filtro.Trim(), StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
         await CargarCombos();
         await CargarVentas();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (string.IsNullOrWhiteSpace(errorModal))
+        {
+            errorModalEnfocado = null;
+            return;
+        }
+
+        if (errorModal != errorModalEnfocado)
+        {
+            errorModalEnfocado = errorModal;
+            await errorModalRef.FocusAsync();
+        }
     }
 
     private async Task CargarCombos()
@@ -336,6 +516,7 @@ else{
 
     private async Task LimpiarFiltros()
     {
+        nombreCliente = string.Empty;
         desde = null;
         hasta = null;
         await CargarVentas();

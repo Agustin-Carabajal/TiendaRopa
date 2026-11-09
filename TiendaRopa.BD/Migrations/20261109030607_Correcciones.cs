@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class InicioPe : Migration
+    public partial class Correcciones : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -65,6 +65,36 @@ namespace TiendaRopa.BD.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Colores", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Etiquetas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Nombre = table.Column<string>(type: "text", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Etiquetas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Marcas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NombreMarca = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Marcas", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -344,8 +374,8 @@ namespace TiendaRopa.BD.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     NombreProducto = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DescripcionProducto = table.Column<string>(type: "text", nullable: true),
-                    MarcaProducto = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ProveedorId = table.Column<int>(type: "integer", nullable: false),
+                    ProveedorId = table.Column<int>(type: "integer", nullable: true),
+                    MarcaId = table.Column<int>(type: "integer", nullable: false),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
                 },
@@ -353,11 +383,16 @@ namespace TiendaRopa.BD.Migrations
                 {
                     table.PrimaryKey("PK_Productos", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Productos_Marcas_MarcaId",
+                        column: x => x.MarcaId,
+                        principalTable: "Marcas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Productos_Proveedores_ProveedorId",
                         column: x => x.ProveedorId,
                         principalTable: "Proveedores",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -663,6 +698,34 @@ namespace TiendaRopa.BD.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "VariantesEtiquetas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
+                    EtiquetaId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VariantesEtiquetas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VariantesEtiquetas_Etiquetas_EtiquetaId",
+                        column: x => x.EtiquetaId,
+                        principalTable: "Etiquetas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_VariantesEtiquetas_Variantes_VarianteId",
+                        column: x => x.VarianteId,
+                        principalTable: "Variantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -800,6 +863,11 @@ namespace TiendaRopa.BD.Migrations
                 column: "ProveedorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Productos_MarcaId",
+                table: "Productos",
+                column: "MarcaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Productos_ProveedorId",
                 table: "Productos",
                 column: "ProveedorId");
@@ -823,6 +891,17 @@ namespace TiendaRopa.BD.Migrations
                 name: "IX_Variantes_TalleId",
                 table: "Variantes",
                 column: "TalleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VariantesEtiquetas_EtiquetaId",
+                table: "VariantesEtiquetas",
+                column: "EtiquetaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VariantesEtiquetas_VarianteId_EtiquetaId",
+                table: "VariantesEtiquetas",
+                columns: new[] { "VarianteId", "EtiquetaId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Ventas_CarritoId",
@@ -879,6 +958,9 @@ namespace TiendaRopa.BD.Migrations
                 name: "PagosVenta");
 
             migrationBuilder.DropTable(
+                name: "VariantesEtiquetas");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -888,13 +970,19 @@ namespace TiendaRopa.BD.Migrations
                 name: "Recepciones");
 
             migrationBuilder.DropTable(
-                name: "Variantes");
-
-            migrationBuilder.DropTable(
                 name: "Pagos");
 
             migrationBuilder.DropTable(
                 name: "Ventas");
+
+            migrationBuilder.DropTable(
+                name: "Etiquetas");
+
+            migrationBuilder.DropTable(
+                name: "Variantes");
+
+            migrationBuilder.DropTable(
+                name: "Carritos");
 
             migrationBuilder.DropTable(
                 name: "ProductosColores");
@@ -903,7 +991,7 @@ namespace TiendaRopa.BD.Migrations
                 name: "Talles");
 
             migrationBuilder.DropTable(
-                name: "Carritos");
+                name: "Clientes");
 
             migrationBuilder.DropTable(
                 name: "Colores");
@@ -912,13 +1000,13 @@ namespace TiendaRopa.BD.Migrations
                 name: "Productos");
 
             migrationBuilder.DropTable(
-                name: "Clientes");
+                name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Marcas");
 
             migrationBuilder.DropTable(
                 name: "Proveedores");
-
-            migrationBuilder.DropTable(
-                name: "AspNetUsers");
         }
     }
 }
