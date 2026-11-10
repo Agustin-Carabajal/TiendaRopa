@@ -12,7 +12,7 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261110090314_InicioRender")]
+    [Migration("20261110091912_InicioRender")]
     partial class InicioRender
     {
         /// <inheritdoc />
