@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
@@ -15,25 +15,9 @@
 </head>
 
 <body>
-    <div id="initial-loading-screen" role="status" aria-live="polite" aria-label="Cargando Frida Boutique">
-        <div class="loading-screen-content">
-            <img src="@Assets["images/logo-frida-boutique.png"]" alt="Frida Boutique" />
-            <div class="loading-indicator" aria-hidden="true"></div>
-            <p>Preparando tu tienda...</p>
-        </div>
-    </div>
-
     <Routes @rendermode="PageRenderMode" />
     <ReconnectModal />
-    <script src="@Assets["_framework/blazor.web.js"]" autostart="false"></script>
-    <script>
-        Blazor.start()
-            .then(() => document.documentElement.classList.add("app-ready"))
-            .catch(error => {
-                console.error("No se pudo iniciar la aplicación.", error);
-                document.documentElement.classList.add("app-ready");
-            });
-    </script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
     <script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
 </body>
 
