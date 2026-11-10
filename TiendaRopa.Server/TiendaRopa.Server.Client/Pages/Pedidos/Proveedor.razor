@@ -1,100 +1,81 @@
-﻿<h3>Proveedor</h3>
-
-@page "/admin/proveedor"
-@page "/admin/proveedor/{Id:int}"
-@attribute [Authorize(Roles = "Admin")]
-@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
 @using TiendaRopa.Shared.DTO.Proveedor
-@inject HttpClient Http
-@inject NavigationManager Navigation
 
-<h3>@(Id == null ? "Nuevo Proveedor" : "Editar Proveedor")</h3>
+@if (Mostrar)
+{
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header @(EsEdicion ? "modal-header-editar" : "modal-header-agregar")">
+                    <h5 class="modal-title">@(EsEdicion ? "Editar proveedor" : "Añadir proveedor")</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="Cancelar"></button>
+                </div>
 
-<EditForm Model="@modeloProveedor" OnValidSubmit="Guardar">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+                <EditForm Model="Modelo" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        @if (!string.IsNullOrWhiteSpace(MensajeError))
+                        {
+                            <div class="alert alert-danger" role="alert">@MensajeError</div>
+                        }
 
-    <div class="mb-3">
-        <label class="form-label">Razón Social</label>
-        <InputText @bind-Value="modeloProveedor.RazonSocialProveedores" class="form-control" />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social *</label>
+                                <InputText @bind-Value="Modelo.RazonSocialProveedores" class="form-control" />
+                                <ValidationMessage For="() => Modelo.RazonSocialProveedores" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Número de Contacto *</label>
+                                <InputText @bind-Value="Modelo.TelefonoContacto" class="form-control" type="tel" />
+                                <ValidationMessage For="() => Modelo.TelefonoContacto" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CUIT (opcional)</label>
+                                <InputText @bind-Value="Modelo.CuitProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Domicilio (opcional)</label>
+                                <InputText @bind-Value="Modelo.DomicilioProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de Contacto (opcional)</label>
+                                <InputText @bind-Value="Modelo.ContactoNombreProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email (opcional)</label>
+                                <InputText @bind-Value="Modelo.EmailProveedores" class="form-control" type="email" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Observaciones (opcional)</label>
+                                <InputTextArea @bind-Value="Modelo.ObvsProveedores" class="form-control" rows="2" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            @(EsEdicion ? "Guardar cambios" : "Guardar proveedor")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">CUIT (opcional)</label>
-        <InputText @bind-Value="modeloProveedor.CuitProveedores" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Domicilio (opcional)</label>
-        <InputText @bind-Value="modeloProveedor.DomicilioProveedores" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Nombre de Contacto (opcional)</label>
-        <InputText @bind-Value="modeloProveedor.ContactoNombreProveedores" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Número de Contacto</label>
-        <InputText @bind-Value="modeloProveedor.TelefonoContacto" class="form-control" type="tel" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Email (opcional)</label>
-        <InputText @bind-Value="modeloProveedor.EmailProveedores" class="form-control" type="email" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Observaciones</label>
-        <InputTextArea @bind-Value="modeloProveedor.ObvsProveedores" class="form-control" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
-</EditForm>
+}
 
 @code {
-    [Parameter]
-    public int? Id { get; set; }
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public bool EsEdicion { get; set; }
+    [Parameter] public ProveedorDto Modelo { get; set; } = new();
+    [Parameter] public string? MensajeError { get; set; }
+    [Parameter] public EventCallback OnGuardar { get; set; }
+    [Parameter] public EventCallback OnCancelar { get; set; }
 
-    
-    public ProveedorDto modeloProveedor { get; set; } = new ProveedorDto();
+    private Task Guardar() => OnGuardar.InvokeAsync();
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (Id.HasValue)
-        {
-            try
-            {
-                var respuesta = await Http.GetFromJsonAsync<ProveedorDto>($"api/proveedores/{Id}");
-                if (respuesta != null)
-                {
-                    modeloProveedor = respuesta;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al cargar proveedor: {ex.Message}");
-            }
-        }
-    }
-
-    private async Task Guardar()
-    {
-        if (Id == null)
-        {
-            await Http.PostAsJsonAsync("api/proveedores", modeloProveedor);
-        }
-        else
-        {
-            await Http.PutAsJsonAsync($"api/proveedores/{Id}", modeloProveedor);
-        }
-
-        Navigation.NavigateTo("/admin/proveedores");
-    }
-
-    private void Cancelar()
-    {
-        Navigation.NavigateTo("/admin/proveedores");
-    }
+    private Task Cancelar() => OnCancelar.InvokeAsync();
 }

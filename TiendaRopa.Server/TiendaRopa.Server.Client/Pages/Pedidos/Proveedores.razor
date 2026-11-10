@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Proveedor
 @inject HttpClient Http
-@inject NavigationManager Navigation
 
 <div class="d-flex justify-content-between align-items-center page-heading mb-4">
     <h2 class="page-title">Listado de Proveedores</h2>
@@ -48,7 +47,7 @@ else
                         <td>@proveedor.TelefonoContacto</td>
                         <td>@proveedor.EmailProveedores</td>
                         <td class="text-center">
-                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(proveedor.Id)">
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => AbrirModalEditar(proveedor)">
                                 Editar
                             </button>
                             <button class="btn btn-danger btn-sm" @onclick="() => EliminarProveedor(proveedor.Id)">
@@ -62,74 +61,18 @@ else
     </div>
 }
 
-@if (mostrarModalAgregar)
-{
-    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header modal-header-agregar">
-                    <h5 class="modal-title">Añadir proveedor</h5>
-                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModalAgregar"></button>
-                </div>
-
-                <EditForm Model="modeloProveedor" OnValidSubmit="GuardarProveedor">
-                    <DataAnnotationsValidator />
-                    <div class="modal-body">
-                        @if (!string.IsNullOrWhiteSpace(mensajeError))
-                        {
-                            <div class="alert alert-danger" role="alert">@mensajeError</div>
-                        }
-
-                        <ValidationSummary class="alert alert-danger" />
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Razón Social *</label>
-                                <InputText @bind-Value="modeloProveedor.RazonSocialProveedores" class="form-control" />
-                                <ValidationMessage For="() => modeloProveedor.RazonSocialProveedores" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Número de Contacto *</label>
-                                <InputText @bind-Value="modeloProveedor.TelefonoContacto" class="form-control" type="tel" />
-                                <ValidationMessage For="() => modeloProveedor.TelefonoContacto" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">CUIT (opcional)</label>
-                                <InputText @bind-Value="modeloProveedor.CuitProveedores" class="form-control" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Domicilio (opcional)</label>
-                                <InputText @bind-Value="modeloProveedor.DomicilioProveedores" class="form-control" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Nombre de Contacto (opcional)</label>
-                                <InputText @bind-Value="modeloProveedor.ContactoNombreProveedores" class="form-control" />
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Email (opcional)</label>
-                                <InputText @bind-Value="modeloProveedor.EmailProveedores" class="form-control" type="email" />
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Observaciones (opcional)</label>
-                                <InputTextArea @bind-Value="modeloProveedor.ObvsProveedores" class="form-control" rows="2" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalAgregar">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Guardar proveedor</button>
-                    </div>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-}
+<Proveedor Mostrar="mostrarModalProveedor"
+           EsEdicion="esEdicion"
+           Modelo="modeloProveedor"
+           MensajeError="mensajeError"
+           OnGuardar="GuardarProveedor"
+           OnCancelar="CerrarModalProveedor" />
 
 @code {
     private List<ProveedorDto>? listaProveedores;
     private ProveedorDto modeloProveedor = new();
-    private bool mostrarModalAgregar;
+    private bool mostrarModalProveedor;
+    private bool esEdicion;
     private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
@@ -152,13 +95,32 @@ else
     private void AbrirModalAgregar()
     {
         modeloProveedor = new ProveedorDto();
+        esEdicion = false;
         mensajeError = null;
-        mostrarModalAgregar = true;
+        mostrarModalProveedor = true;
     }
 
-    private void CerrarModalAgregar()
+    private void AbrirModalEditar(ProveedorDto proveedor)
     {
-        mostrarModalAgregar = false;
+        modeloProveedor = new ProveedorDto
+        {
+            Id = proveedor.Id,
+            RazonSocialProveedores = proveedor.RazonSocialProveedores,
+            TelefonoContacto = proveedor.TelefonoContacto,
+            CuitProveedores = proveedor.CuitProveedores,
+            DomicilioProveedores = proveedor.DomicilioProveedores,
+            ContactoNombreProveedores = proveedor.ContactoNombreProveedores,
+            EmailProveedores = proveedor.EmailProveedores,
+            ObvsProveedores = proveedor.ObvsProveedores
+        };
+        esEdicion = true;
+        mensajeError = null;
+        mostrarModalProveedor = true;
+    }
+
+    private void CerrarModalProveedor()
+    {
+        mostrarModalProveedor = false;
         mensajeError = null;
     }
 
@@ -166,25 +128,23 @@ else
     {
         try
         {
-            var respuesta = await Http.PostAsJsonAsync("api/proveedores", modeloProveedor);
+            var respuesta = esEdicion
+                ? await Http.PutAsJsonAsync($"api/proveedores/{modeloProveedor.Id}", modeloProveedor)
+                : await Http.PostAsJsonAsync("api/proveedores", modeloProveedor);
+
             if (!respuesta.IsSuccessStatusCode)
             {
                 mensajeError = await respuesta.Content.ReadAsStringAsync();
                 return;
             }
 
-            CerrarModalAgregar();
+            CerrarModalProveedor();
             await CargarProveedores();
         }
         catch (Exception ex)
         {
             mensajeError = $"No se pudo guardar el proveedor: {ex.Message}";
         }
-    }
-
-    private void IrAEditar(int id)
-    {
-        Navigation.NavigateTo($"/admin/proveedor/{id}");
     }
 
     private async Task EliminarProveedor(int id)

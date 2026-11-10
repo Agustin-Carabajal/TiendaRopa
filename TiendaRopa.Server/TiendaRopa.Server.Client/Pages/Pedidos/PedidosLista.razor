@@ -46,7 +46,7 @@ else
                         <td>@(ped.TotalPedido == 0 ? "Pendiente de recepción" : $"${ped.TotalPedido:N2}")</td>
                         <td class="text-center">
                             <a class="btn btn-outline-primary btn-sm me-2" href="@($"{Navigation.BaseUri}api/pedidos/{ped.Id}/recibo.pdf")">Generar recibo PDF</a>
-                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(ped.Id)">Editar</button>
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => AbrirModalEditar(ped.Id)">Editar</button>
                             <button class="btn btn-danger btn-sm" @onclick="() => EliminarPedido(ped.Id)">Eliminar</button>
                         </td>
                     </tr>
@@ -61,8 +61,8 @@ else
     <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header modal-header-agregar">
-                    <h5 class="modal-title">Añadir pedido</h5>
+                <div class="modal-header @(esEdicion ? "modal-header-editar" : "modal-header-agregar")">
+                    <h5 class="modal-title">@(esEdicion ? "Editar pedido" : "Añadir pedido")</h5>
                     <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModalAgregar"></button>
                 </div>
 
@@ -74,6 +74,15 @@ else
                             <div class="alert alert-danger" role="alert">@mensajeError</div>
                         }
 
+                        @if (cargandoPedido)
+                        {
+                            <div class="text-center my-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2">Cargando pedido...</p>
+                            </div>
+                        }
+                        else
+                        {
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label">Proveedor *</label>
@@ -87,7 +96,8 @@ else
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Número de pedido</label>
-                                <InputText @bind-Value="modeloPedido.FacturaPedido" class="form-control" placeholder="Se genera automáticamente" />
+                                <InputText @bind-Value="modeloPedido.FacturaPedido" class="form-control"
+                                           placeholder="Se genera automáticamente" readonly="@esEdicion" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Emitido</label>
@@ -161,12 +171,14 @@ else
                                 </table>
                             </div>
                         }
+                        }
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" @onclick="CerrarModalAgregar">Cancelar</button>
-                        <button type="submit" class="btn btn-primary" disabled="@(modeloPedido.IdProveedor == 0 || detallesPedido.Count == 0)">
-                            Guardar pedido
+                        <button type="submit" class="btn btn-primary"
+                                disabled="@(cargandoPedido || modeloPedido.IdProveedor == 0 || detallesPedido.Count == 0)">
+                            @(esEdicion ? "Guardar cambios" : "Guardar pedido")
                         </button>
                     </div>
                 </EditForm>
@@ -182,6 +194,8 @@ else
     private List<DetallePedidoDTO> detallesPedido = new();
     private PedidoDTO modeloPedido = new();
     private bool mostrarModalAgregar;
+    private bool esEdicion;
+    private bool cargandoPedido;
     private bool mostrarSelectorVariante;
     private int varianteSeleccionadaId;
     private int cantidadVariante = 1;
@@ -197,8 +211,6 @@ else
     {
         listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
     }
-
-    private void IrAEditar(int id) => Navigation.NavigateTo($"/admin/pedidos/pedido/{id}");
 
     private async Task CargarDatosParaPedido()
     {
@@ -217,14 +229,52 @@ else
     {
         modeloPedido = new PedidoDTO { FechaDePedido = DateTime.Today };
         detallesPedido = new();
+        esEdicion = false;
+        cargandoPedido = false;
         mensajeError = null;
         mostrarSelectorVariante = false;
         mostrarModalAgregar = true;
     }
 
+    private async Task AbrirModalEditar(int id)
+    {
+        modeloPedido = new PedidoDTO { Id = id };
+        detallesPedido = new();
+        esEdicion = true;
+        cargandoPedido = true;
+        mensajeError = null;
+        mostrarSelectorVariante = false;
+        mostrarModalAgregar = true;
+
+        try
+        {
+            var pedido = await Http.GetFromJsonAsync<PedidoDTO>($"api/pedidos/{id}");
+            var detalles = await Http.GetFromJsonAsync<List<DetallePedidoDTO>>(
+                $"api/DetallesPedido/porpedido/{id}");
+
+            if (pedido == null)
+            {
+                mensajeError = "No se encontró el pedido seleccionado.";
+                return;
+            }
+
+            modeloPedido = pedido;
+            detallesPedido = detalles ?? new();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No se pudo cargar el pedido: {ex.Message}";
+        }
+        finally
+        {
+            cargandoPedido = false;
+        }
+    }
+
     private void CerrarModalAgregar()
     {
         mostrarModalAgregar = false;
+        cargandoPedido = false;
         mensajeError = null;
     }
 
@@ -276,33 +326,59 @@ else
 
         try
         {
-            var respuestaPedido = await Http.PostAsJsonAsync("api/pedidos", modeloPedido);
-            if (!respuestaPedido.IsSuccessStatusCode)
-            {
-                mensajeError = await respuestaPedido.Content.ReadAsStringAsync();
-                return;
-            }
+            int pedidoId;
 
-            var pedidoCreado = await respuestaPedido.Content.ReadFromJsonAsync<PedidoDTO>();
-            if (pedidoCreado == null)
+            if (esEdicion)
             {
-                mensajeError = "El servidor no devolvió los datos del pedido creado.";
-                return;
+                var respuestaEdicion = await Http.PutAsJsonAsync(
+                    $"api/pedidos/{modeloPedido.Id}",
+                    modeloPedido);
+
+                if (!respuestaEdicion.IsSuccessStatusCode)
+                {
+                    mensajeError = await respuestaEdicion.Content.ReadAsStringAsync();
+                    return;
+                }
+
+                pedidoId = modeloPedido.Id;
+            }
+            else
+            {
+                var respuestaPedido = await Http.PostAsJsonAsync("api/pedidos", modeloPedido);
+                if (!respuestaPedido.IsSuccessStatusCode)
+                {
+                    mensajeError = await respuestaPedido.Content.ReadAsStringAsync();
+                    return;
+                }
+
+                var pedidoCreado = await respuestaPedido.Content.ReadFromJsonAsync<PedidoDTO>();
+                if (pedidoCreado == null)
+                {
+                    mensajeError = "El servidor no devolvió los datos del pedido creado.";
+                    return;
+                }
+
+                pedidoId = pedidoCreado.Id;
             }
 
             foreach (var detalle in detallesPedido)
             {
                 var dto = new
                 {
+                    Id = detalle.Id,
                     Cant_prod_Pedido = detalle.Cant_prod_Pedido,
-                    PedidoId = pedidoCreado.Id,
+                    PedidoId = pedidoId,
                     VarianteId = detalle.VarianteId
                 };
 
-                var respuestaDetalle = await Http.PostAsJsonAsync("api/detallespedido", dto);
+                var respuestaDetalle = detalle.Id == 0
+                    ? await Http.PostAsJsonAsync("api/detallespedido", dto)
+                    : await Http.PutAsJsonAsync($"api/detallespedido/{detalle.Id}", dto);
+
                 if (!respuestaDetalle.IsSuccessStatusCode)
                 {
-                    mensajeError = $"El pedido se creó, pero no se pudo guardar una variante: {await respuestaDetalle.Content.ReadAsStringAsync()}";
+                    var accion = esEdicion ? "actualizar" : "guardar";
+                    mensajeError = $"El pedido se procesó, pero no se pudo {accion} una variante: {await respuestaDetalle.Content.ReadAsStringAsync()}";
                     return;
                 }
             }
