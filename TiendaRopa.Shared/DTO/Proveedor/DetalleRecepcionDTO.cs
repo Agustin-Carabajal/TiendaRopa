@@ -9,6 +9,8 @@ namespace TiendaRopa.Shared.DTO.Proveedor
         public int Id { get; set; }
         public decimal TotalPedidos { get; set; }
         public decimal PrecioUnitario { get; set; }
+        public decimal PrecioEnvio { get; set; }
+        public decimal Ganancia { get; set; }
         public int CantidadRecibida { get; set; }
         public int PedidoId { get; set; }
         public int RecepcionId { get; set; }

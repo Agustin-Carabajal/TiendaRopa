@@ -12,27 +12,45 @@ namespace TiendaRopa.Server.Controllers
     public class RecepcionesController : ControllerBase
     {
         private readonly IRecepcionRepositorio _repository;
-        private readonly IPedidoRepositorio _pedidoRepositorio; // <-- Inyectamos el repositorio de pedidos
-        private readonly AppDbContext _context; // Lo conservamos por ahora si consultas DetallesRecepciones directamente
+        private readonly AppDbContext _context;
 
-        public RecepcionesController(AppDbContext context, IRecepcionRepositorio repository, IPedidoRepositorio pedidoRepositorio)
+        public RecepcionesController(AppDbContext context, IRecepcionRepositorio repository)
         {
             _context = context;
             _repository = repository;
-            _pedidoRepositorio = pedidoRepositorio;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RecepcionDto>>> Get()
         {
             var recepciones = await _repository.GetAllAsync();
-            var dtos = recepciones.Select(r => new RecepcionDto
+            var referenciasPedido = await _context.DetallesRecepciones
+                .Select(d => new
+                {
+                    d.RecepcionId,
+                    d.PedidoId,
+                    FacturaPedido = d.Pedido == null ? null : d.Pedido.FacturaPedidos
+                })
+                .ToListAsync();
+            var pedidosPorRecepcion = referenciasPedido
+                .GroupBy(x => x.RecepcionId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var dtos = recepciones.Select(recepcion =>
             {
-                Id = r.Id,
-                FechaDeEntrega = r.FechaDeEntrega,
-                RemitoProveedor = r.RemitoProveedor,
-                RecibidoPor = r.RecibidoPor,
-                Notas = r.Notas
+                pedidosPorRecepcion.TryGetValue(recepcion.Id, out var referencia);
+
+                return new RecepcionDto
+                {
+                    Id = recepcion.Id,
+                    FechaDeEntrega = recepcion.FechaDeEntrega,
+                    PrecioEnvioTotal = recepcion.PrecioEnvioTotal,
+                    RemitoProveedor = recepcion.RemitoProveedor,
+                    RecibidoPor = recepcion.RecibidoPor,
+                    Notas = recepcion.Notas,
+                    PedidoId = referencia?.PedidoId,
+                    FacturaPedido = referencia?.FacturaPedido
+                };
             });
 
             return Ok(dtos);
@@ -41,14 +59,19 @@ namespace TiendaRopa.Server.Controllers
         [HttpPost]
         public async Task<ActionResult<RecepcionDto>> PostRecepcion([FromBody] RecepcionDto dto)
         {
+            if (dto.PrecioEnvioTotal < 0)
+            {
+                return BadRequest("El costo total del envío no puede ser negativo.");
+            }
+
             try
             {
-                // Aseguramos que la fecha sea compatible con UTC si usas PostgreSQL
                 var fechaUtc = DateTime.SpecifyKind(dto.FechaDeEntrega, DateTimeKind.Utc);
 
                 var recepcion = new Recepcion
                 {
                     FechaDeEntrega = fechaUtc,
+                    PrecioEnvioTotal = dto.PrecioEnvioTotal,
                     RemitoProveedor = dto.RemitoProveedor,
                     RecibidoPor = dto.RecibidoPor,
                     Notas = dto.Notas
@@ -61,9 +84,10 @@ namespace TiendaRopa.Server.Controllers
             }
             catch (DbUpdateException ex)
             {
-                // Extraemos el mensaje interno real de la base de datos (clave duplicada, campo nulo, etc.)
-                var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                return StatusCode(500, $"Error de base de datos al guardar la recepción: {innerMessage}");
+                var mensajeInterno = ex.InnerException?.Message ?? ex.Message;
+                return StatusCode(
+                    500,
+                    $"Error de base de datos al guardar la recepción: {mensajeInterno}");
             }
             catch (Exception ex)
             {
@@ -76,46 +100,7 @@ namespace TiendaRopa.Server.Controllers
         {
             try
             {
-                // 1. Obtenemos los detalles del pedido usando el repositorio limpio
-                var detallesPedido = await _pedidoRepositorio.GetDetallesByPedidoIdAsync(pedidoId);
-
-                if (detallesPedido == null || !detallesPedido.Any())
-                {
-                    return Ok(new List<ItemPedidoPendienteDTO>());
-                }
-
-                // 2. Obtenemos las recepciones anteriores para este pedido
-                var recepcionesAnteriores = await _context.DetallesRecepciones
-                    .Where(dr => dr.PedidoId == pedidoId)
-                    .ToListAsync();
-
-                var resultado = new List<ItemPedidoPendienteDTO>();
-
-                foreach (var dp in detallesPedido)
-                {
-                    int yaRecibido = 0;
-
-                    if (recepcionesAnteriores != null && recepcionesAnteriores.Any())
-                    {
-                        yaRecibido = recepcionesAnteriores
-                            .Where(dr => dr.VarianteId == dp.VarianteId)
-                            .Sum(dr => dr.CantidadRecibida);
-                    }
-
-                    int pendiente = dp.Cant_prod_Pedido - yaRecibido;
-
-                    resultado.Add(new ItemPedidoPendienteDTO
-                    {
-                        VarianteId = dp.VarianteId,
-                        NombreProducto = $"Variante ID: {dp.VarianteId}",
-                        CantidadPedida = dp.Cant_prod_Pedido,
-                        CantidadYaRecibida = yaRecibido,
-                        PrecioUnitario = dp.Valor_uni,
-                        CantidadARecibirAhora = pendiente > 0 ? pendiente : 0
-                    });
-                }
-
-                return Ok(resultado);
+                return Ok(await _repository.GetItemsPendientesPorPedidoAsync(pedidoId));
             }
             catch (Exception ex)
             {

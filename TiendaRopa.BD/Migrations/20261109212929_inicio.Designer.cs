@@ -12,7 +12,7 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261109195329_inicio")]
+    [Migration("20261109212929_inicio")]
     partial class inicio
     {
         /// <inheritdoc />
@@ -1241,7 +1241,7 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
                         .WithMany()
                         .HasForeignKey("VarianteId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1266,7 +1266,7 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
                         .WithMany()
                         .HasForeignKey("VarianteId")
                         .OnDelete(DeleteBehavior.Restrict)

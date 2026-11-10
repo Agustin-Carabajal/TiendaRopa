@@ -45,6 +45,13 @@
                 <InputText @bind-Value="nuevaRecepcion.RecibidoPor" class="form-control" />
             </div>
 
+            <div class="col-md-4">
+                <label class="form-label">Costo total del envío ($)</label>
+                <InputNumber @bind-Value="nuevaRecepcion.PrecioEnvioTotal" class="form-control" min="0" step="0.01" />
+                <small class="text-muted">Se divide entre todas las unidades que ingresan en esta recepción.</small>
+                <small class="d-block text-muted">Envío asignado ahora: $@PrecioEnvioPorUnidad.ToString("N2") por unidad.</small>
+            </div>
+
             <div class="col-md-12">
                 <label class="form-label">Notas / Observaciones</label>
                 <InputText @bind-Value="nuevaRecepcion.Notas" class="form-control" />
@@ -66,7 +73,9 @@
                             <th class="text-center">Ya Recibido</th>
                             <th class="text-center">Pendiente</th>
                             <th style="width: 180px;">Ingreso Ahora</th>
-                            <th class="text-center">Subtotal ($)</th>
+                            <th>Precio unitario de compra ($)</th>
+                            <th>Ganancia por unidad ($)</th>
+                            <th class="text-end">Precio de venta unitario</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -92,8 +101,15 @@
                                         <span class="badge bg-success">Completado</span>
                                     }
                                 </td>
-                                <td class="text-center fw-bold">
-                                    $@(item.CantidadARecibirAhora * item.PrecioUnitario)
+                                <td>
+                                    <InputNumber @bind-Value="item.PrecioUnitario" class="form-control" min="0.01" step="0.01"
+                                                 disabled="@(item.CantidadPendiente == 0)" />
+                                </td>
+                                <td>
+                                    $@item.Ganancia.ToString("N2")
+                                </td>
+                                <td class="text-end fw-bold">
+                                    $@PrecioVentaUnitario(item).ToString("N2")
                                 </td>
                             </tr>
                         }
@@ -121,6 +137,13 @@
     private List<ItemPedidoPendienteDTO>? itemsPendientes;
     private int pedidoSeleccionadoId = 0;
     private string? mensajeError;
+    private int unidadesARecibir => itemsPendientes?.Where(i => i.CantidadARecibirAhora > 0).Sum(i => i.CantidadARecibirAhora) ?? 0;
+    private decimal PrecioEnvioPorUnidad => unidadesARecibir == 0
+        ? 0m
+        : Math.Round(nuevaRecepcion.PrecioEnvioTotal / unidadesARecibir, 2, MidpointRounding.AwayFromZero);
+
+    private decimal PrecioVentaUnitario(ItemPedidoPendienteDTO item) =>
+        item.PrecioUnitario + PrecioEnvioPorUnidad + item.Ganancia;
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,59 +180,74 @@
     }
 
     private async Task GuardarRecepcion()
-{
-    var itemsAProcesar = itemsPendientes?.Where(i => i.CantidadARecibirAhora > 0).ToList();
-
-    if (itemsAProcesar == null || !itemsAProcesar.Any())
     {
-        mensajeError = "Debes ingresar una cantidad mayor a cero en al menos un producto para registrar la recepción.";
-        return;
-    }
+        var itemsAProcesar = itemsPendientes?
+            .Where(item => item.CantidadARecibirAhora > 0)
+            .ToList();
 
-    try
-    {
-        // 1. Guardar la cabecera de la Recepción
-        var response = await Http.PostAsJsonAsync("api/recepciones", nuevaRecepcion);
-
-        if (response.IsSuccessStatusCode)
+        if (itemsAProcesar == null || itemsAProcesar.Count == 0)
         {
-            var recepcionCreada = await response.Content.ReadFromJsonAsync<RecepcionDto>();
+            mensajeError = "Debes ingresar una cantidad mayor a cero en al menos un producto para registrar la recepción.";
+            return;
+        }
 
-            // 2. Guardar cada detalle de recepción asociado a este remito y pedido
+        if (nuevaRecepcion.PrecioEnvioTotal < 0)
+        {
+            mensajeError = "El costo total del envío no puede ser negativo.";
+            return;
+        }
+
+        if (itemsAProcesar.Any(item => item.PrecioUnitario <= 0m))
+        {
+            mensajeError = "Ingresá un precio unitario mayor a cero para cada variante recibida.";
+            return;
+        }
+
+        try
+        {
+            var respuestaRecepcion = await Http.PostAsJsonAsync("api/recepciones", nuevaRecepcion);
+
+            if (!respuestaRecepcion.IsSuccessStatusCode)
+            {
+                var errorServidor = await respuestaRecepcion.Content.ReadAsStringAsync();
+                mensajeError = $"No se pudo registrar la cabecera de la recepción: {errorServidor}";
+                return;
+            }
+
+            var recepcionCreada = await respuestaRecepcion.Content.ReadFromJsonAsync<RecepcionDto>();
+
             foreach (var item in itemsAProcesar)
             {
-                var detalleDto = new DetallesRecepcionDto
+                var detalleRecepcion = new DetallesRecepcionDto
                 {
                     RecepcionId = recepcionCreada!.Id,
                     PedidoId = pedidoSeleccionadoId,
                     VarianteId = item.VarianteId,
                     CantidadRecibida = item.CantidadARecibirAhora,
                     PrecioUnitario = item.PrecioUnitario,
+                    PrecioEnvio = PrecioEnvioPorUnidad,
+                    Ganancia = item.Ganancia,
                     TotalPedidos = item.CantidadARecibirAhora * item.PrecioUnitario
                 };
 
-                var detalleResponse = await Http.PostAsJsonAsync("api/detallesrecepciones", detalleDto);
-                if (!detalleResponse.IsSuccessStatusCode)
+                var respuestaDetalle = await Http.PostAsJsonAsync(
+                    "api/detallesrecepciones",
+                    detalleRecepcion);
+
+                if (!respuestaDetalle.IsSuccessStatusCode)
                 {
-                    var errorDetalle = await detalleResponse.Content.ReadAsStringAsync();
+                    var errorDetalle = await respuestaDetalle.Content.ReadAsStringAsync();
                     throw new Exception($"Error al guardar el detalle de recepción: {errorDetalle}");
                 }
             }
 
             Navigation.NavigateTo("/admin/recepciones");
         }
-        else
+        catch (Exception ex)
         {
-            // Capturamos el error exacto que envía el backend
-            var errorServer = await response.Content.ReadAsStringAsync();
-            mensajeError = $"No se pudo registrar la cabecera de la recepción: {errorServer}";
+            mensajeError = $"Error al guardar la recepción: {ex.Message}";
         }
     }
-    catch (Exception ex)
-    {
-        mensajeError = $"Error al guardar la recepción: {ex.Message}";
-    }
-}
 
     private void Cancelar() => Navigation.NavigateTo("/admin/recepciones");
 }

@@ -34,6 +34,12 @@
                         }
                     }
                 </InputSelect>
+                @if (modeloPedido.IdProveedor == 0)
+                {
+                    <div class="alert alert-warning py-2 mt-2 mb-0" role="alert">
+                        No se puede guardar el pedido sin seleccionar un proveedor.
+                    </div>
+                }
             </div>
 
             <div class="col-md-6">
@@ -43,7 +49,7 @@
             </div>
 
             <div class="col-md-6">
-                <label class="form-label">Fecha de Realización</label>
+                <label class="form-label">Emitido</label>
                 <InputDate @bind-Value="modeloPedido.FechaDePedido" class="form-control" />
             </div>
 
@@ -57,9 +63,9 @@
     <!-- 2. SECCIÓN PARA ARMAR LA LISTA DE PRENDAS A PEDIR -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <span>2. Prendas / Productos a Solicitar</span>
+            <span>2. Variantes a Solicitar</span>
             <button type="button" class="btn btn-success btn-sm" @onclick="AbrirSelectorPrenda">
-                + Agregar Producto del Catálogo
+                + Agregar Variante del Catálogo
             </button>
         </div>
         <div class="card-body">
@@ -67,22 +73,22 @@
             @if (mostrarSelectorPrenda)
             {
                 <div class="p-3 mb-3 border rounded bg-light">
-                    <h6 class="text-primary mb-3">Seleccionar Producto Activo</h6>
+                    <h6 class="text-primary mb-3">Seleccionar Variante Activa</h6>
                     <div class="row g-3">
                         <div class="col-md-5">
-                            <label class="form-label">Producto / Prenda</label>
-                            <select class="form-select" @onchange="OnProductoSeleccionado">
-                                <option value="0">-- Elegir Producto --</option>
-                                @if (listaProductosCargados != null && listaProductosCargados.Any())
+                            <label class="form-label">Variante (producto, color y talle)</label>
+                            <select class="form-select" @bind="itemDetalleNuevo.VarianteId" @bind:after="OnVarianteSeleccionada">
+                                <option value="0">-- Elegir Variante --</option>
+                                @if (listaVariantesCargadas.Any())
                                 {
-                                    @foreach (var prod in listaProductosCargados)
+                                    @foreach (var variante in listaVariantesCargadas)
                                     {
-                                        <option value="@prod.Id">@prod.Nombre (@prod.Marca)</option>
+                                        <option value="@variante.Id">@EtiquetaVariante(variante)</option>
                                     }
                                 }
                                 else
                                 {
-                                    <option value="0" disabled>No hay productos activos cargados en el sistema</option>
+                                    <option value="0" disabled>No hay variantes activas cargadas en el sistema</option>
                                 }
                             </select>
                         </div>
@@ -91,22 +97,7 @@
                             <label class="form-label">Cantidad</label>
                             <input type="number" min="1" class="form-control" 
                                    @bind="itemDetalleNuevo.Cant_prod_Pedido" 
-                                   @bind:event="oninput" 
-                                   @onchange="CalcularSubtotalItem" />
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Precio Unit. ($)</label>
-                            <input type="number" step="0.01" class="form-control" 
-                                   @bind="itemDetalleNuevo.Valor_uni" 
-                                   @bind:event="oninput" 
-                                   @onchange="CalcularSubtotalItem" />
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label">Subtotal Estimado ($)</label>
-                            <input type="number" step="0.01" class="form-control" 
-                                   @bind="itemDetalleNuevo.Valor_est" readonly />
+                                   @bind:event="oninput" />
                         </div>
                     </div>
 
@@ -124,7 +115,7 @@
             @if (!prendasSolicitadas.Any())
             {
                 <div class="alert alert-warning text-center">
-                    Aún no agregaste productos a este pedido. Haz clic en <strong>"+ Agregar Producto del Catálogo"</strong> para comenzar.
+                    Aún no agregaste variantes a este pedido. Haz clic en <strong>"+ Agregar Variante del Catálogo"</strong> para comenzar.
                 </div>
             }
             else
@@ -132,10 +123,8 @@
                 <table class="table table-bordered table-striped align-middle">
                     <thead class="table-secondary">
                         <tr>
-                            <th>Producto</th>
+                            <th>Variante</th>
                             <th class="text-center">Cantidad</th>
-                            <th class="text-end">Precio Unitario</th>
-                            <th class="text-end">Subtotal Estimado</th>
                             <th class="text-center">Acción</th>
                         </tr>
                     </thead>
@@ -145,8 +134,6 @@
                             <tr>
                                 <td>@item.NombreProducto</td>
                                 <td class="text-center">@item.Cant_prod_Pedido</td>
-                                <td class="text-end">$@item.Valor_uni</td>
-                                <td class="text-end fw-bold">$@item.Valor_est</td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-danger btn-sm" @onclick="() => QuitarPrenda(item)">
                                         Quitar
@@ -158,10 +145,6 @@
                 </table>
             }
 
-            <div class="d-flex justify-content-end align-items-center mt-3">
-                <h4 class="me-3">Total del Pedido:</h4>
-                <h3 class="text-success font-weight-bold">$@modeloPedido.TotalPedido</h3>
-            </div>
         </div>
     </div>
 
@@ -180,46 +163,45 @@
 
     public PedidoDTO modeloPedido { get; set; } = new PedidoDTO();
     private List<DetallePedidoDTO> prendasSolicitadas = new();
-    
+
     private DetallePedidoDTO itemDetalleNuevo = new();
     private bool mostrarSelectorPrenda = false;
     private string? mensajeError;
 
     private List<ProveedorDto>? listaProveedores = new();
-    private List<ProductoMostrarDTO>? listaProductosCargados = new();
+    private List<VarianteMostrarDTO> listaVariantesCargadas = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // 1. Cargar Proveedores
             var respProveedores = await Http.GetAsync("api/proveedores");
             if (respProveedores.IsSuccessStatusCode)
             {
                 listaProveedores = await respProveedores.Content.ReadFromJsonAsync<List<ProveedorDto>>();
             }
 
-            // 2. Cargar Productos Activos usando la ruta exacta de tu backend
-            var respProductos = await Http.GetAsync("api/Producto/lista-productos-activos");
-            if (respProductos.IsSuccessStatusCode)
+            var respVariantes = await Http.GetAsync("api/Variante/lista-variantes-activas");
+            if (respVariantes.IsSuccessStatusCode)
             {
-                listaProductosCargados = await respProductos.Content.ReadFromJsonAsync<List<ProductoMostrarDTO>>();
+                listaVariantesCargadas = await respVariantes.Content.ReadFromJsonAsync<List<VarianteMostrarDTO>>() ?? new();
             }
             else
             {
-                // Si devuelve 404 (Sin registros) dejamos la lista vacía para no arrojar excepción
-                listaProductosCargados = new List<ProductoMostrarDTO>();
+                listaVariantesCargadas = new();
             }
 
-            // 3. Cargar Pedido si estamos en Edición
             if (Id.HasValue)
             {
                 var ped = await Http.GetFromJsonAsync<PedidoDTO>($"api/pedidos/{Id}");
                 if (ped != null)
                 {
                     modeloPedido = ped;
-                    var det = await Http.GetFromJsonAsync<List<DetallePedidoDTO>>($"api/detallespedidos/porpedido/{Id}");
-                    if (det != null) prendasSolicitadas = det;
+                    var det = await Http.GetFromJsonAsync<List<DetallePedidoDTO>>($"api/DetallesPedido/porpedido/{Id}");
+                    if (det != null)
+                    {
+                        prendasSolicitadas = det;
+                    }
                 }
             }
             else
@@ -241,60 +223,49 @@
 
     private void AbrirSelectorPrenda()
     {
-        itemDetalleNuevo = new DetallePedidoDTO { Cant_prod_Pedido = 1, Valor_uni = 0 };
+        itemDetalleNuevo = new DetallePedidoDTO { Cant_prod_Pedido = 1 };
         mostrarSelectorPrenda = true;
     }
 
-    private void OnProductoSeleccionado(ChangeEventArgs e)
+    private void OnVarianteSeleccionada()
     {
-        if (int.TryParse(e.Value?.ToString(), out int productoId) && productoId > 0)
+        var variante = listaVariantesCargadas.FirstOrDefault(v => v.Id == itemDetalleNuevo.VarianteId);
+        if (variante != null)
         {
-            var prod = listaProductosCargados?.FirstOrDefault(p => p.Id == productoId);
-            if (prod != null)
-            {
-                itemDetalleNuevo.VarianteId = prod.Id; // ID del producto
-                itemDetalleNuevo.NombreProducto = $"{prod.Nombre} ({prod.Marca})";
-                CalcularSubtotalItem();
-            }
+            itemDetalleNuevo.NombreProducto = EtiquetaVariante(variante);
         }
     }
 
-    private void CalcularSubtotalItem()
-    {
-        itemDetalleNuevo.Valor_est = itemDetalleNuevo.Cant_prod_Pedido * itemDetalleNuevo.Valor_uni;
-    }
+    private static string EtiquetaVariante(VarianteMostrarDTO variante) =>
+        $"{variante.ProductoColor} - Talle {variante.Talle} - SKU {variante.CodVariante}";
 
     private void AgregarPrendaALista()
     {
-        if (itemDetalleNuevo.VarianteId == 0 || itemDetalleNuevo.Cant_prod_Pedido <= 0) return;
+        if (itemDetalleNuevo.VarianteId == 0 || itemDetalleNuevo.Cant_prod_Pedido <= 0)
+        {
+            return;
+        }
 
         prendasSolicitadas.Add(new DetallePedidoDTO
         {
             VarianteId = itemDetalleNuevo.VarianteId,
             NombreProducto = itemDetalleNuevo.NombreProducto,
-            Cant_prod_Pedido = itemDetalleNuevo.Cant_prod_Pedido,
-            Valor_uni = itemDetalleNuevo.Valor_uni,
-            Valor_est = itemDetalleNuevo.Valor_est
+            Cant_prod_Pedido = itemDetalleNuevo.Cant_prod_Pedido
         });
-
-        RecalcularTotalGeneral();
         mostrarSelectorPrenda = false;
     }
 
     private void QuitarPrenda(DetallePedidoDTO item)
     {
         prendasSolicitadas.Remove(item);
-        RecalcularTotalGeneral();
-    }
-
-    private void RecalcularTotalGeneral()
-    {
-        modeloPedido.TotalPedido = prendasSolicitadas.Sum(d => d.Valor_est);
     }
 
     private async Task GuardarPedidoCompleto()
     {
-        if (modeloPedido.IdProveedor == 0 || !prendasSolicitadas.Any()) return;
+        if (modeloPedido.IdProveedor == 0 || !prendasSolicitadas.Any())
+        {
+            return;
+        }
 
         try
         {
@@ -307,21 +278,21 @@
 
                     foreach (var prenda in prendasSolicitadas)
                     {
-                        // Creamos el DTO limpio para asegurar el Content-Type correcto
                         var detalleDto = new
                         {
                             Cant_prod_Pedido = prenda.Cant_prod_Pedido,
-                            Valor_est = prenda.Valor_est,
-                            Valor_uni = prenda.Valor_uni,
                             PedidoId = pedidoCreado!.Id,
                             VarianteId = prenda.VarianteId
                         };
 
-                        var detalleResponse = await Http.PostAsJsonAsync("api/detallespedido", detalleDto);
+                        var detalleResponse = await Http.PostAsJsonAsync(
+                            "api/detallespedido",
+                            detalleDto);
                         if (!detalleResponse.IsSuccessStatusCode)
                         {
                             var errorDetalle = await detalleResponse.Content.ReadAsStringAsync();
-                            throw new Exception($"Error al guardar el detalle (Variante ID {prenda.VarianteId}): {errorDetalle}");
+                        throw new Exception(
+                            $"Error al guardar el detalle (Variante ID {prenda.VarianteId}): {errorDetalle}");
                         }
                     }
                 }
@@ -346,8 +317,6 @@
                     {
                         Id = prenda.Id,
                         Cant_prod_Pedido = prenda.Cant_prod_Pedido,
-                        Valor_est = prenda.Valor_est,
-                        Valor_uni = prenda.Valor_uni,
                         PedidoId = Id.Value,
                         VarianteId = prenda.VarianteId
                     };
@@ -355,9 +324,13 @@
                     HttpResponseMessage detalleResponse;
 
                     if (prenda.Id == 0)
+                    {
                         detalleResponse = await Http.PostAsJsonAsync("api/detallespedido", detalleDto);
+                    }
                     else
+                    {
                         detalleResponse = await Http.PutAsJsonAsync($"api/detallespedido/{prenda.Id}", detalleDto);
+                    }
 
                     if (!detalleResponse.IsSuccessStatusCode)
                     {

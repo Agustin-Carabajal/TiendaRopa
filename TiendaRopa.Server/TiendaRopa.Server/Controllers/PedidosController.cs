@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TiendaRopa.BD.Datos.Entity;
-using TiendaRopa.Repositorio.Repositorios.Generico;
 using TiendaRopa.Repositorio.Repositorios.PedidosRep;
+using TiendaRopa.Server.Services;
 using TiendaRopa.Shared.DTO.Proveedor;
 
 namespace TiendaRopa.Server.Controllers
@@ -11,10 +11,12 @@ namespace TiendaRopa.Server.Controllers
     public class PedidosController : ControllerBase
     {
         private readonly IPedidoRepositorio _repository;
+        private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
 
-        public PedidosController(IPedidoRepositorio repository)
+        public PedidosController(IPedidoRepositorio repository, IDetallePedidoRepositorio detallePedidoRepositorio)
         {
             _repository = repository;
+            _detallePedidoRepositorio = detallePedidoRepositorio;
         }
 
         [HttpGet]
@@ -29,7 +31,7 @@ namespace TiendaRopa.Server.Controllers
                 FechaDeEntrega = p.FechaDeEntrega,
                 FacturaPedido = p.FacturaPedidos,
                 IdProveedor = p.ProveedorId,
-                RazonSocialProveedor = p.Proveedor?.RazonSocialProveedores // Mapeamos el nombre
+                RazonSocialProveedor = p.Proveedor?.RazonSocialProveedores
             });
             return Ok(dtos);
         }
@@ -38,7 +40,10 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult<PedidoDTO>> Get(int id)
         {
             var p = await _repository.GetByIdAsync(id);
-            if (p == null) return NotFound();
+            if (p == null)
+            {
+                return NotFound();
+            }
 
             var dto = new PedidoDTO
             {
@@ -68,15 +73,12 @@ namespace TiendaRopa.Server.Controllers
                                     : dto.FacturaPedido,
                 FechaDePedido = dto.FechaDePedido,
                 FechaDeEntrega = dto.FechaDeEntrega,
-                TotalPedidos = dto.TotalPedido
+                TotalPedidos = 0m
             };
 
-            // 1. Cambiá '_repositorio' por la variable de tu repositorio (ej: repositorio, _pedidoRepositorio, etc.)
             await _repository.AddAsync(nuevoPedido);
 
             dto.Id = nuevoPedido.Id;
-
-            // 2. Reemplazamos CreatedAtAction por Ok(dto) para evitar depender del nombre del GET
             return Ok(dto);
         }
 
@@ -84,9 +86,11 @@ namespace TiendaRopa.Server.Controllers
         public async Task<IActionResult> Put(int id, [FromBody] PedidoDTO dto)
         {
             var p = await _repository.GetByIdAsync(id);
-            if (p == null) return NotFound();
+            if (p == null)
+            {
+                return NotFound();
+            }
 
-            p.TotalPedidos = dto.TotalPedido;
             p.FechaDePedido = dto.FechaDePedido;
             p.FechaDeEntrega = dto.FechaDeEntrega;
             p.FacturaPedidos = dto.FacturaPedido;
@@ -100,10 +104,47 @@ namespace TiendaRopa.Server.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var p = await _repository.GetByIdAsync(id);
-            if (p == null) return NotFound();
+            if (p == null)
+            {
+                return NotFound();
+            }
 
             await _repository.DeleteAsync(id);
             return NoContent();
+        }
+
+        [HttpGet("{id:int}/recibo.pdf")]
+        public async Task<IActionResult> DescargarReciboPdf(int id)
+        {
+            var pedidos = await _repository.GetAllAsync();
+            var pedido = pedidos.FirstOrDefault(p => p.Id == id);
+            if (pedido == null) return NotFound("No se encontró el pedido.");
+
+            var detalles = (await _detallePedidoRepositorio.GetAllAsync())
+                .Where(d => d.PedidoId == id)
+                .OrderBy(d => d.Id)
+                .ToList();
+            if (detalles.Count == 0)
+            {
+                return NotFound("El pedido no tiene artículos para incluir en el recibo.");
+            }
+
+            var pdf = PedidoPdfGenerator.Generar(
+                pedido,
+                pedido.Proveedor?.RazonSocialProveedores ?? "Sin proveedor",
+                detalles);
+            var nombreArchivo = new string(pedido.FacturaPedidos
+                .Where(c => char.IsLetterOrDigit(c) || c is '-' or '_')
+                .ToArray());
+
+            var identificadorArchivo = string.IsNullOrWhiteSpace(nombreArchivo)
+                ? id.ToString()
+                : nombreArchivo;
+
+            return File(
+                pdf,
+                "application/pdf",
+                $"Recibo-{identificadorArchivo}.pdf");
         }
     }
 }

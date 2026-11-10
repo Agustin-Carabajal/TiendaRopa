@@ -13,6 +13,7 @@ namespace TiendaRopa.Shared.DTO.Proveedor
         public int CantidadYaRecibida { get; set; }
         public int CantidadPendiente => CantidadPedida - CantidadYaRecibida;
         public decimal PrecioUnitario { get; set; }
+        public decimal Ganancia => PrecioUnitario * 2m;
         public int CantidadARecibirAhora { get; set; }
     }
 }

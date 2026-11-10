@@ -35,6 +35,7 @@ else
                     <th>Razón Social</th>
                     <th>CUIT</th>
                     <th>Contacto</th>
+                    <th>Teléfono</th>
                     <th>Email</th>
                     <th class="text-center">Acciones</th>
                 </tr>
@@ -46,6 +47,7 @@ else
                         <td>@prov.RazonSocialProveedores</td>
                         <td>@prov.CuitProveedores</td>
                         <td>@prov.ContactoNombreProveedores</td>
+                        <td>@prov.TelefonoContacto</td>
                         <td>@prov.EmailProveedores</td>
                         <td class="text-center">
                             <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(prov.Id)">

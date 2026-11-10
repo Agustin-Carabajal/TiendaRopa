@@ -18,7 +18,7 @@ namespace TiendaRopa.BD.Datos.Entity
         // Foraneas
 
         public int VarianteId { get; set; }
-        public Producto? Variante { get; set; }
+        public Variante? Variante { get; set; }
         public int PedidoId { get; set; }
         public Pedido? Pedido { get; set; }
     }

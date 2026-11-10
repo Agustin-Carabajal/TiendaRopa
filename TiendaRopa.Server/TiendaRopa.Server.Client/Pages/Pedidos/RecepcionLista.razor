@@ -32,24 +32,60 @@
     }
     else
     {
+        <div class="card mb-3">
+            <div class="card-body row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Filtrar por pedido</label>
+                    <select class="form-select" @bind="pedidoFiltro">
+                        <option value="0">Todos los pedidos</option>
+                        @foreach (var pedido in pedidosDisponibles)
+                        {
+                            <option value="@pedido.Id">@pedido.FacturaPedido (Pedido #@pedido.Id)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Recibido desde</label>
+                    <input type="date" class="form-control" @bind="fechaDesde" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Recibido hasta</label>
+                    <input type="date" class="form-control" @bind="fechaHasta" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" @onclick="LimpiarFiltros">Limpiar filtros</button>
+                </div>
+            </div>
+        </div>
+
+        @if (!recepcionesFiltradas.Any())
+        {
+            <div class="alert alert-info">No hay recepciones que coincidan con esos filtros.</div>
+        }
+        else
+        {
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
+                        <th>Pedido</th>
                         <th>Remito Proveedor</th>
                         <th>Fecha de Entrega</th>
+                        <th>Envío total</th>
                         <th>Recibido Por</th>
                         <th>Notas</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var rec in listaRecepciones)
+                    @foreach (var rec in recepcionesFiltradas)
                     {
                         <tr>
                             <td>@rec.Id</td>
+                            <td>@(rec.FacturaPedido ?? (rec.PedidoId.HasValue ? $"Pedido #{rec.PedidoId}" : "-"))</td>
                             <td>@rec.RemitoProveedor</td>
                             <td>@rec.FechaDeEntrega.ToShortDateString()</td>
+                            <td>$@rec.PrecioEnvioTotal.ToString("N2")</td>
                             <td>@rec.RecibidoPor</td>
                             <td>@(string.IsNullOrEmpty(rec.Notas) ? "-" : rec.Notas)</td>
                         </tr>
@@ -57,12 +93,22 @@
                 </tbody>
             </table>
         </div>
+        }
     }
 </div>
 
 @code {
     private List<RecepcionDto>? listaRecepciones;
+    private List<PedidoDTO> pedidosDisponibles = new();
     private string mensajeError = string.Empty;
+    private int pedidoFiltro;
+    private DateTime? fechaDesde;
+    private DateTime? fechaHasta;
+
+    private IEnumerable<RecepcionDto> recepcionesFiltradas => (listaRecepciones?.AsEnumerable() ?? Enumerable.Empty<RecepcionDto>())
+        .Where(r => pedidoFiltro == 0 || r.PedidoId == pedidoFiltro)
+        .Where(r => !fechaDesde.HasValue || r.FechaDeEntrega.Date >= fechaDesde.Value.Date)
+        .Where(r => !fechaHasta.HasValue || r.FechaDeEntrega.Date <= fechaHasta.Value.Date);
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,6 +120,7 @@
         try
         {
             listaRecepciones = await Http.GetFromJsonAsync<List<RecepcionDto>>("api/recepciones");
+            pedidosDisponibles = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos") ?? new();
         }
         catch (Exception ex)
         {
@@ -84,5 +131,12 @@
     private void IrNuevaRecepcion()
     {
         Navigation.NavigateTo("/admin/recepciones/nueva");
+    }
+
+    private void LimpiarFiltros()
+    {
+        pedidoFiltro = 0;
+        fechaDesde = null;
+        fechaHasta = null;
     }
 }

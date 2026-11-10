@@ -21,21 +21,21 @@
             {
                 @foreach (var ped in listaPedidos)
                 {
-                    <option value="@ped.Id">Factura: @ped.FacturaPedido - Total: $@ped.TotalPedido</option>
+                    <option value="@ped.Id">Factura: @ped.FacturaPedido</option>
                 }
             }
         </InputSelect>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Prenda / Producto</label>
+        <label class="form-label">Variante (producto, color y talle)</label>
         <InputSelect @bind-Value="modeloDetalle.VarianteId" class="form-control">
-            <option value="0">-- Seleccione la Prenda --</option>
-            @if (listaProductos != null)
+            <option value="0">-- Seleccione la Variante --</option>
+            @if (listaVariantes != null)
             {
-                @foreach (var prod in listaProductos)
+                @foreach (var variante in listaVariantes)
                 {
-                    <option value="@prod.Id">@prod.Nombre</option>
+                    <option value="@variante.Id">@variante.ProductoColor - Talle @variante.Talle - SKU @variante.CodVariante</option>
                 }
             }
         </InputSelect>
@@ -44,16 +44,6 @@
     <div class="mb-3">
         <label class="form-label">Cantidad Pedida</label>
         <InputNumber @bind-Value="modeloDetalle.Cant_prod_Pedido" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Valor Unidad</label>
-        <InputNumber @bind-Value="modeloDetalle.Valor_uni" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Valor Estimado Total</label>
-        <InputNumber @bind-Value="modeloDetalle.Valor_est" class="form-control" />
     </div>
 
     <button type="submit" class="btn btn-primary"
@@ -70,13 +60,13 @@
 
    
     private List<PedidoDTO>? listaPedidos;
-    private List<ProductoMostrarDTO>? listaProductos;
+    private List<VarianteMostrarDTO>? listaVariantes;
 
     protected override async Task OnInitializedAsync()
     {
         
         listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
-        listaProductos = await Http.GetFromJsonAsync<List<ProductoMostrarDTO>>("api/productos"); 
+        listaVariantes = await Http.GetFromJsonAsync<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas");
 
         if (Id.HasValue)
         {

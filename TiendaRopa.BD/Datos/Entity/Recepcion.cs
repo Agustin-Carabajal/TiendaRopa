@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace TiendaRopa.BD.Datos.Entity
@@ -8,6 +9,9 @@ namespace TiendaRopa.BD.Datos.Entity
     public class Recepcion : EntityBase
     {
         public DateTime FechaDeEntrega { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PrecioEnvioTotal { get; set; }
 
         [MaxLength(45, ErrorMessage = "El Remito del proveedor no puede exceder los 45 caracteres.")]
         public required string RemitoProveedor { get; set; }

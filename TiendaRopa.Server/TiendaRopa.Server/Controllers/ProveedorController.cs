@@ -27,6 +27,7 @@ namespace TiendaRopa.Server.Controllers
                 CuitProveedores = p.CuitProveedores,
                 DomicilioProveedores = p.DomicilioProveedores,
                 ContactoNombreProveedores = p.ContactoNombreProveedores,
+                TelefonoContacto = p.TelefonoContacto,
                 EmailProveedores = p.EmailProveedores,
                 ObvsProveedores = p.ObvsProveedores
             });
@@ -46,6 +47,7 @@ namespace TiendaRopa.Server.Controllers
                 CuitProveedores = p.CuitProveedores,
                 DomicilioProveedores = p.DomicilioProveedores,
                 ContactoNombreProveedores = p.ContactoNombreProveedores,
+                TelefonoContacto = p.TelefonoContacto,
                 EmailProveedores = p.EmailProveedores,
                 ObvsProveedores = p.ObvsProveedores
             };
@@ -61,6 +63,7 @@ namespace TiendaRopa.Server.Controllers
                 CuitProveedores = dto.CuitProveedores,
                 DomicilioProveedores = dto.DomicilioProveedores,
                 ContactoNombreProveedores = dto.ContactoNombreProveedores,
+                TelefonoContacto = dto.TelefonoContacto,
                 EmailProveedores = dto.EmailProveedores,
                 ObvsProveedores = dto.ObvsProveedores
             };
@@ -79,6 +82,7 @@ namespace TiendaRopa.Server.Controllers
             p.CuitProveedores = dto.CuitProveedores;
             p.DomicilioProveedores = dto.DomicilioProveedores;
             p.ContactoNombreProveedores = dto.ContactoNombreProveedores;
+            p.TelefonoContacto = dto.TelefonoContacto;
             p.EmailProveedores = dto.EmailProveedores;
             p.ObvsProveedores = dto.ObvsProveedores;
 

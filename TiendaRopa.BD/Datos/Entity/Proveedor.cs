@@ -12,16 +12,20 @@ namespace TiendaRopa.BD.Datos.Entity
         public required string RazonSocialProveedores { get; set; }
 
         [MaxLength(50, ErrorMessage = "El cuit de proveedores no puede exceder los 50 caracteres.")]
-        public required string CuitProveedores { get; set; }
+        public string? CuitProveedores { get; set; }
 
         [MaxLength(200, ErrorMessage = "La direccion del domicilio no puede exceder los 200 caracteres.")]
-        public required string DomicilioProveedores { get; set; }
+        public string? DomicilioProveedores { get; set; }
 
         [MaxLength(50, ErrorMessage = "El nombre del contacto no puede exceder los 50 caracteres.")]
-        public required string ContactoNombreProveedores { get; set; }
+        public string? ContactoNombreProveedores { get; set; }
+
+        [Required(ErrorMessage = "El número de contacto del proveedor es obligatorio.")]
+        [MaxLength(30, ErrorMessage = "El número de contacto no puede exceder los 30 caracteres.")]
+        public required string TelefonoContacto { get; set; }
 
         [MaxLength(50, ErrorMessage = "El Correo Electronico del proveedor no puede exceder los 50 caracteres.")]
-        public required string EmailProveedores { get; set; }
+        public string? EmailProveedores { get; set; }
 
         public string? ObvsProveedores { get; set; }
     }

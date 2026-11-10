@@ -20,22 +20,27 @@
     </div>
 
     <div class="mb-3">
-        <label class="form-label">CUIT</label>
+        <label class="form-label">CUIT (opcional)</label>
         <InputText @bind-Value="modeloProveedor.CuitProveedores" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Domicilio</label>
+        <label class="form-label">Domicilio (opcional)</label>
         <InputText @bind-Value="modeloProveedor.DomicilioProveedores" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Nombre de Contacto</label>
+        <label class="form-label">Nombre de Contacto (opcional)</label>
         <InputText @bind-Value="modeloProveedor.ContactoNombreProveedores" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Email</label>
+        <label class="form-label">Número de Contacto</label>
+        <InputText @bind-Value="modeloProveedor.TelefonoContacto" class="form-control" type="tel" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email (opcional)</label>
         <InputText @bind-Value="modeloProveedor.EmailProveedores" class="form-control" type="email" />
     </div>
 

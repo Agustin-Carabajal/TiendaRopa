@@ -28,9 +28,9 @@ else
                 <tr>
                     <th>Factura</th>
                     <th>Proveedor</th>
-                    <th>Fecha Pedido</th>
+                    <th>Emitido</th>
                     <th>Fecha Entrega</th>
-                    <th>Total</th>
+                    <th>Costo de prendas recibidas</th>
                     <th class="text-center">Acciones</th>
                 </tr>
             </thead>
@@ -42,8 +42,9 @@ else
                         <td>@ped.RazonSocialProveedor</td>
                         <td>@ped.FechaDePedido.ToShortDateString()</td>
                         <td>@(ped.FechaDeEntrega.HasValue ? ped.FechaDeEntrega.Value.ToShortDateString() : "Pendiente")</td>
-                        <td>$@ped.TotalPedido</td>
+                        <td>@(ped.TotalPedido == 0 ? "Pendiente de recepción" : $"${ped.TotalPedido:N2}")</td>
                         <td class="text-center">
+                            <a class="btn btn-outline-primary btn-sm me-2" href="@($"{Navigation.BaseUri}api/pedidos/{ped.Id}/recibo.pdf")">Generar recibo PDF</a>
                             <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(ped.Id)">Editar</button>
                             <button class="btn btn-danger btn-sm" @onclick="() => EliminarPedido(ped.Id)">Eliminar</button>
                         </td>

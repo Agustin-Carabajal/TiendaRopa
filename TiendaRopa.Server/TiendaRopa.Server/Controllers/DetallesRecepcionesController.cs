@@ -20,6 +20,11 @@ namespace TiendaRopa.Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DetallesRecepcionDto dto)
         {
+            if (dto.CantidadRecibida <= 0)
+                return BadRequest("La cantidad recibida debe ser mayor a cero.");
+            if (dto.PrecioUnitario <= 0 || dto.PrecioEnvio < 0 || dto.Ganancia < 0)
+                return BadRequest("El costo unitario debe ser mayor a cero y el envío y la ganancia no pueden ser negativos.");
+
             var detalle = new DetallesRecepcion
             {
                 PedidoId = dto.PedidoId,
@@ -27,6 +32,8 @@ namespace TiendaRopa.Server.Controllers
                 VarianteId = dto.VarianteId,
                 CantidadRecibida = dto.CantidadRecibida,
                 PrecioUnitario = dto.PrecioUnitario,
+                PrecioEnvio = dto.PrecioEnvio,
+                Ganancia = dto.PrecioUnitario * 2m,
                 TotalPedidos = dto.TotalPedidos
             };
 

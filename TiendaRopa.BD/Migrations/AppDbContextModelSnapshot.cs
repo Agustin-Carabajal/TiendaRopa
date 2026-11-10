@@ -479,7 +479,13 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("PedidoId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Ganancia")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PrecioEnvio")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("RecepcionId")
@@ -865,22 +871,18 @@ namespace TiendaRopa.BD.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContactoNombreProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("CuitProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("DomicilioProveedores")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("EmailProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -898,6 +900,11 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TelefonoContacto")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("Id");
 
@@ -917,6 +924,9 @@ namespace TiendaRopa.BD.Migrations
 
                     b.Property<DateTime>("FechaDeEntrega")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("PrecioEnvioTotal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Notas")
                         .IsRequired()
@@ -1238,7 +1248,7 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
                         .WithMany()
                         .HasForeignKey("VarianteId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1263,7 +1273,7 @@ namespace TiendaRopa.BD.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TiendaRopa.BD.Datos.Entity.Producto", "Variante")
+                    b.HasOne("TiendaRopa.BD.Datos.Entity.Variante", "Variante")
                         .WithMany()
                         .HasForeignKey("VarianteId")
                         .OnDelete(DeleteBehavior.Restrict)

@@ -27,8 +27,6 @@ else
                     <th>Factura Pedido</th>
                     <th>Prenda / Producto</th>
                     <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Valor Estimado</th>
                     <th class="text-center">Acciones</th>
                 </tr>
             </thead>
@@ -39,8 +37,6 @@ else
                         <td>@det.FacturaPedido</td>
                         <td>@det.NombreProducto</td>
                         <td>@det.Cant_prod_Pedido</td>
-                        <td>$@det.Valor_uni</td>
-                        <td>$@det.Valor_est</td>
                         <td class="text-center">
                             <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(det.Id)">Editar</button>
                             <button class="btn btn-danger btn-sm" @onclick="() => EliminarDetalle(det.Id)">Eliminar</button>

@@ -21,12 +21,28 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
             return await _context.DetallesPedidos
                                  .Include(d => d.Pedido)
                                  .Include(d => d.Variante)
+                                    .ThenInclude(v => v!.ProductoColor)
+                                        .ThenInclude(pc => pc!.Producto)
+                                 .Include(d => d.Variante)
+                                    .ThenInclude(v => v!.ProductoColor)
+                                        .ThenInclude(pc => pc!.Color)
+                                 .Include(d => d.Variante)
+                                    .ThenInclude(v => v!.Talle)
                                  .ToListAsync();
         }
 
         public async Task<DetallesPedido?> GetByIdAsync(int id)
         {
-            return await _context.DetallesPedidos.FindAsync(id);
+            return await _context.DetallesPedidos
+                .Include(d => d.Variante)
+                    .ThenInclude(v => v!.ProductoColor)
+                        .ThenInclude(pc => pc!.Producto)
+                .Include(d => d.Variante)
+                    .ThenInclude(v => v!.ProductoColor)
+                        .ThenInclude(pc => pc!.Color)
+                .Include(d => d.Variante)
+                    .ThenInclude(v => v!.Talle)
+                .FirstOrDefaultAsync(d => d.Id == id);
         }
 
         public async Task AddAsync(DetallesPedido detalle)

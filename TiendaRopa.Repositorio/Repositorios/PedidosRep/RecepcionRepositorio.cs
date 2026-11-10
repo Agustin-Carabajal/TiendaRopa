@@ -36,14 +36,23 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
 
         public async Task AddDetalleRecepcionAsync(DetallesRecepcion detalle)
         {
+            var costoRecibidoAntes = await _context.DetallesRecepciones
+                .Where(dr => dr.PedidoId == detalle.PedidoId)
+                .SumAsync(dr => (decimal?)(dr.PrecioUnitario * dr.CantidadRecibida)) ?? 0m;
+
             await _context.DetallesRecepciones.AddAsync(detalle);
 
             var variante = await _context.Variantes.FindAsync(detalle.VarianteId);
             if (variante != null)
             {
                 variante.Stock += detalle.CantidadRecibida;
+                variante.PrecioVenta = detalle.PrecioUnitario + detalle.PrecioEnvio + detalle.Ganancia;
                 _context.Variantes.Update(variante);
             }
+
+            var pedido = await _context.Pedidos.FindAsync(detalle.PedidoId);
+            if (pedido != null)
+                pedido.TotalPedidos = costoRecibidoAntes + detalle.PrecioUnitario * detalle.CantidadRecibida;
 
             await _context.SaveChangesAsync();
         }
@@ -52,11 +61,23 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
         {
             var detallesPedido = await _context.DetallesPedidos
                 .Include(d => d.Variante)
+                    .ThenInclude(v => v!.ProductoColor)
+                        .ThenInclude(pc => pc!.Producto)
+                .Include(d => d.Variante)
+                    .ThenInclude(v => v!.ProductoColor)
+                        .ThenInclude(pc => pc!.Color)
+                .Include(d => d.Variante)
+                    .ThenInclude(v => v!.Talle)
                 .Where(d => d.PedidoId == pedidoId)
                 .ToListAsync();
 
             var recepcionesPrevias = await _context.DetallesRecepciones
                 .Where(dr => dr.PedidoId == pedidoId)
+                .ToListAsync();
+            var variantesDelPedido = detallesPedido.Select(d => d.VarianteId).Distinct().ToList();
+            var costosRecepcionados = await _context.DetallesRecepciones
+                .Where(dr => variantesDelPedido.Contains(dr.VarianteId))
+                .OrderBy(dr => dr.Id)
                 .ToListAsync();
 
             var itemsPendientes = detallesPedido.Select(dp =>
@@ -64,16 +85,19 @@ namespace TiendaRopa.Repositorio.Repositorios.PedidosRep
                 int yaRecibido = recepcionesPrevias
                     .Where(dr => dr.VarianteId == dp.VarianteId)
                     .Sum(dr => dr.CantidadRecibida);
+                var ultimoCosto = costosRecepcionados.LastOrDefault(dr => dr.VarianteId == dp.VarianteId);
 
                 return new ItemPedidoPendienteDTO
                 {
                     PedidoId = dp.PedidoId,
                     VarianteId = dp.VarianteId,
-                    NombreProducto = dp.Variante != null ? dp.Variante.NombreProducto : "Producto",
+                    NombreProducto = dp.Variante == null
+                        ? "Variante no disponible"
+                        : $"{dp.Variante.ProductoColor?.Producto?.NombreProducto ?? "Producto"} - {dp.Variante.ProductoColor?.Color?.NombreColor ?? "Color sin asignar"} - Talle {dp.Variante.Talle?.NombreTalle ?? "Sin talle"} - SKU {dp.Variante.CodVariante}",
                     CantidadPedida = dp.Cant_prod_Pedido,
                     CantidadYaRecibida = yaRecibido,
-                    PrecioUnitario = dp.Valor_uni,
-                    CantidadARecibirAhora = 0
+                    PrecioUnitario = ultimoCosto?.PrecioUnitario ?? 0m,
+                    CantidadARecibirAhora = Math.Max(0, dp.Cant_prod_Pedido - yaRecibido)
                 };
             }).ToList();
 

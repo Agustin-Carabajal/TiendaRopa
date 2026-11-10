@@ -420,75 +420,6 @@ namespace TiendaRopa.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DetallesPedidos",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cant_prod_Pedido = table.Column<int>(type: "integer", nullable: false),
-                    Valor_est = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Valor_uni = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    VarianteId = table.Column<int>(type: "integer", nullable: false),
-                    PedidoId = table.Column<int>(type: "integer", nullable: false),
-                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
-                    Observacion = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DetallesPedidos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DetallesPedidos_Pedidos_PedidoId",
-                        column: x => x.PedidoId,
-                        principalTable: "Pedidos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DetallesPedidos_Productos_VarianteId",
-                        column: x => x.VarianteId,
-                        principalTable: "Productos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DetallesRecepciones",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TotalPedidos = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    PrecioUnitario = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CantidadRecibida = table.Column<int>(type: "integer", nullable: false),
-                    PedidoId = table.Column<int>(type: "integer", nullable: false),
-                    RecepcionId = table.Column<int>(type: "integer", nullable: false),
-                    VarianteId = table.Column<int>(type: "integer", nullable: false),
-                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
-                    Observacion = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DetallesRecepciones", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DetallesRecepciones_Pedidos_PedidoId",
-                        column: x => x.PedidoId,
-                        principalTable: "Pedidos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DetallesRecepciones_Productos_VarianteId",
-                        column: x => x.VarianteId,
-                        principalTable: "Productos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_DetallesRecepciones_Recepciones_RecepcionId",
-                        column: x => x.RecepcionId,
-                        principalTable: "Recepciones",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ProductosColores",
                 columns: table => new
                 {
@@ -663,6 +594,75 @@ namespace TiendaRopa.BD.Migrations
                         name: "FK_PagosVenta_Ventas_VentaId",
                         column: x => x.VentaId,
                         principalTable: "Ventas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DetallesPedidos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Cant_prod_Pedido = table.Column<int>(type: "integer", nullable: false),
+                    Valor_est = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Valor_uni = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
+                    PedidoId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DetallesPedidos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DetallesPedidos_Pedidos_PedidoId",
+                        column: x => x.PedidoId,
+                        principalTable: "Pedidos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetallesPedidos_Variantes_VarianteId",
+                        column: x => x.VarianteId,
+                        principalTable: "Variantes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DetallesRecepciones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TotalPedidos = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    PrecioUnitario = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    CantidadRecibida = table.Column<int>(type: "integer", nullable: false),
+                    PedidoId = table.Column<int>(type: "integer", nullable: false),
+                    RecepcionId = table.Column<int>(type: "integer", nullable: false),
+                    VarianteId = table.Column<int>(type: "integer", nullable: false),
+                    EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
+                    Observacion = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DetallesRecepciones", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DetallesRecepciones_Pedidos_PedidoId",
+                        column: x => x.PedidoId,
+                        principalTable: "Pedidos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetallesRecepciones_Recepciones_RecepcionId",
+                        column: x => x.RecepcionId,
+                        principalTable: "Recepciones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DetallesRecepciones_Variantes_VarianteId",
+                        column: x => x.VarianteId,
+                        principalTable: "Variantes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });

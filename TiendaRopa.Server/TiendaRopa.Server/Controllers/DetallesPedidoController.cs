@@ -20,18 +20,14 @@ namespace TiendaRopa.Server.Controllers
         public async Task<ActionResult<IEnumerable<DetallePedidoDTO>>> Get()
         {
             var detalles = await _repository.GetAllAsync();
-            var dtos = detalles.Select(d => new DetallePedidoDTO
-            {
-                Id = d.Id,
-                Cant_prod_Pedido = d.Cant_prod_Pedido,
-                Valor_est = d.Valor_est,
-                Valor_uni = d.Valor_uni,
-                PedidoId = d.PedidoId,
-                FacturaPedido = d.Pedido?.FacturaPedidos, 
-                VarianteId = d.VarianteId,
-                NombreProducto = d.Variante?.NombreProducto
-            });
-            return Ok(dtos);
+            return Ok(detalles.Select(MapearDetalle));
+        }
+
+        [HttpGet("porpedido/{pedidoId:int}")]
+        public async Task<ActionResult<IEnumerable<DetallePedidoDTO>>> GetPorPedido(int pedidoId)
+        {
+            var detalles = await _repository.GetAllAsync();
+            return Ok(detalles.Where(d => d.PedidoId == pedidoId).OrderBy(d => d.Id).Select(MapearDetalle));
         }
 
         [HttpGet("{id}")]
@@ -44,13 +40,37 @@ namespace TiendaRopa.Server.Controllers
             {
                 Id = d.Id,
                 Cant_prod_Pedido = d.Cant_prod_Pedido,
-                Valor_est = d.Valor_est,
-                Valor_uni = d.Valor_uni,
                 PedidoId = d.PedidoId,
-                VarianteId = d.VarianteId  
+                VarianteId = d.VarianteId,
+                NombreProducto = NombreVariante(d.Variante),
+                CodVariante = d.Variante?.CodVariante,
+                Color = d.Variante?.ProductoColor?.Color?.NombreColor,
+                Talle = d.Variante?.Talle?.NombreTalle
             };
             return Ok(dto);
         }
+
+        private static string? NombreVariante(Variante? variante)
+        {
+            if (variante == null) return null;
+            var producto = variante.ProductoColor?.Producto?.NombreProducto ?? "Producto";
+            var color = variante.ProductoColor?.Color?.NombreColor ?? "Color sin asignar";
+            var talle = variante.Talle?.NombreTalle ?? "Talle sin asignar";
+            return $"{producto} - {color} - Talle {talle} - SKU {variante.CodVariante}";
+        }
+
+        private static DetallePedidoDTO MapearDetalle(DetallesPedido detalle) => new()
+        {
+            Id = detalle.Id,
+            Cant_prod_Pedido = detalle.Cant_prod_Pedido,
+            PedidoId = detalle.PedidoId,
+            FacturaPedido = detalle.Pedido?.FacturaPedidos,
+            VarianteId = detalle.VarianteId,
+            NombreProducto = NombreVariante(detalle.Variante),
+            CodVariante = detalle.Variante?.CodVariante,
+            Color = detalle.Variante?.ProductoColor?.Color?.NombreColor,
+            Talle = detalle.Variante?.Talle?.NombreTalle
+        };
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DetallePedidoDTO dto)
@@ -58,8 +78,8 @@ namespace TiendaRopa.Server.Controllers
             var detalle = new DetallesPedido
             {
                 Cant_prod_Pedido = dto.Cant_prod_Pedido,
-                Valor_est = dto.Valor_est,
-                Valor_uni = dto.Valor_uni,
+                Valor_est = 0m,
+                Valor_uni = 0m,
                 PedidoId = dto.PedidoId,
                 VarianteId = dto.VarianteId // <-- Vinculado directamente a la variante seleccionada
             };
@@ -75,8 +95,8 @@ namespace TiendaRopa.Server.Controllers
             if (d == null) return NotFound();
 
             d.Cant_prod_Pedido = dto.Cant_prod_Pedido;
-            d.Valor_est = dto.Valor_est;
-            d.Valor_uni = dto.Valor_uni;
+            d.Valor_est = 0m;
+            d.Valor_uni = 0m;
             d.PedidoId = dto.PedidoId;
             d.VarianteId = dto.VarianteId;
 
