@@ -12,8 +12,8 @@ using TiendaRopa.BD.Datos;
 namespace TiendaRopa.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261109212929_inicio")]
-    partial class inicio
+    [Migration("20261110090314_InicioRender")]
+    partial class InicioRender
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -475,12 +475,18 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Ganancia")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("PedidoId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("PrecioEnvio")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PrecioUnitario")
                         .HasColumnType("decimal(18,2)");
@@ -868,22 +874,18 @@ namespace TiendaRopa.BD.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContactoNombreProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("CuitProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("DomicilioProveedores")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("EmailProveedores")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -901,6 +903,11 @@ namespace TiendaRopa.BD.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TelefonoContacto")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.HasKey("Id");
 
@@ -929,6 +936,9 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("PrecioEnvioTotal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("RecibidoPor")
                         .IsRequired()

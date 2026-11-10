@@ -472,6 +472,9 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("EstadoRegistro")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Ganancia")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("text");
@@ -479,13 +482,10 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<int>("PedidoId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Ganancia")
+                    b.Property<decimal>("PrecioEnvio")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PrecioUnitario")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PrecioEnvio")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("RecepcionId")
@@ -925,9 +925,6 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<DateTime>("FechaDeEntrega")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("PrecioEnvioTotal")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("Notas")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -936,6 +933,9 @@ namespace TiendaRopa.BD.Migrations
                     b.Property<string>("Observacion")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("PrecioEnvioTotal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("RecibidoPor")
                         .IsRequired()

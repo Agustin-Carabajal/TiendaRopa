@@ -26,30 +26,41 @@ public static class IdentitySeeder
                 await roleManager.CreateAsync(new IdentityRole(rol));
         }
 
-        // Credenciales del admin: salen de la configuración, no del código
-        var email = config["AdminSeed:Email"];
-        var password = config["AdminSeed:Password"];
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            return;
-
-        var admin = await userManager.FindByEmailAsync(email);
-        if (admin is null)
+        // Las credenciales salen de User Secrets o de otra fuente de configuración,
+        // no quedan guardadas en el código ni en appsettings.
+        foreach (var adminConfigKey in new[] { "AdminSeed", "AdminSeed2" })
         {
-            admin = new ApplicationUser
+            var email = config[$"{adminConfigKey}:Email"];
+            var password = config[$"{adminConfigKey}:Password"];
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                continue;
+
+            var admin = await userManager.FindByEmailAsync(email);
+            if (admin is null)
             {
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true,              // necesario si RequireConfirmedAccount = true
-                EstadoRegistro = EstadoRegistro.activo // ajustá al nombre real de tu enum
-            };
+                admin = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true, // necesario si RequireConfirmedAccount = true
+                    EstadoRegistro = EstadoRegistro.activo
+                };
 
-            var result = await userManager.CreateAsync(admin, password);
-            if (!result.Succeeded)
-                throw new InvalidOperationException(
-                    "No se pudo crear el admin: " + string.Join("; ", result.Errors.Select(e => e.Description)));
+                var result = await userManager.CreateAsync(admin, password);
+                if (!result.Succeeded)
+                    throw new InvalidOperationException(
+                        $"No se pudo crear el admin configurado en {adminConfigKey}: " +
+                        string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
+
+            if (!await userManager.IsInRoleAsync(admin, "Admin"))
+            {
+                var roleResult = await userManager.AddToRoleAsync(admin, "Admin");
+                if (!roleResult.Succeeded)
+                    throw new InvalidOperationException(
+                        $"No se pudo asignar el rol Admin a {email}: " +
+                        string.Join("; ", roleResult.Errors.Select(e => e.Description)));
+            }
         }
-
-        if (!await userManager.IsInRoleAsync(admin, "Admin"))
-            await userManager.AddToRoleAsync(admin, "Admin");
     }
 }

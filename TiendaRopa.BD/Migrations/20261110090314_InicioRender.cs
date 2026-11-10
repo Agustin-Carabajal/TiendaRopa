@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TiendaRopa.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class inicio : Migration
+    public partial class InicioRender : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -139,10 +139,11 @@ namespace TiendaRopa.BD.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     RazonSocialProveedores = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    CuitProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    DomicilioProveedores = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    ContactoNombreProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    EmailProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CuitProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    DomicilioProveedores = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ContactoNombreProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    TelefonoContacto = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    EmailProveedores = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ObvsProveedores = table.Column<string>(type: "text", nullable: true),
                     EstadoRegistro = table.Column<int>(type: "integer", nullable: false),
                     Observacion = table.Column<string>(type: "text", nullable: false)
@@ -159,6 +160,7 @@ namespace TiendaRopa.BD.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     FechaDeEntrega = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PrecioEnvioTotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     RemitoProveedor = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
                     RecibidoPor = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
                     Notas = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -637,6 +639,8 @@ namespace TiendaRopa.BD.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TotalPedidos = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     PrecioUnitario = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    PrecioEnvio = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Ganancia = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     CantidadRecibida = table.Column<int>(type: "integer", nullable: false),
                     PedidoId = table.Column<int>(type: "integer", nullable: false),
                     RecepcionId = table.Column<int>(type: "integer", nullable: false),
