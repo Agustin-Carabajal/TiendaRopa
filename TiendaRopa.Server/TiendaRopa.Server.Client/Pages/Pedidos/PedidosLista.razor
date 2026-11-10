@@ -2,12 +2,13 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Authorization
 @using TiendaRopa.Shared.DTO.Proveedor
+@using TiendaRopa.Shared.DTO.Producto_y_mas
 @inject HttpClient Http
 @inject NavigationManager Navigation
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Listado de Pedidos</h2>
-    <button class="btn btn-success" @onclick="IrAAñadir">
+<div class="d-flex justify-content-between align-items-center page-heading mb-4">
+    <h2 class="page-title">Listado de Pedidos</h2>
+    <button class="btn btn-success" @onclick="AbrirModalAgregar">
         Añadir Pedido
     </button>
 </div>
@@ -22,7 +23,7 @@ else if (!listaPedidos.Any())
 }
 else
 {
-    <div class="table-responsive">
+    <div class="table-responsive tabla-fb">
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
@@ -55,12 +56,141 @@ else
     </div>
 }
 
+@if (mostrarModalAgregar)
+{
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header modal-header-agregar">
+                    <h5 class="modal-title">Añadir pedido</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModalAgregar"></button>
+                </div>
+
+                <EditForm Model="modeloPedido" OnValidSubmit="GuardarPedido">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        @if (!string.IsNullOrWhiteSpace(mensajeError))
+                        {
+                            <div class="alert alert-danger" role="alert">@mensajeError</div>
+                        }
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Proveedor *</label>
+                                <InputSelect @bind-Value="modeloPedido.IdProveedor" class="form-select">
+                                    <option value="0">-- Seleccionar proveedor --</option>
+                                    @foreach (var proveedor in proveedores)
+                                    {
+                                        <option value="@proveedor.Id">@proveedor.RazonSocialProveedores</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Número de pedido</label>
+                                <InputText @bind-Value="modeloPedido.FacturaPedido" class="form-control" placeholder="Se genera automáticamente" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emitido</label>
+                                <InputDate @bind-Value="modeloPedido.FechaDePedido" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha estimada de entrega</label>
+                                <InputDate @bind-Value="modeloPedido.FechaDeEntrega" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Variantes a solicitar</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="AbrirSelectorVariante">
+                                Agregar variante
+                            </button>
+                        </div>
+
+                        @if (mostrarSelectorVariante)
+                        {
+                            <div class="card card-body mb-3">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-8">
+                                        <label class="form-label">Variante (producto, color y talle)</label>
+                                        <InputSelect @bind-Value="varianteSeleccionadaId" class="form-select">
+                                            <option value="0">-- Elegir variante --</option>
+                                            @foreach (var variante in variantes.Where(v => detallesPedido.All(d => d.VarianteId != v.Id)))
+                                            {
+                                                <option value="@variante.Id">@EtiquetaVariante(variante)</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Cantidad</label>
+                                        <InputNumber @bind-Value="cantidadVariante" class="form-control" min="1" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" @onclick="AgregarVariante">Añadir</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (detallesPedido.Count == 0)
+                        {
+                            <div class="alert alert-warning">Agregá al menos una variante al pedido.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Variante</th>
+                                            <th class="text-center">Cantidad</th>
+                                            <th class="text-center">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var detalle in detallesPedido)
+                                        {
+                                            <tr>
+                                                <td>@detalle.NombreProducto</td>
+                                                <td class="text-center">@detalle.Cant_prod_Pedido</td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => QuitarVariante(detalle)">Quitar</button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalAgregar">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" disabled="@(modeloPedido.IdProveedor == 0 || detallesPedido.Count == 0)">
+                            Guardar pedido
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<PedidoDTO>? listaPedidos;
+    private List<ProveedorDto> proveedores = new();
+    private List<VarianteMostrarDTO> variantes = new();
+    private List<DetallePedidoDTO> detallesPedido = new();
+    private PedidoDTO modeloPedido = new();
+    private bool mostrarModalAgregar;
+    private bool mostrarSelectorVariante;
+    private int varianteSeleccionadaId;
+    private int cantidadVariante = 1;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
         await CargarPedidos();
+        await CargarDatosParaPedido();
     }
 
     private async Task CargarPedidos()
@@ -68,8 +198,123 @@ else
         listaPedidos = await Http.GetFromJsonAsync<List<PedidoDTO>>("api/pedidos");
     }
 
-    private void IrAAñadir() => Navigation.NavigateTo("/admin/pedidos/pedido");
     private void IrAEditar(int id) => Navigation.NavigateTo($"/admin/pedidos/pedido/{id}");
+
+    private async Task CargarDatosParaPedido()
+    {
+        try
+        {
+            proveedores = await Http.GetFromJsonAsync<List<ProveedorDto>>("api/proveedores") ?? new();
+            variantes = await Http.GetFromJsonAsync<List<VarianteMostrarDTO>>("api/Variante/lista-variantes-activas") ?? new();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No se pudieron cargar los proveedores o las variantes: {ex.Message}";
+        }
+    }
+
+    private void AbrirModalAgregar()
+    {
+        modeloPedido = new PedidoDTO { FechaDePedido = DateTime.Today };
+        detallesPedido = new();
+        mensajeError = null;
+        mostrarSelectorVariante = false;
+        mostrarModalAgregar = true;
+    }
+
+    private void CerrarModalAgregar()
+    {
+        mostrarModalAgregar = false;
+        mensajeError = null;
+    }
+
+    private void AbrirSelectorVariante()
+    {
+        varianteSeleccionadaId = 0;
+        cantidadVariante = 1;
+        mostrarSelectorVariante = true;
+    }
+
+    private void AgregarVariante()
+    {
+        var variante = variantes.FirstOrDefault(item => item.Id == varianteSeleccionadaId);
+        if (variante == null || cantidadVariante <= 0)
+        {
+            return;
+        }
+
+        detallesPedido.Add(new DetallePedidoDTO
+        {
+            VarianteId = variante.Id,
+            NombreProducto = EtiquetaVariante(variante),
+            Cant_prod_Pedido = cantidadVariante
+        });
+        mostrarSelectorVariante = false;
+    }
+
+    private void QuitarVariante(DetallePedidoDTO detalle)
+    {
+        detallesPedido.Remove(detalle);
+    }
+
+    private static string EtiquetaVariante(VarianteMostrarDTO variante) =>
+        $"{variante.ProductoColor} - Talle {variante.Talle} - SKU {variante.CodVariante}";
+
+    private async Task GuardarPedido()
+    {
+        if (modeloPedido.IdProveedor <= 0)
+        {
+            mensajeError = "Seleccioná un proveedor para guardar el pedido.";
+            return;
+        }
+
+        if (detallesPedido.Count == 0)
+        {
+            mensajeError = "Agregá al menos una variante al pedido.";
+            return;
+        }
+
+        try
+        {
+            var respuestaPedido = await Http.PostAsJsonAsync("api/pedidos", modeloPedido);
+            if (!respuestaPedido.IsSuccessStatusCode)
+            {
+                mensajeError = await respuestaPedido.Content.ReadAsStringAsync();
+                return;
+            }
+
+            var pedidoCreado = await respuestaPedido.Content.ReadFromJsonAsync<PedidoDTO>();
+            if (pedidoCreado == null)
+            {
+                mensajeError = "El servidor no devolvió los datos del pedido creado.";
+                return;
+            }
+
+            foreach (var detalle in detallesPedido)
+            {
+                var dto = new
+                {
+                    Cant_prod_Pedido = detalle.Cant_prod_Pedido,
+                    PedidoId = pedidoCreado.Id,
+                    VarianteId = detalle.VarianteId
+                };
+
+                var respuestaDetalle = await Http.PostAsJsonAsync("api/detallespedido", dto);
+                if (!respuestaDetalle.IsSuccessStatusCode)
+                {
+                    mensajeError = $"El pedido se creó, pero no se pudo guardar una variante: {await respuestaDetalle.Content.ReadAsStringAsync()}";
+                    return;
+                }
+            }
+
+            CerrarModalAgregar();
+            await CargarPedidos();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al guardar el pedido: {ex.Message}";
+        }
+    }
 
     private async Task EliminarPedido(int id)
     {

@@ -104,6 +104,16 @@
         background-color: #6b9ed2;
     }
 
+@media (max-width: 480px) {
+    #components-reconnect-modal {
+        box-sizing: border-box;
+        width: calc(100vw - 2rem);
+        max-width: 24rem;
+        margin: auto;
+        padding: 1.25rem;
+    }
+}
+
 .components-rejoining-animation {
     position: relative;
     width: 80px;

@@ -10,8 +10,8 @@
 @inject IHttpServicio http
 @inject IJSRuntime js
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Ventas presenciales</h3>
+<div class="d-flex justify-content-between align-items-center page-heading mb-3">
+    <h3 class="page-title">Ventas presenciales</h3>
     <button class="btn btn-primary" @onclick="NuevaVenta">Nueva Venta</button>
 </div>
 @if (!string.IsNullOrWhiteSpace(errorPagina))
@@ -105,16 +105,16 @@ else
 
 @if (modal)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, .5)">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="resize: both; overflow: auto; width: min(95vw, 1200px); height: min(90vh, 900px); min-width: min(95vw, 520px); min-height: 50vh; max-width: 95vw; max-height: 90vh;">
-            <div class="modal-content" style="height: 100%; min-height: 0;">
-                <div class="modal-header">
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header @(ventaActual == null ? "modal-header-agregar" : edicion ? "modal-header-editar" : "modal-header-detalles")">
                     <h5 class="modal-title">
                         @(ventaActual == null ? "Nueva venta" : edicion ? "Editar venta #" + ventaActual.Id : "Detalle de venta #" + ventaActual.Id)
                     </h5>
                     <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal"></button>
                 </div>
-                <div class="modal-body" style="min-height: 0; overflow: auto;">
+                <div class="modal-body">
                     @if (!string.IsNullOrWhiteSpace(errorModal))
                     {
                         <div class="alert alert-danger" role="alert" tabindex="-1" @ref="errorModalRef">

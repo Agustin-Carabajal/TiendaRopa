@@ -1,13 +1,12 @@
 ﻿@page "/admin/recepciones"
 @inject HttpClient Http
-@inject NavigationManager Navigation
 @using TiendaRopa.Shared.DTO.Proveedor
 @using TiendaRopa.Shared.DTO.Producto_y_mas
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>Historial de Recepciones</h3>
-        <button class="btn btn-primary" @onclick="IrNuevaRecepcion">
+    <div class="d-flex justify-content-between align-items-center page-heading mb-4">
+        <h3 class="page-title">Historial de Recepciones</h3>
+        <button class="btn btn-primary" @onclick="AbrirModalRecepcion">
             <i class="bi bi-plus-circle"></i> Registrar Nueva Recepción
         </button>
     </div>
@@ -64,7 +63,7 @@
         }
         else
         {
-        <div class="table-responsive">
+        <div class="table-responsive tabla-fb">
             <table class="table table-striped table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
@@ -97,6 +96,128 @@
     }
 </div>
 
+@if (mostrarModalRecepcion)
+{
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header modal-header-agregar">
+                    <h5 class="modal-title">Registrar recepción de mercadería</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModalRecepcion"></button>
+                </div>
+
+                <EditForm Model="nuevaRecepcion" OnValidSubmit="GuardarRecepcion">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        @if (!string.IsNullOrWhiteSpace(mensajeErrorFormulario))
+                        {
+                            <div class="alert alert-danger" role="alert">@mensajeErrorFormulario</div>
+                        }
+
+                        <div class="card card-body mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Pedido relacionado *</label>
+                                    <select class="form-select" value="@pedidoSeleccionadoId" @onchange="OnPedidoCambiado">
+                                        <option value="0">-- Seleccionar pedido --</option>
+                                        @foreach (var pedido in pedidosDisponibles)
+                                        {
+                                            <option value="@pedido.Id">@pedido.FacturaPedido (Pedido #@pedido.Id)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha recibida</label>
+                                    <InputDate @bind-Value="nuevaRecepcion.FechaDeEntrega" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">N.º de remito del proveedor</label>
+                                    <InputText @bind-Value="nuevaRecepcion.RemitoProveedor" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Recibido por</label>
+                                    <InputText @bind-Value="nuevaRecepcion.RecibidoPor" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Costo total del envío ($)</label>
+                                    <InputNumber @bind-Value="nuevaRecepcion.PrecioEnvioTotal" class="form-control" min="0" step="0.01" />
+                                    <small class="text-muted">Se distribuye entre las unidades de esta recepción. Ahora: $@PrecioEnvioPorUnidad.ToString("N2") por unidad.</small>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Notas / observaciones</label>
+                                    <InputTextArea @bind-Value="nuevaRecepcion.Notas" class="form-control" rows="2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (cargandoPendientes)
+                        {
+                            <div class="text-center my-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2">Cargando variantes pendientes...</p>
+                            </div>
+                        }
+                        else if (itemsPendientes != null && itemsPendientes.Any())
+                        {
+                            <h6 class="mb-3">Variantes del pedido</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto / Variante</th>
+                                            <th class="text-center">Pedidas</th>
+                                            <th class="text-center">Recibidas</th>
+                                            <th class="text-center">Pendientes</th>
+                                            <th style="min-width: 120px;">Recibir ahora</th>
+                                            <th style="min-width: 150px;">Costo unitario</th>
+                                            <th>Ganancia por unidad</th>
+                                            <th>Precio de venta unitario</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in itemsPendientes)
+                                        {
+                                            <tr>
+                                                <td>@item.NombreProducto</td>
+                                                <td class="text-center">@item.CantidadPedida</td>
+                                                <td class="text-center">@item.CantidadYaRecibida</td>
+                                                <td class="text-center">@item.CantidadPendiente</td>
+                                                <td>
+                                                    <input type="number" class="form-control" min="0" max="@item.CantidadPendiente"
+                                                           @bind="item.CantidadARecibirAhora" @bind:event="oninput"
+                                                           disabled="@(item.CantidadPendiente == 0)" />
+                                                </td>
+                                                <td>
+                                                    <InputNumber @bind-Value="item.PrecioUnitario" class="form-control" min="0.01" step="0.01"
+                                                                 disabled="@(item.CantidadPendiente == 0)" />
+                                                </td>
+                                                <td>$@item.Ganancia.ToString("N2")</td>
+                                                <td>$@PrecioVentaUnitario(item).ToString("N2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else if (pedidoSeleccionadoId > 0 && !cargandoPendientes)
+                        {
+                            <div class="alert alert-info">Este pedido ya fue recibido por completo o no contiene artículos pendientes.</div>
+                        }
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalRecepcion">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"
+                                disabled="@(pedidoSeleccionadoId == 0 || cargandoPendientes || itemsPendientes == null || !itemsPendientes.Any())">
+                            Guardar recepción
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<RecepcionDto>? listaRecepciones;
     private List<PedidoDTO> pedidosDisponibles = new();
@@ -104,6 +225,16 @@
     private int pedidoFiltro;
     private DateTime? fechaDesde;
     private DateTime? fechaHasta;
+    private bool mostrarModalRecepcion;
+    private bool cargandoPendientes;
+    private string mensajeErrorFormulario = string.Empty;
+    private RecepcionDto nuevaRecepcion = new();
+    private List<ItemPedidoPendienteDTO>? itemsPendientes;
+    private int pedidoSeleccionadoId;
+    private int UnidadesARecibir => itemsPendientes?.Where(item => item.CantidadARecibirAhora > 0).Sum(item => item.CantidadARecibirAhora) ?? 0;
+    private decimal PrecioEnvioPorUnidad => UnidadesARecibir == 0
+        ? 0m
+        : Math.Round(nuevaRecepcion.PrecioEnvioTotal / UnidadesARecibir, 2, MidpointRounding.AwayFromZero);
 
     private IEnumerable<RecepcionDto> recepcionesFiltradas => (listaRecepciones?.AsEnumerable() ?? Enumerable.Empty<RecepcionDto>())
         .Where(r => pedidoFiltro == 0 || r.PedidoId == pedidoFiltro)
@@ -128,9 +259,122 @@
         }
     }
 
-    private void IrNuevaRecepcion()
+    private void AbrirModalRecepcion()
     {
-        Navigation.NavigateTo("/admin/recepciones/nueva");
+        nuevaRecepcion = new RecepcionDto { FechaDeEntrega = DateTime.Today };
+        pedidoSeleccionadoId = 0;
+        itemsPendientes = null;
+        mensajeErrorFormulario = string.Empty;
+        mostrarModalRecepcion = true;
+    }
+
+    private void CerrarModalRecepcion()
+    {
+        mostrarModalRecepcion = false;
+        mensajeErrorFormulario = string.Empty;
+    }
+
+    private async Task OnPedidoCambiado(ChangeEventArgs evento)
+    {
+        if (!int.TryParse(evento.Value?.ToString(), out var pedidoId) || pedidoId <= 0)
+        {
+            pedidoSeleccionadoId = 0;
+            itemsPendientes = null;
+            return;
+        }
+
+        pedidoSeleccionadoId = pedidoId;
+        cargandoPendientes = true;
+        mensajeErrorFormulario = string.Empty;
+
+        try
+        {
+            itemsPendientes = await Http.GetFromJsonAsync<List<ItemPedidoPendienteDTO>>(
+                $"api/recepciones/pendientes/{pedidoId}");
+        }
+        catch (Exception ex)
+        {
+            itemsPendientes = null;
+            mensajeErrorFormulario = $"Error al cargar las variantes pendientes: {ex.Message}";
+        }
+        finally
+        {
+            cargandoPendientes = false;
+        }
+    }
+
+    private decimal PrecioVentaUnitario(ItemPedidoPendienteDTO item) =>
+        item.PrecioUnitario + PrecioEnvioPorUnidad + item.Ganancia;
+
+    private async Task GuardarRecepcion()
+    {
+        var itemsARecibir = itemsPendientes?
+            .Where(item => item.CantidadARecibirAhora > 0)
+            .ToList();
+
+        if (itemsARecibir == null || itemsARecibir.Count == 0)
+        {
+            mensajeErrorFormulario = "Ingresá una cantidad mayor a cero en al menos una variante.";
+            return;
+        }
+
+        if (nuevaRecepcion.PrecioEnvioTotal < 0)
+        {
+            mensajeErrorFormulario = "El costo total del envío no puede ser negativo.";
+            return;
+        }
+
+        if (itemsARecibir.Any(item => item.PrecioUnitario <= 0m))
+        {
+            mensajeErrorFormulario = "Ingresá un costo unitario mayor a cero para cada variante recibida.";
+            return;
+        }
+
+        try
+        {
+            var respuestaRecepcion = await Http.PostAsJsonAsync("api/recepciones", nuevaRecepcion);
+            if (!respuestaRecepcion.IsSuccessStatusCode)
+            {
+                mensajeErrorFormulario = await respuestaRecepcion.Content.ReadAsStringAsync();
+                return;
+            }
+
+            var recepcionCreada = await respuestaRecepcion.Content.ReadFromJsonAsync<RecepcionDto>();
+            if (recepcionCreada == null)
+            {
+                mensajeErrorFormulario = "El servidor no devolvió los datos de la recepción creada.";
+                return;
+            }
+
+            foreach (var item in itemsARecibir)
+            {
+                var detalle = new DetallesRecepcionDto
+                {
+                    RecepcionId = recepcionCreada.Id,
+                    PedidoId = pedidoSeleccionadoId,
+                    VarianteId = item.VarianteId,
+                    CantidadRecibida = item.CantidadARecibirAhora,
+                    PrecioUnitario = item.PrecioUnitario,
+                    PrecioEnvio = PrecioEnvioPorUnidad,
+                    Ganancia = item.Ganancia,
+                    TotalPedidos = item.CantidadARecibirAhora * item.PrecioUnitario
+                };
+
+                var respuestaDetalle = await Http.PostAsJsonAsync("api/detallesrecepciones", detalle);
+                if (!respuestaDetalle.IsSuccessStatusCode)
+                {
+                    mensajeErrorFormulario = $"La recepción se creó, pero no se pudo guardar una variante: {await respuestaDetalle.Content.ReadAsStringAsync()}";
+                    return;
+                }
+            }
+
+            CerrarModalRecepcion();
+            await CargarRecepciones();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorFormulario = $"Error al guardar la recepción: {ex.Message}";
+        }
     }
 
     private void LimpiarFiltros()

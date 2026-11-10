@@ -7,169 +7,238 @@
 @inject IHttpServicio http
 @inject IJSRuntime JS
 
-<div class="container-fluid mt-4">
-    <h2 class="mb-4 text center">Gestión de Categorías de Ropa</h2>
+<div class="container-fluid mt-4 categorias-page">
+    <h2 class="mb-4 text-center">Gestión de Categorías de Ropa</h2>
 
     <div class="row">
-        <!--Talles -->
-        <div class="col-md-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background-color: #FAD2E1; color: #4A3B47;">
                     <h5 class="mb-0">Talles</h5>
                     <button class="btn btn-light btn-sm" @onclick='() => Agregar("Talle")'>
                         <i class="oi oi-plus"></i> +
                     </button>
                 </div>
+
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Descripción</th>
-                                <th class="text-end px-3">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (listaTalles == null)
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
-                            }
-                            else if (!listaTalles.Any())
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var talle in listaTalles)
+                    <div class="table-responsive tabla-fb">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-end px-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (listaTalles == null)
                                 {
                                     <tr>
-                                        <td class="align-middle">@talle.NombreTalle</td>
-                                        <td class="text-end px-3">
-                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarTalle(talle.IdTalle, talle.NombreTalle)'>Editar</button>
-                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(talle.IdTalle, "Talle")'>Borrar</button>
-                                        </td>
+                                        <td colspan="2" class="text-center text-muted p-3">Cargando...</td>
                                     </tr>
                                 }
-                            }
-                        </tbody>
-                    </table>
+                                else if (!listaTalles.Any())
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted p-3">No hay registros</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var talle in listaTalles)
+                                    {
+                                        <tr>
+                                            <td>@talle.NombreTalle</td>
+                                            <td class="text-end px-3">
+                                                <button class="btn btn-warning btn-sm me-1"
+                                                        @onclick='() => EditarTalle(talle.IdTalle, talle.NombreTalle)'>
+                                                    Editar
+                                                </button>
+                                                <button class="btn btn-danger btn-sm"
+                                                        @onclick='() => Borrar(talle.IdTalle, "Talle")'>
+                                                    Borrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- ================= TABLA DE COLORES ================= -->
-        <div class="col-md-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background-color: #FDE2E4; color: #4A3B47;">
                     <h5 class="mb-0">Colores</h5>
                     <button class="btn btn-light btn-sm" @onclick='() => Agregar("Color")'>
                         <i class="oi oi-plus"></i> +
                     </button>
                 </div>
+
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Descripción</th>
-                                <th class="text-end px-3">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (listaColores == null)
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
-                            }
-                            else if (!listaColores.Any())
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var color in listaColores)
+                    <div class="table-responsive tabla-fb">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-end px-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (listaColores == null)
                                 {
                                     <tr>
-                                        <td class="align-middle">@color.NombreColor</td>
-                                        <td class="text-end px-3">
-                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarColor(color.IdColor, color.NombreColor)'>Editar</button>
-                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(color.IdColor, "Color")'>Borrar</button>
-                                        </td>
+                                        <td colspan="2" class="text-center text-muted p-3">Cargando...</td>
                                     </tr>
                                 }
-                            }
-                        </tbody>
-                    </table>
+                                else if (!listaColores.Any())
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted p-3">No hay registros</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var color in listaColores)
+                                    {
+                                        <tr>
+                                            <td>@color.NombreColor</td>
+                                            <td class="text-end px-3">
+                                                <button class="btn btn-warning btn-sm me-1"
+                                                        @onclick='() => EditarColor(color.IdColor, color.NombreColor)'>
+                                                    Editar
+                                                </button>
+                                                <button class="btn btn-danger btn-sm"
+                                                        @onclick='() => Borrar(color.IdColor, "Color")'>
+                                                    Borrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- ================= TABLA DE ETIQUETAS ================= -->
-        <div class="col-md-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background-color: #E2ECE9; color: #4A3B47;">
                     <h5 class="mb-0">Etiquetas</h5>
-                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Etiqueta")'>+</button>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Etiqueta")'>
+                        <i class="oi oi-plus"></i> +
+                    </button>
                 </div>
+
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light"><tr><th>Descripción</th><th class="text-end px-3">Acciones</th></tr></thead>
-                        <tbody>
-                            @if (listaEtiquetas == null)
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
-                            }
-                            else if (!listaEtiquetas.Any())
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var etiqueta in listaEtiquetas)
+                    <div class="table-responsive tabla-fb">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-end px-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (listaEtiquetas == null)
                                 {
                                     <tr>
-                                        <td class="align-middle">@etiqueta.Nombre</td>
-                                        <td class="text-end px-3">
-                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarEtiqueta(etiqueta.IdEtiqueta, etiqueta.Nombre)'>Editar</button>
-                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(etiqueta.IdEtiqueta, "Etiqueta")'>Borrar</button>
-                                        </td>
+                                        <td colspan="2" class="text-center text-muted p-3">Cargando...</td>
                                     </tr>
                                 }
-                            }
-                        </tbody>
-                    </table>
+                                else if (!listaEtiquetas.Any())
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted p-3">No hay registros</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var etiqueta in listaEtiquetas)
+                                    {
+                                        <tr>
+                                            <td>@etiqueta.Nombre</td>
+                                            <td class="text-end px-3">
+                                                <button class="btn btn-warning btn-sm me-1"
+                                                        @onclick='() => EditarEtiqueta(etiqueta.IdEtiqueta, etiqueta.Nombre)'>
+                                                    Editar
+                                                </button>
+                                                <button class="btn btn-danger btn-sm"
+                                                        @onclick='() => Borrar(etiqueta.IdEtiqueta, "Etiqueta")'>
+                                                    Borrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- ================= TABLA DE MARCAS ================= -->
-        <div class="col-md-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                     style="background-color: #FAD2E1; color: #4A3B47;">
                     <h5 class="mb-0">Marcas</h5>
-                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Marca")'>+</button>
+                    <button class="btn btn-light btn-sm" @onclick='() => Agregar("Marca")'>
+                        <i class="oi oi-plus"></i> +
+                    </button>
                 </div>
+
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light"><tr><th>Descripción</th><th class="text-end px-3">Acciones</th></tr></thead>
-                        <tbody>
-                            @if (listaMarcas == null)
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">Cargando...</td></tr>
-                            }
-                            else if (!listaMarcas.Any())
-                            {
-                                <tr><td colspan="2" class="text-center text-muted p-3">No hay registros</td></tr>
-                            }
-                            else
-                            {
-                                @foreach (var marca in listaMarcas)
+                    <div class="table-responsive tabla-fb">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-end px-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (listaMarcas == null)
                                 {
                                     <tr>
-                                        <td class="align-middle">@marca.NombreMarca</td>
-                                        <td class="text-end px-3">
-                                            <button class="btn btn-outline-warning btn-sm me-1" @onclick='() => EditarMarca(marca.IdMarca, marca.NombreMarca)'>Editar</button>
-                                            <button class="btn btn-outline-danger btn-sm" @onclick='() => Borrar(marca.IdMarca, "Marca")'>Borrar</button>
-                                        </td>
+                                        <td colspan="2" class="text-center text-muted p-3">Cargando...</td>
                                     </tr>
                                 }
-                            }
-                        </tbody>
-                    </table>
+                                else if (!listaMarcas.Any())
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted p-3">No hay registros</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var marca in listaMarcas)
+                                    {
+                                        <tr>
+                                            <td>@marca.NombreMarca</td>
+                                            <td class="text-end px-3">
+                                                <button class="btn btn-warning btn-sm me-1"
+                                                        @onclick='() => EditarMarca(marca.IdMarca, marca.NombreMarca)'>
+                                                    Editar
+                                                </button>
+                                                <button class="btn btn-danger btn-sm"
+                                                        @onclick='() => Borrar(marca.IdMarca, "Marca")'>
+                                                    Borrar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -178,16 +247,17 @@
 
 @if (mostrarModal)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
             <div class="modal-content shadow-lg">
-                <div class="modal-header">
+                <div class="modal-header modal-header-agregar">
                     <h5 class="modal-title">@tituloModal @tipoAtributoSeleccionado</h5>
-                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModal"></button>
                 </div>
+
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nueva Descripción:</label>
+                        <label class="form-label">Nueva descripción:</label>
 
                         @if (tipoAtributoSeleccionado == "Talle")
                         {
@@ -212,6 +282,7 @@
                         }
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
                     <button type="button" class="btn btn-primary" @onclick="ProcesarGuardado">Confirmar</button>

@@ -1,5 +1,3 @@
-﻿<h3>Proveedores</h3>
-
 @page "/admin/proveedores"
 @attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Authorization
@@ -7,9 +5,9 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Listado de Proveedores</h2>
-    <button class="btn btn-success" @onclick="IrAAñadir">
+<div class="d-flex justify-content-between align-items-center page-heading mb-4">
+    <h2 class="page-title">Listado de Proveedores</h2>
+    <button class="btn btn-success" @onclick="AbrirModalAgregar">
         <i class="oi oi-plus"></i> Añadir Proveedor
     </button>
 </div>
@@ -28,8 +26,8 @@ else if (!listaProveedores.Any())
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover vertical-align-middle">
+    <div class="table-responsive tabla-fb">
+        <table class="table table-striped table-hover align-middle">
             <thead class="table-dark">
                 <tr>
                     <th>Razón Social</th>
@@ -41,19 +39,19 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var prov in listaProveedores)
+                @foreach (var proveedor in listaProveedores)
                 {
                     <tr>
-                        <td>@prov.RazonSocialProveedores</td>
-                        <td>@prov.CuitProveedores</td>
-                        <td>@prov.ContactoNombreProveedores</td>
-                        <td>@prov.TelefonoContacto</td>
-                        <td>@prov.EmailProveedores</td>
+                        <td>@proveedor.RazonSocialProveedores</td>
+                        <td>@proveedor.CuitProveedores</td>
+                        <td>@proveedor.ContactoNombreProveedores</td>
+                        <td>@proveedor.TelefonoContacto</td>
+                        <td>@proveedor.EmailProveedores</td>
                         <td class="text-center">
-                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(prov.Id)">
+                            <button class="btn btn-warning btn-sm me-2" @onclick="() => IrAEditar(proveedor.Id)">
                                 Editar
                             </button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarProveedor(prov.Id)">
+                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarProveedor(proveedor.Id)">
                                 Eliminar
                             </button>
                         </td>
@@ -64,8 +62,75 @@ else
     </div>
 }
 
+@if (mostrarModalAgregar)
+{
+    <div class="modal fade show d-block modal-fb" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header modal-header-agregar">
+                    <h5 class="modal-title">Añadir proveedor</h5>
+                    <button type="button" class="btn-close" aria-label="Cerrar" @onclick="CerrarModalAgregar"></button>
+                </div>
+
+                <EditForm Model="modeloProveedor" OnValidSubmit="GuardarProveedor">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        @if (!string.IsNullOrWhiteSpace(mensajeError))
+                        {
+                            <div class="alert alert-danger" role="alert">@mensajeError</div>
+                        }
+
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Razón Social *</label>
+                                <InputText @bind-Value="modeloProveedor.RazonSocialProveedores" class="form-control" />
+                                <ValidationMessage For="() => modeloProveedor.RazonSocialProveedores" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Número de Contacto *</label>
+                                <InputText @bind-Value="modeloProveedor.TelefonoContacto" class="form-control" type="tel" />
+                                <ValidationMessage For="() => modeloProveedor.TelefonoContacto" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CUIT (opcional)</label>
+                                <InputText @bind-Value="modeloProveedor.CuitProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Domicilio (opcional)</label>
+                                <InputText @bind-Value="modeloProveedor.DomicilioProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de Contacto (opcional)</label>
+                                <InputText @bind-Value="modeloProveedor.ContactoNombreProveedores" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email (opcional)</label>
+                                <InputText @bind-Value="modeloProveedor.EmailProveedores" class="form-control" type="email" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Observaciones (opcional)</label>
+                                <InputTextArea @bind-Value="modeloProveedor.ObvsProveedores" class="form-control" rows="2" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModalAgregar">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar proveedor</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ProveedorDto>? listaProveedores;
+    private ProveedorDto modeloProveedor = new();
+    private bool mostrarModalAgregar;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,9 +149,37 @@ else
         }
     }
 
-    private void IrAAñadir()
+    private void AbrirModalAgregar()
     {
-        Navigation.NavigateTo("/admin/proveedor");
+        modeloProveedor = new ProveedorDto();
+        mensajeError = null;
+        mostrarModalAgregar = true;
+    }
+
+    private void CerrarModalAgregar()
+    {
+        mostrarModalAgregar = false;
+        mensajeError = null;
+    }
+
+    private async Task GuardarProveedor()
+    {
+        try
+        {
+            var respuesta = await Http.PostAsJsonAsync("api/proveedores", modeloProveedor);
+            if (!respuesta.IsSuccessStatusCode)
+            {
+                mensajeError = await respuesta.Content.ReadAsStringAsync();
+                return;
+            }
+
+            CerrarModalAgregar();
+            await CargarProveedores();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No se pudo guardar el proveedor: {ex.Message}";
+        }
     }
 
     private void IrAEditar(int id)

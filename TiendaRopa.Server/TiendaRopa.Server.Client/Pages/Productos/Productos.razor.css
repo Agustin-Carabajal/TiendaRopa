@@ -332,6 +332,18 @@
 }
 
 /* ---------- Mobile ---------- */
+@media (max-width: 899.98px) {
+    .tabla-fb {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabla-fb .table {
+        min-width: 620px;
+    }
+}
+
 @media (max-width: 640px) {
     .acciones {
         white-space: normal;

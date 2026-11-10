@@ -7,7 +7,7 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 
-<h3>@(Id == null ? "Agregar Prenda a Pedido" : "Editar Detalle de Pedido")</h3>
+<h3 class="page-title">@(Id == null ? "Agregar Prenda a Pedido" : "Editar Detalle de Pedido")</h3>
 
 <EditForm Model="@modeloDetalle" OnValidSubmit="Guardar">
     <DataAnnotationsValidator />
